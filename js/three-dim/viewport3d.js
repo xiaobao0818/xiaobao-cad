@@ -9,7 +9,7 @@ export class Viewport3D extends Emitter {
   constructor(container) {
     super();
     this.container = container;
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -169,6 +169,11 @@ export class Viewport3D extends Emitter {
     return null;
   }
   onClick(fn) { this._onDown = fn; }
+  /** 供 AI 多模态审阅：渲染当前帧并返回 PNG dataURL */
+  capture() {
+    this.renderer.render(this.scene, this.camera);
+    return this.renderer.domElement.toDataURL('image/png');
+  }
   dispose() {
     this.renderer.dispose();
     this.container.innerHTML = '';

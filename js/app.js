@@ -1055,6 +1055,19 @@ window.CAD = {
   askAI: (text) => { if (window.__aiPanel) window.__aiPanel.ask(text); app.switchTab('ai'); },
   summarize: (opts) => io.buildSceneSummary(app.scene, opts),
   render: () => app.viewport.requestRender(),
+  /** 供 AI 多模态审阅：截取当前有内容的工作区渲染图（PNG dataURL） */
+  captureForAI: () => {
+    const has2d = app.scene.count() > 0;
+    const has3d = !!(app.app3d?.model && app.app3d.model.visibleCount() > 0);
+    const active3d = app.workspace === '3d';
+    try {
+      if (active3d && has3d && app.app3d?.vp) return app.app3d.vp.capture();
+      if (!active3d && has2d) return app.viewport.captureForAI(true);
+      if (has3d && app.app3d?.vp) return app.app3d.vp.capture();
+      if (has2d) return app.viewport.captureForAI(true);
+    } catch (e) { console.warn('[capture]', e); }
+    return null;
+  },
 };
 
 const app = new App();

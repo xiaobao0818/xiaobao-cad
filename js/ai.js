@@ -17,9 +17,26 @@ const DEFAULT_SETTINGS = {
   useTools: true,
   toolRoundLimit: 0, // 工具调用轮数上限，0 = 不限制
   toolCallLimit: 0,  // 工具调用总次数上限，0 = 不限制
+  visionBase: 'https://api.minimaxi.com', // 多模态审阅模型（MiniMax M3 原生多模态）
+  visionModel: 'MiniMax-M3',
+  visionKey: '',   // 为空时沿用主模型 Key
+  autoReview: true, // 创作完成后自动让多模态模型看图审阅优化
+  reviewRounds: 0,  // 审阅优化轮数上限，0 = 不限制（死循环防护与停止按钮仍生效）
+  deepThink: false, // MiniMax M3 thinking 模式（更高质量，略慢）
 };
 const REPEAT_LIMIT = 2; // 死循环防护：连续重复相同工具调用达到该值 → 停止（不是上限，是防空转烧额度）
 const MAX_SUMMARY_LEN = 3000;
+
+const REVIEW_MARK = '[多模态审阅]';
+const REVIEW_PROMPT =
+  REVIEW_MARK +
+  '你是小宝CAD 的图纸审阅员。上面的图片是当前 CAD 图纸/三维模型的实时渲染截图。\n' +
+  '请对照用户最近的创作要求，仔细检查：几何形状、尺寸比例、零件位置、遗漏或多余的内容、明显的错误。\n' +
+  '规则：\n' +
+  '1. 如果发现问题，直接调用工具修改（移动/旋转/缩放/增删实体、布尔运算等），不要只口头描述；\n' +
+  '2. 每次修改后我会把新的截图再次发给你；\n' +
+  '3. 如果认为已经达到要求，回复「已满意」并简短总结最终结果，不要再调用任何工具；\n' +
+  '4. 尽量在 1~2 轮内收敛，避免无意义的反复调整。';
 
 const SYSTEM_PROMPT = [
   '你是"小宝CAD"内置的 CAD 专家助手，帮助用户通过对话完成 CAD 绘图创作。',
@@ -385,6 +402,9 @@ export default class AIChatPanel {
         this.modelEl = this._el('span', 'ai-model', (s) => { s.textContent = this.settings.model || '未配置'; });
         head.appendChild(this.modelEl);
         const btns = this._el('div', 'ai-head-btns');
+        const reviewBtn = this._btn('👁 审阅', () => this._manualReview(), 'ai-review');
+        reviewBtn.title = '让多模态模型查看当前图纸并自动优化';
+        btns.appendChild(reviewBtn);
         btns.appendChild(this._btn('⚙ 设置', () => this.openSettings()));
         btns.appendChild(this._btn('🗑 清空', () => this.clear()));
         head.appendChild(btns);
@@ -398,7 +418,7 @@ export default class AIChatPanel {
         files.appendChild(this.attachBtn);
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
-        this.fileInput.accept = '.dxf,.json,.xbcad,.svg,.txt';
+        this.fileInput.accept = '.dxf,.json,.xbcad,.svg,.txt,.png,.jpg,.jpeg,.webp,.gif';
         this.fileInput.multiple = true;
         this.fileInput.style.display = 'none';
         this.fileInput.addEventListener('change', () => this._onFiles(this.fileInput.files));
@@ -550,6 +570,7 @@ export default class AIChatPanel {
     this._setSendButton(true);
     try {
       let result;
+      const toolBefore = this.messages.filter((m) => m.role === 'tool').length;
       if (s.useTools) {
         result = await this._runWithTools();
         if (result && result.fallback) result = await this._runFallback();
@@ -557,6 +578,17 @@ export default class AIChatPanel {
         result = await this._runFallback();
       }
       if (result && result.text) this._addMessage('assistant', result.text);
+      // 自动多模态审阅：本次对话动过图纸后，让 MiniMax M3 看图检查并优化
+      const toolsUsed = this.messages.filter((m) => m.role === 'tool').length > toolBefore;
+      if (toolsUsed && s.autoReview && result && !result.fallback) {
+        try {
+          await this._visionReview();
+        } catch (e) {
+          console.warn('[ai] 自动审阅失败', e);
+          if (e && e.aborted) return;
+          this._addMessage('error', '👁 多模态审阅失败：' + (e && e.message ? e.message : e));
+        }
+      }
     } catch (e) {
       this._renderError(e);
     } finally {
@@ -582,7 +614,87 @@ export default class AIChatPanel {
     this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
   }
 
-  async _runWithTools() {
+  /* ---------------- 多模态审阅（MiniMax M3 看图优化闭环） ---------------- */
+  _manualReview() {
+    if (this._busy) { this.CAD.notify('AI 正在工作中，请先等待或点「停止」', 'error'); return; }
+    this._busy = true;
+    this._ctrl = new AbortController();
+    this._updateStatus();
+    this._setSendButton(true);
+    (async () => {
+      try {
+        await this._visionReview();
+      } catch (e) {
+        if (e && e.aborted) { this._addMessage('system', '⏹ 已停止审阅'); return; }
+        this._addMessage('error', '👁 多模态审阅失败：' + (e && e.message ? e.message : e));
+      } finally {
+        this._busy = false;
+        this._ctrl = null;
+        this._updateStatus();
+        this._setSendButton(false);
+      }
+    })();
+  }
+  /** 截图 → 多模态模型看图 → 工具修改 → 再截图…… 直到模型回复满意 */
+  async _visionReview() {
+    const s = this.settings;
+    const captureFn = this.CAD.captureForAI;
+    if (typeof captureFn !== 'function') throw new Error('当前版本不支持截图审阅');
+    let image = captureFn();
+    if (!image) throw new Error('当前图纸/模型为空，没有可审阅的内容');
+    const endpointCfg = {
+      base: s.visionBase || 'https://api.minimaxi.com',
+      model: s.visionModel || 'MiniMax-M3',
+      key: s.visionKey || s.key,
+    };
+    const roundLimit = Number(s.reviewRounds) > 0 ? Number(s.reviewRounds) : Infinity;
+    this._addMessage('system', `👁 多模态审阅中（${endpointCfg.model}，正在查看图纸…）`);
+    let rounds = 0;
+    let lastText = '';
+    let lastFixSig = null;
+    let fixRepeat = 0;
+    while (rounds < roundLimit) {
+      rounds++;
+      const idxBefore = this.messages.length;
+      this.messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: REVIEW_PROMPT },
+          { type: 'image_url', image_url: { url: image } },
+        ],
+      });
+      const r = await this._runWithTools(endpointCfg);
+      const text = (r && r.text) ? r.text : '';
+      lastText = text;
+      if (text) this._addMessage('assistant', text);
+      // 本轮执行的修改（本轮新增的助手工具调用签名）
+      const fixSig = this.messages.slice(idxBefore)
+        .filter((m) => m.role === 'assistant' && m.tool_calls?.length)
+        .map((m) => m.tool_calls.map((tc) => `${tc.function?.name}(${tc.function?.arguments || ''})`).join('|'))
+        .join('||');
+      if (!fixSig) break; // 模型未修改 = 认为满意
+      // 跨轮重复修改防护：连续多轮做完全相同的修改 → 停止（防无限循环，非上限）
+      if (fixSig === lastFixSig) {
+        fixRepeat++;
+        if (fixRepeat >= 2) {
+          this._addMessage('system', '👁 模型连续多轮做了相同修改（可能陷入循环），已停止审阅。');
+          break;
+        }
+      } else {
+        lastFixSig = fixSig;
+        fixRepeat = 0;
+      }
+      image = captureFn();
+      if (!image) break;
+      this._addMessage('system', '👁 已按审阅意见修改，再次检查…');
+    }
+    if (rounds >= roundLimit && Number(s.reviewRounds) > 0) {
+      this._addMessage('system', `👁 审阅轮数已达设置上限（${s.reviewRounds}），已停止。`);
+    }
+    return lastText;
+  }
+
+  async _runWithTools(endpointCfg = {}) {
     const s = this.settings;
     const roundLimit = Number(s.toolRoundLimit) > 0 ? Number(s.toolRoundLimit) : Infinity;
     const callLimit = Number(s.toolCallLimit) > 0 ? Number(s.toolCallLimit) : Infinity;
@@ -591,7 +703,7 @@ export default class AIChatPanel {
     let repeatCount = 0;
     for (let round = 0; round < roundLimit; round++) {
       const body = {
-        model: s.model,
+        model: endpointCfg.model || s.model,
         messages: this.messages,
         temperature: s.temperature,
         max_tokens: s.maxTokens,
@@ -599,9 +711,12 @@ export default class AIChatPanel {
         tools: this._allTools(),
         tool_choice: 'auto',
       };
+      if ((endpointCfg.model || s.model).toLowerCase().includes('m3') && s.deepThink) {
+        body.thinking = { type: 'adaptive' };
+      }
       let data;
       try {
-        data = await this._post(body, this._ctrl.signal);
+        data = await this._post(body, this._ctrl.signal, endpointCfg);
       } catch (e) {
         if (e.aborted || e.network) throw e;
         if (e.status === 400 || e.status === 404) return { fallback: true };
@@ -712,9 +827,13 @@ export default class AIChatPanel {
   }
 
   /* ---------------- 网络请求 ---------------- */
-  async _post(body, signal) {
+  async _post(body, signal, endpointCfg = {}) {
     const s = this.settings;
-    let base = (s.base || '').trim() || 'https://api.deepseek.com';
+    const cfg = {
+      base: endpointCfg.base !== undefined ? endpointCfg.base : s.base,
+      key: endpointCfg.key !== undefined ? endpointCfg.key : s.key,
+    };
+    let base = (cfg.base || '').trim() || 'https://api.deepseek.com';
     if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
     base = base.replace(/\/+$/, '');
     const url = base + '/chat/completions';
@@ -722,7 +841,7 @@ export default class AIChatPanel {
     try {
       resp = await fetch(url, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${s.key || ''}`, 'Content-Type': 'application/json' },
+        headers: { Authorization: `Bearer ${cfg.key || ''}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
         signal,
       });
@@ -993,6 +1112,31 @@ export default class AIChatPanel {
   async _attachFile(file) {
     const name = file.name || '未命名';
     const ext = (name.split('.').pop() || '').toLowerCase();
+    // 图片参考：直接以多模态内容注入对话（原生多模态能力）
+    if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) {
+      try {
+        const dataURL = await new Promise((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(String(r.result));
+          r.onerror = () => reject(new Error('读取图片失败'));
+          r.readAsDataURL(file);
+        });
+        if (dataURL.length > 8 * 1024 * 1024) throw new Error('图片过大（>8MB）');
+        this.messages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: `[图片参考] ${name}\n请结合这张图片进行创作（照着图片中的内容建模/绘图）。` },
+            { type: 'image_url', image_url: { url: dataURL } },
+          ],
+        });
+        this._addMessage('system', `🖼 已附加图片参考：${name}（模型将直接看懂这张图）`);
+      } catch (e) {
+        const msg = '🖼 图片参考失败: ' + (e && e.message ? e.message : e);
+        try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
+        this._addMessage('error', msg);
+      }
+      return;
+    }
     try {
       const text = await fileToText(file);
       let summary; let count = 0; let isText = false;
@@ -1147,6 +1291,55 @@ export default class AIChatPanel {
     callLimitInp.min = '0'; callLimitInp.step = '10';
     row('工具次数上限', callLimitInp);
 
+    // ---- 多模态审阅（MiniMax M3 原生多模态） ----
+    const sep = document.createElement('div');
+    sep.style.cssText = 'margin:10px 0 6px;border-top:1px solid var(--border);padding-top:8px;color:var(--text-dim);font-size:12px;';
+    sep.textContent = '👁 多模态审阅（创作完成后自动看图检查并优化）';
+    box.appendChild(sep);
+
+    const vBaseInp = mkInput('text', String(s.visionBase ?? 'https://api.minimaxi.com'), 'https://api.minimaxi.com');
+    row('视觉 API 地址', vBaseInp);
+    const vModelInp = mkInput('text', String(s.visionModel ?? 'MiniMax-M3'), 'MiniMax-M3');
+    row('视觉模型', vModelInp);
+    const vKeyInp = mkInput('password', String(s.visionKey ?? ''), '默认沿用上方 API Key');
+    row('视觉 Key(可选)', vKeyInp);
+
+    const autoRow = document.createElement('div');
+    autoRow.className = 'form-row';
+    const autoLabel = document.createElement('label');
+    autoLabel.textContent = '自动审阅';
+    const autoChk = document.createElement('input');
+    autoChk.type = 'checkbox';
+    autoChk.checked = !!s.autoReview;
+    autoChk.style.cssText = 'flex:none;width:16px;height:16px;accent-color:var(--accent);';
+    const autoText = document.createElement('span');
+    autoText.textContent = '每次创作后自动让多模态模型看图优化（也可点 👁 审阅 手动触发）';
+    autoText.style.cssText = 'color:var(--text-dim);font-size:12px;';
+    autoRow.appendChild(autoLabel);
+    autoRow.appendChild(autoChk);
+    autoRow.appendChild(autoText);
+    box.appendChild(autoRow);
+
+    const rRoundInp = mkInput('number', String(s.reviewRounds ?? 0), '0 = 不限制');
+    rRoundInp.min = '0'; rRoundInp.step = '1';
+    row('审阅轮数上限', rRoundInp);
+
+    const thinkRow = document.createElement('div');
+    thinkRow.className = 'form-row';
+    const thinkLabel = document.createElement('label');
+    thinkLabel.textContent = '深度思考';
+    const thinkChk = document.createElement('input');
+    thinkChk.type = 'checkbox';
+    thinkChk.checked = !!s.deepThink;
+    thinkChk.style.cssText = 'flex:none;width:16px;height:16px;accent-color:var(--accent);';
+    const thinkText = document.createElement('span');
+    thinkText.textContent = 'MiniMax M3 thinking 模式（审阅质量更高，响应稍慢）';
+    thinkText.style.cssText = 'color:var(--text-dim);font-size:12px;';
+    thinkRow.appendChild(thinkLabel);
+    thinkRow.appendChild(thinkChk);
+    thinkRow.appendChild(thinkText);
+    box.appendChild(thinkRow);
+
     const toolsRow = document.createElement('div');
     toolsRow.className = 'form-row';
     const toolsLabel = document.createElement('label');
@@ -1185,6 +1378,7 @@ export default class AIChatPanel {
             const maxTokens = parseInt(maxInp.value, 10);
             const roundLimit = parseInt(roundLimitInp.value, 10);
             const callLimit = parseInt(callLimitInp.value, 10);
+            const reviewRounds = parseInt(rRoundInp.value, 10);
             this.settings = {
               base,
               model,
@@ -1194,6 +1388,12 @@ export default class AIChatPanel {
               useTools: toolsChk.checked,
               toolRoundLimit: Number.isFinite(roundLimit) && roundLimit >= 0 ? roundLimit : 0,
               toolCallLimit: Number.isFinite(callLimit) && callLimit >= 0 ? callLimit : 0,
+              visionBase: vBaseInp.value.trim() || DEFAULT_SETTINGS.visionBase,
+              visionModel: vModelInp.value.trim() || DEFAULT_SETTINGS.visionModel,
+              visionKey: vKeyInp.value.trim(),
+              autoReview: autoChk.checked,
+              reviewRounds: Number.isFinite(reviewRounds) && reviewRounds >= 0 ? reviewRounds : 0,
+              deepThink: thinkChk.checked,
             };
             try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch (e) { /* ignore */ }
             this._updateStatus();

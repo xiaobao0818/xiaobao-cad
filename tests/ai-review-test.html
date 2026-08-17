@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head><meta charset="UTF-8"><title>小宝CAD AI 水泵实测</title>
+<head><meta charset="UTF-8"><title>小宝CAD AI 多模态审阅实测</title>
 <script type="importmap">
   {
     "imports": {
@@ -92,6 +92,8 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 localStorage.setItem('xbcad:ai-settings', JSON.stringify({
   base: 'http://localhost:8898', model: 'mock-water-pump', key: 'test-key-123',
   temperature: 0.2, maxTokens: 4000, useTools: true, autoReview: false,
+  visionBase: 'http://localhost:8898', visionModel: 'MiniMax-M3', visionKey: '',
+  reviewRounds: 0, deepThink: false,
 }));
 (async () => {
   for (let i = 0; i < 400 && !(window.CAD && window.CAD.scene); i++) await wait(50);
@@ -104,45 +106,59 @@ localStorage.setItem('xbcad:ai-settings', JSON.stringify({
   try { await CAD.app3d?.readyPromise; } catch (e) { log('kernel fail: ' + (e?.message || e)); }
   log('kernel: ' + !!CAD.app3d?.ready);
   const panel = window.__aiPanel;
-  log('aiPanel: ' + !!panel);
-  if (!panel || !CAD.app3d?.ready) { log('AI_PUMP_FAIL'); out(); return; }
-  const prompt = '请绘制一个水泵的三维模型：底座、泵壳、进出水法兰。';
-  log('提问: ' + prompt);
-  panel.ask(prompt);
-  let done = false;
+  if (!panel || !CAD.app3d?.ready) { log('AI_REVIEW_FAIL'); out(); return; }
+  // 先验证截图能力
+  const img = CAD.captureForAI();
+  log('截图能力: ' + (img && img.startsWith('data:image/png') ? 'OK (' + img.length + ' 字符)' : 'FAIL'));
+  // 1) 正常创作（水泵剧本，无自动审阅）
+  panel.ask('请绘制一个水泵的三维模型：底座、泵壳、进出水法兰。');
   for (let i = 0; i < 600; i++) {
     await wait(200);
-    const final = panel.messages.some((m) => m.role === 'assistant' && /水泵三维模型已完成/.test(m.content || ''));
-    if (final && !panel._busy) { done = true; break; }
+    const f = panel.messages.some((m) => m.role === 'assistant' && /水泵三维模型已完成/.test(m.content || ''));
+    if (f && !panel._busy) break;
   }
-  log('对话完成: ' + done);
-  const systemNotes = [...document.querySelectorAll('.ai-msg.system .ai-bubble')].map((el) => el.textContent);
-  log('工具执行轨迹: ' + systemNotes.length + ' 轮');
-  const bubbles = [...document.querySelectorAll('.ai-msg.assistant .ai-bubble')].map((el) => el.textContent);
-  const finalMsg = bubbles[bubbles.length - 1] || '';
-  log('助手最终回复: ' + finalMsg.slice(0, 80).replace(/\n/g, ' '));
   const m = CAD.app3d.model;
-  log('模型特征数: ' + m.count() + ' (期望 6)');
-  log('可见实体数: ' + m.visibleCount() + ' (期望 1)');
-  log('视口网格数: ' + CAD.app3d.vp._meshes.size + ' (期望 1)');
-  const ext = m.extents();
-  if (ext) log('模型包围盒: ' + Math.round(ext.minX) + '~' + Math.round(ext.maxX) + ', ' + Math.round(ext.minY) + '~' + Math.round(ext.maxY) + ', ' + Math.round(ext.minZ) + '~' + Math.round(ext.maxZ));
-  const visBefore = m.visibleCount();
-  const meshBefore = CAD.app3d.vp._meshes.size;
-  const pumpOk = done && visBefore === 1 && meshBefore === 1 && /水泵三维模型已完成/.test(finalMsg);
-  log('水泵模型: ' + (pumpOk ? 'OK' : 'FAIL'));
-  // 布尔失败防御：在很远的地方建一个不相交的球，与现有实体做交集（应报错并保留原模型）
-  CAD.ai3d.create_primitive_3d({ kind: 'sphere', x: 500, y: 500, z: 500, r: 10 });
-  const far = m.bodies[m.bodies.length - 1].id;
-  const target = m.bodies.find((b) => !m._booleanFailed.has(b.id)).id;
-  let boolErr = '';
-  try { CAD.ai3d.boolean_3d({ op: 'common', a: target, b: [far] }); } catch (e) { boolErr = String(e.message || e); }
-  log('布尔防御: ' + (boolErr.includes('失败') ? 'OK' : 'FAIL') + ' → ' + boolErr.slice(0, 40));
-  m.removeBody(far); // 清理防御测试用的球
-  CAD.app3d.refresh();
-  log('清理后可见实体数: ' + m.visibleCount() + ' (期望 ' + visBefore + ')');
-  const ok = pumpOk && boolErr.includes('失败') && m.visibleCount() === visBefore;
-  log(ok ? 'AI_PUMP_PASS' : 'AI_PUMP_FAIL');
+  log('创作完成: 特征=' + m.count() + ' 可见=' + m.visibleCount());
+  // 2) 手动触发多模态审阅
+  panel._manualReview();
+  let reviewed = false;
+  for (let i = 0; i < 600; i++) {
+    await wait(200);
+    const ok = panel.messages.some((msg) => msg.role === 'assistant' && /已满意/.test(msg.content || ''));
+    if (ok && !panel._busy) { reviewed = true; break; }
+  }
+  log('审阅完成: ' + reviewed);
+  // 3) 验证审阅过程：消息里带图片、模型被修改
+  const hasImage = panel.messages.some((msg) => msg.role === 'user' && Array.isArray(msg.content) &&
+    msg.content.some((c) => c.type === 'image_url' && (c.image_url?.url || '').startsWith('data:image/png')));
+  log('审阅消息带截图: ' + (hasImage ? 'OK' : 'FAIL'));
+  const hasMark = panel.messages.some((msg) => msg.role === 'user' && Array.isArray(msg.content) &&
+    msg.content.some((c) => c.type === 'text' && /多模态审阅/.test(c.text || '')));
+  log('审阅提示词: ' + (hasMark ? 'OK' : 'FAIL'));
+  log('审阅后特征数: ' + m.count() + ' (期望 7：原 6 + 审阅加的垫圈)');
+  const bubbles = [...document.querySelectorAll('.ai-msg.assistant .ai-bubble')].map((el) => el.textContent);
+  const lastMsg = bubbles[bubbles.length - 1] || '';
+  log('审阅结论: ' + lastMsg.slice(0, 50).replace(/\n/g, ' '));
+  // 4) 自动审阅路径：再问一次带修改的任务，应自动触发审阅
+  const reviewBefore = panel.messages.filter((msg) => msg.role === 'user' && Array.isArray(msg.content) &&
+    msg.content.some((c) => c.type === 'text' && /多模态审阅/.test(c.text || ''))).length;
+  log('诊断: 审阅消息基线=' + reviewBefore);
+  panel.settings.autoReview = true; // 动态启用自动审阅
+  panel.ask('再给模型加一个小零件。');
+  let autoReviewed = false;
+  let lastN = reviewBefore;
+  for (let i = 0; i < 800; i++) {
+    await wait(200);
+    const n = panel.messages.filter((msg) => msg.role === 'user' && Array.isArray(msg.content) &&
+      msg.content.some((c) => c.type === 'text' && /多模态审阅/.test(c.text || ''))).length;
+    if (n !== lastN) { log('诊断: 审阅消息数 ' + lastN + ' → ' + n + ' (busy=' + panel._busy + ')'); lastN = n; }
+    if (n > reviewBefore && !panel._busy) { autoReviewed = true; break; }
+  }
+  const addedPart = panel.messages.some((m) => m.role === 'assistant' && /已添加小零件/.test(m.content || ''));
+  log('诊断: 小零件已添加=' + addedPart + ' busy=' + panel._busy);
+  log('自动审阅触发: ' + (autoReviewed ? 'OK' : 'FAIL'));
+  const ok = reviewed && hasImage && hasMark && m.count() >= 8 && lastMsg.includes('已满意') && autoReviewed;
+  log(ok ? 'AI_REVIEW_PASS' : 'AI_REVIEW_FAIL');
   out();
 })();
 

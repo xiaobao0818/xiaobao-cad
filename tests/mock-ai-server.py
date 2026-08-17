@@ -26,6 +26,73 @@ def extract_ids(messages):
             ids.extend(re.findall(r"id=([A-Za-z0-9]+)", m["content"]))
     return ids
 
+def review_messages(messages):
+    out = []
+    for m in messages:
+        if m.get("role") != "user" or not isinstance(m.get("content"), list):
+            continue
+        for c in m["content"]:
+            if isinstance(c, dict) and "text" in c and "[多模态审阅]" in str(c["text"]):
+                out.append(m)
+                break
+    return out
+
+def last_user_is_review(messages):
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            if isinstance(m.get("content"), list):
+                return any(isinstance(c, dict) and "text" in c and "[多模态审阅]" in str(c["text"]) for c in m["content"])
+            return False
+    return False
+
+def last_plain_ask(messages):
+    for m in reversed(messages):
+        if m.get("role") != "user":
+            continue
+        c = m.get("content")
+        if isinstance(c, str):
+            if c.startswith("[系统提示]") or c.startswith("[参考文件]"):
+                continue
+            return c
+        if isinstance(c, list):
+            texts = [x.get("text", "") for x in c if isinstance(x, dict) and "text" in x]
+            if texts and not any("[多模态审阅]" in t for t in texts):
+                return texts[0]
+    return ""
+
+def history_has(messages, key):
+    for m in messages:
+        if key in str(m.get("content", "")):
+            return True
+    return False
+
+def pump_stage(messages):
+    n = 0
+    for m in messages:
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            if any(not tc["id"].startswith("r") for tc in m["tool_calls"]):
+                n += 1
+    return n + 1
+
+def plain_ask_count(messages):
+    n = 0
+    for m in messages:
+        if m.get("role") != "user":
+            continue
+        c = m.get("content")
+        if isinstance(c, str):
+            if "[多模态审阅]" not in c and "[参考文件]" not in c and "[系统提示]" not in c and "[执行结果反馈]" not in c:
+                n += 1
+        elif isinstance(c, list):
+            texts = [x.get("text", "") for x in c if isinstance(x, dict) and "text" in x]
+            if texts and not any("[多模态审阅]" in t for t in texts):
+                n += 1
+    return n
+
+def extra_rounds(messages):
+    return sum(1 for m in messages if m.get("role") == "assistant" and m.get("tool_calls")
+               and any(tc["id"] == "c10" for tc in m["tool_calls"]))
+
 def build_stage(stage, messages, has_tools):
     if not has_tools:
         msg = {"role": "assistant",
@@ -33,15 +100,37 @@ def build_stage(stage, messages, has_tools):
                           "纸中。你可以回复「继续」让我完成剩余部分。",
                "tool_calls": None}
         return resp(msg, "stop")
-    # 死循环剧本：用户消息含「死循环」时，每轮发出完全相同的工具调用（验证防死循环）
-    user_text = "".join(m.get("content", "") for m in messages if m.get("role") == "user")
-    if "死循环" in user_text:
+    # 多模态审阅剧本：第一轮发现问题并修改，第二轮表示满意
+    if last_user_is_review(messages):
+        if not history_has(messages, "垫圈"):
+            msg = {"role": "assistant",
+                   "content": "截图里发现泵壳与底座衔接处不够平滑，我加一个过渡垫圈。",
+                   "tool_calls": [tool_call("r1", "create_primitive_3d",
+                                {"kind": "cylinder", "x": 0, "y": 0, "z": 24, "r": 45, "h": 3, "color": "#f2c76e"})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant",
+               "content": "已满意 ✅ 重新检查截图：模型比例协调、零件位置正确，无需进一步修改。",
+               "tool_calls": None}
+        return resp(msg, "stop")
+    # 死循环剧本（仅看最后一次普通提问）
+    if "死循环" in last_plain_ask(messages):
         msg = {"role": "assistant", "content": "继续检查模型状态。",
                "tool_calls": [tool_call("c-loop", "list_3d", {})]}
         return resp(msg, "tool_calls")
     ids = extract_ids(messages)
-    # 剧本（模拟一个会分步建模的 CAD 助手）
-    if stage == 1:
+    ps = pump_stage(messages)
+    asks = plain_ask_count(messages)
+    # 第二个普通提问：加一个小零件（一轮工具后收尾）
+    if asks >= 2:
+        if extra_rounds(messages) == 0:
+            msg = {"role": "assistant", "content": "好的，给模型加一个小零件。",
+                   "tool_calls": [tool_call("c10", "create_primitive_3d",
+                                {"kind": "cylinder", "x": 60, "y": 40, "z": 0, "r": 6, "h": 20, "color": "#b9a3f0"})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 已添加小零件（Φ12×20 的定位柱）。", "tool_calls": None}
+        return resp(msg, "stop")
+    # 水泵剧本（1~4 阶段，ps>=5 收尾）
+    if ps == 1:
         msg = {
             "role": "assistant",
             "content": "我来分步建模：先建底座、泵壳和两个法兰。",
@@ -53,11 +142,10 @@ def build_stage(stage, messages, has_tools):
             ],
         }
         return resp(msg, "tool_calls")
-    if stage == 2:
+    if ps == 2:
         msg = {"role": "assistant", "content": "查询当前模型，获取实体 id。", "tool_calls": [tool_call("c5", "list_3d", {})]}
         return resp(msg, "tool_calls")
-    if stage == 3:
-        # fuse 泵壳 + 两法兰（ids: [底座, 泵壳, 进水法兰, 出水法兰]）
+    if ps == 3:
         if len(ids) < 4:
             msg = {"role": "assistant", "content": "实体尚未创建完成，重试查询。", "tool_calls": [tool_call("c6", "list_3d", {})]}
             return resp(msg, "tool_calls")
@@ -65,8 +153,7 @@ def build_stage(stage, messages, has_tools):
         msg = {"role": "assistant", "content": "把泵壳与两个法兰合并。",
                "tool_calls": [tool_call("c7", "boolean_3d", {"op": "fuse", "a": shell, "b": [in_f, out_f]})]}
         return resp(msg, "tool_calls")
-    if stage == 4:
-        # fuse 底座 + 泵体组（泵体组 id 是上一轮结果，取最后一个 id）
+    if ps == 4:
         if len(ids) < 5:
             msg = {"role": "assistant", "content": "继续查询。", "tool_calls": [tool_call("c8", "list_3d", {})]}
             return resp(msg, "tool_calls")
@@ -74,7 +161,7 @@ def build_stage(stage, messages, has_tools):
         msg = {"role": "assistant", "content": "把底座并入泵体。",
                "tool_calls": [tool_call("c9", "boolean_3d", {"op": "fuse", "a": base, "b": [group]})]}
         return resp(msg, "tool_calls")
-    # 最终总结（无工具调用）
+    # 水泵收尾
     msg = {
         "role": "assistant",
         "content": "✅ 水泵三维模型已完成！\n"

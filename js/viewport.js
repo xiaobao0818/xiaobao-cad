@@ -638,4 +638,20 @@ export class Viewport extends Emitter {
     ctx.drawImage(this.canvas, 0, 0);
     return c;
   }
+  /** 供 AI 多模态审阅：干净渲染（无光标/栅格）并返回 PNG dataURL */
+  captureForAI(whiteBg = true) {
+    const gridSave = this.gridOn;
+    const cursorSave = this.cursor.visible;
+    const previewSave = this.previewFn;
+    this.gridOn = false;
+    this.cursor.visible = false;
+    this.previewFn = null;
+    this.render();
+    const c = this.toPNG(whiteBg);
+    this.gridOn = gridSave;
+    this.cursor.visible = cursorSave;
+    this.previewFn = previewSave;
+    this.requestRender();
+    return c.toDataURL('image/png');
+  }
 }

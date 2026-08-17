@@ -91,7 +91,7 @@ const log = (x) => { results.push(x); out(); };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 localStorage.setItem('xbcad:ai-settings', JSON.stringify({
   base: 'http://localhost:8898', model: 'mock-water-pump', key: 'test-key-123',
-  temperature: 0.2, maxTokens: 4000, useTools: true,
+  temperature: 0.2, maxTokens: 4000, useTools: true, autoReview: false,
 }));
 (async () => {
   for (let i = 0; i < 400 && !(window.CAD && window.CAD.scene); i++) await wait(50);
