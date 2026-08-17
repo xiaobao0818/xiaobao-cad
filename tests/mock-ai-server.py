@@ -67,12 +67,18 @@ def history_has(messages, key):
     return False
 
 def pump_stage(messages):
+    # 只统计三维工具轮次（2D/审阅轮次不推进水泵阶段）
     n = 0
     for m in messages:
         if m.get("role") == "assistant" and m.get("tool_calls"):
-            if any(not tc["id"].startswith("r") for tc in m["tool_calls"]):
+            names = [tc["function"]["name"] for tc in m["tool_calls"]]
+            if any(nm in ("create_primitive_3d", "boolean_3d", "list_3d") for nm in names):
                 n += 1
     return n + 1
+
+def rect_rounds(messages):
+    return sum(1 for m in messages if m.get("role") == "assistant" and m.get("tool_calls")
+               and any(tc["id"] == "c2d1" for tc in m["tool_calls"]))
 
 def plain_ask_count(messages):
     n = 0
@@ -112,6 +118,15 @@ def build_stage(stage, messages, has_tools):
                "content": "已满意 ✅ 重新检查截图：模型比例协调、零件位置正确，无需进一步修改。",
                "tool_calls": None}
         return resp(msg, "stop")
+    # 2D 制图剧本（仅看最后一次普通提问）
+    if "矩形" in last_plain_ask(messages):
+        if rect_rounds(messages) == 0:
+            msg = {"role": "assistant", "content": "好的，在 2D 图纸上画一个矩形。",
+                   "tool_calls": [tool_call("c2d1", "draw_entities",
+                                {"items": [{"type": "rectangle", "x1": 0, "y1": 0, "x2": 100, "y2": 60}]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 矩形已绘制（100×60）。", "tool_calls": None}
+        return resp(msg, "stop")
     # 死循环剧本（仅看最后一次普通提问）
     if "死循环" in last_plain_ask(messages):
         msg = {"role": "assistant", "content": "继续检查模型状态。",
@@ -120,8 +135,8 @@ def build_stage(stage, messages, has_tools):
     ids = extract_ids(messages)
     ps = pump_stage(messages)
     asks = plain_ask_count(messages)
-    # 第二个普通提问：加一个小零件（一轮工具后收尾）
-    if asks >= 2:
+    # 水泵完成后的追加提问：加一个小零件（一轮工具后收尾）
+    if asks >= 2 and history_has(messages, "水泵三维模型已完成"):
         if extra_rounds(messages) == 0:
             msg = {"role": "assistant", "content": "好的，给模型加一个小零件。",
                    "tool_calls": [tool_call("c10", "create_primitive_3d",

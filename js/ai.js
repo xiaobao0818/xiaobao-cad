@@ -363,14 +363,31 @@ export default class AIChatPanel {
   /** 供其他模块（如 3D 建模）注册额外工具与系统提示 */
   registerExtraTools(tools, promptLine = '') {
     this._extraTools.push(...(Array.isArray(tools) ? tools : []));
-    if (promptLine) {
-      this._extraPrompt += promptLine + '\n';
-      if (this.messages[0]?.role === 'system') {
-        this.messages[0].content = SYSTEM_PROMPT + '\n\n[三维能力]\n' + this._extraPrompt.trim();
-      }
-    }
+    if (promptLine) this._extraPrompt += promptLine + '\n';
   }
-  _allTools() { return [...TOOLS, ...this._extraTools]; }
+  /** 当前工作区可用工具：2D 制图只发 2D 工具，3D 建模只发 3D 工具 */
+  _workspaceTools() {
+    return this.CAD.workspace === '3d' ? [...this._extraTools] : [...TOOLS];
+  }
+  _workspaceLine() {
+    if (this.CAD.workspace === '3d') {
+      if (!this._extraTools.length) {
+        return '当前工作区：3D 实体建模，但三维内核尚未就绪（请提示用户先切换到 3D 建模工作区等待内核加载完成，或稍后重试）。';
+      }
+      return '当前工作区：3D 实体建模。用户此时的要求都是三维建模任务——请只用三维工具（create_primitive_3d / boolean_3d / list_3d 等）创建和修改三维实体；绝对不要调用 2D 绘图工具。';
+    }
+    return '当前工作区：2D 制图。用户此时的要求都是二维绘图任务——请只用 2D 工具（draw_entities / modify_entities / set_layer 等）绘制和修改二维图元；绝对不要调用三维实体工具。';
+  }
+  _systemContent() {
+    const parts = [SYSTEM_PROMPT];
+    if (this._extraPrompt.trim()) parts.push('[三维能力]\n' + this._extraPrompt.trim());
+    parts.push('[当前工作区]\n' + this._workspaceLine());
+    return parts.join('\n\n');
+  }
+  _syncSystemMessage() {
+    if (this.messages[0]?.role === 'system') this.messages[0].content = this._systemContent();
+  }
+  _allTools() { return this._workspaceTools(); }
 
   /* ---------------- 设置 ---------------- */
   _loadSettings() {
@@ -702,6 +719,7 @@ export default class AIChatPanel {
     let lastSig = null;
     let repeatCount = 0;
     for (let round = 0; round < roundLimit; round++) {
+      this._syncSystemMessage();
       const body = {
         model: endpointCfg.model || s.model,
         messages: this.messages,
@@ -794,6 +812,7 @@ export default class AIChatPanel {
     this.messages = this.messages
       .filter((m) => m.role !== 'tool')
       .map((m) => (m.role === 'assistant' ? { role: m.role, content: m.content } : m));
+    this._syncSystemMessage();
 
     const body = {
       model: s.model,
@@ -821,9 +840,17 @@ export default class AIChatPanel {
   }
 
   _appendFallbackInstruction() {
+    const is3d = this.CAD.workspace === '3d';
+    const instr = is3d
+      ? '\n\n当前是 3D 建模工作区，无法用文本命令绘制 2D 图形。如果无法调用函数工具，请用如下 JSON 代码块输出三维创建指令（一次可多条）：\n' +
+        '```json\n' +
+        '{"create3d":[{"kind":"box","dx":60,"dy":40,"dz":30,"x":0,"y":0,"z":0},{"kind":"cylinder","r":10,"h":50}],"query":"list3d"}\n' +
+        '```\n' +
+        'create3d 每项支持 kind: box(dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，坐标 x,y,z；query 支持 "list3d"。'
+      : FALLBACK_INSTRUCTION;
     const last = [...this.messages].reverse().find((m) => m.role === 'user' && !String(m.content).startsWith('[参考文件]'));
-    if (last) last.content = String(last.content) + FALLBACK_INSTRUCTION;
-    else this.messages.push({ role: 'user', content: FALLBACK_INSTRUCTION.trim() });
+    if (last) last.content = String(last.content) + instr;
+    else this.messages.push({ role: 'user', content: instr.trim() });
   }
 
   /* ---------------- 网络请求 ---------------- */
@@ -887,7 +914,11 @@ export default class AIChatPanel {
     try { return JSON.parse(str); } catch (e) { return {}; }
   }
   _callTool(name, args) {
-    // 优先 2D 工具，其次 3D 工具（CAD.ai3d，由 3D 工作区注册）
+    // 工作区严格隔离：2D 区只允许 2D 工具，3D 区只允许 3D 工具
+    const allowed = new Set(this._workspaceTools().map((t) => t.function.name));
+    if (!allowed.has(name)) {
+      throw new Error(`当前工作区（${this.CAD.workspace === '3d' ? '3D 建模' : '2D 制图'}）不支持工具: ${name}，请改用本工作区的工具`);
+    }
     const fn = this._tools[name] || (this.CAD.ai3d && this.CAD.ai3d[name]);
     if (!fn) throw new Error('未知工具: ' + name);
     return fn(args || {});
@@ -1316,9 +1347,24 @@ export default class AIChatPanel {
       try { results.push(this._toolDrawEntities({ items: obj.draw })); }
       catch (e) { results.push('draw 执行失败: ' + (e && e.message ? e.message : e)); }
     }
+    if (obj && Array.isArray(obj.create3d)) {
+      try {
+        const a3d = this.CAD.ai3d;
+        if (!a3d) throw new Error('三维内核未就绪');
+        const done = [];
+        for (const it of obj.create3d) done.push(a3d.create_primitive_3d(it));
+        results.push(done.join(' | '));
+      } catch (e) { results.push('create3d 执行失败: ' + (e && e.message ? e.message : e)); }
+    }
     if (obj && obj.query) {
-      try { results.push(this._toolQueryDrawing({ what: obj.query })); }
-      catch (e) { results.push('query 执行失败: ' + (e && e.message ? e.message : e)); }
+      const q = String(obj.query);
+      if (q === 'list3d' && this.CAD.ai3d) {
+        try { results.push(this.CAD.ai3d.list_3d({})); }
+        catch (e) { results.push('list3d 执行失败: ' + (e && e.message ? e.message : e)); }
+      } else {
+        try { results.push(this._toolQueryDrawing({ what: q })); }
+        catch (e) { results.push('query 执行失败: ' + (e && e.message ? e.message : e)); }
+      }
     }
     return results;
   }
