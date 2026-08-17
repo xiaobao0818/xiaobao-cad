@@ -70,4 +70,30 @@ console.log('== 工作区工具隔离 ==');
   ok('工作区切换：工具集动态跟随');
 }
 
+console.log('== MiniMax 设置迁移 ==');
+{
+  globalThis.localStorage = {
+    _d: {},
+    getItem(k) { return this._d[k] ?? null; },
+    setItem(k, v) { this._d[k] = String(v); },
+    removeItem(k) { delete this._d[k]; },
+  };
+  const panel = Object.create(AIChatPanel.prototype);
+  // 旧 DeepSeek 默认 + 视觉 Key → 迁移并提升 Key
+  localStorage._d['xbcad:ai-settings'] = JSON.stringify({ base: 'https://api.deepseek.com', model: 'deepseek-chat', key: 'sk-old', visionKey: 'mm-key-123' });
+  const s1 = panel._loadSettings();
+  assert.equal(s1.base, 'https://api.minimaxi.com');
+  assert.equal(s1.model, 'MiniMax-M3');
+  assert.equal(s1.key, 'mm-key-123');
+  assert.equal(s1.visionKey, '');
+  assert.equal(s1.settingsVersion, 2);
+  ok('旧 DeepSeek 配置自动迁移到 MiniMax，视觉 Key 提升为主 Key');
+  // 自定义接口不被迁移
+  localStorage._d['xbcad:ai-settings'] = JSON.stringify({ base: 'http://localhost:8898', model: 'mock', key: 'k' });
+  const s2 = panel._loadSettings();
+  assert.equal(s2.base, 'http://localhost:8898');
+  assert.equal(s2.model, 'mock');
+  ok('自定义接口配置不受迁移影响');
+}
+
 console.log(`\n全部通过：${n} 项`);

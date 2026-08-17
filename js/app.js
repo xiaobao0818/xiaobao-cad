@@ -953,7 +953,7 @@ class App {
         · 标注：线性/对齐/半径/直径/角度<br>
         · 图层、块、对象捕捉、正交、栅格、撤销重做<br>
         · 文件：DXF 读写、JSON 原生格式、SVG 导入导出、PNG 导出<br>
-        · <b>🤖 AI 助手</b>：接入大模型（DeepSeek 等 OpenAI 兼容接口），对话式 CAD 创作</p>
+        · <b>🤖 AI 助手</b>：接入 MiniMax M3 大模型（原生多模态），对话式 CAD 创作与看图审阅</p>
         <p style="color:var(--text-dim)">DWG 为专有格式，请先用 ODA/LibreDWG 转换为 DXF。</p>
       </div>`,
     });

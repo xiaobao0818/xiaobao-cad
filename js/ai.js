@@ -1,5 +1,5 @@
 /* ============================================================
- * 小宝CAD AI 助手 —— 对话式 CAD 创作（DeepSeek / OpenAI 兼容接口）
+ * 小宝CAD AI 助手 —— 对话式 CAD 创作（MiniMax M3 原生多模态，OpenAI 兼容接口）
  * ============================================================ */
 import { escapeHtml, D2R, dist, translationM, rotationM, scaleM, mirrorM } from './util.js';
 import { make } from './entities.js';
@@ -8,9 +8,10 @@ import { fileToText, buildDataSummary, buildSceneSummary, svgToEntities } from '
 
 /* ---------------- 常量 ---------------- */
 const SETTINGS_KEY = 'xbcad:ai-settings';
+const SETTINGS_VERSION = 2;
 const DEFAULT_SETTINGS = {
-  base: 'https://api.deepseek.com',
-  model: 'deepseek-chat',
+  base: 'https://api.minimaxi.com',
+  model: 'MiniMax-M3',
   key: '',
   temperature: 0.2,
   maxTokens: 4000,
@@ -393,7 +394,25 @@ export default class AIChatPanel {
   _loadSettings() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
-      if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      if (!raw) return { ...DEFAULT_SETTINGS };
+      const saved = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      // 旧版本迁移：项目已全面切换 MiniMax M3
+      if (saved.settingsVersion !== SETTINGS_VERSION) {
+        const wasDeepSeekDefault = (saved.base === 'https://api.deepseek.com' && saved.model === 'deepseek-chat');
+        if (wasDeepSeekDefault) {
+          saved.base = 'https://api.minimaxi.com';
+          saved.model = 'MiniMax-M3';
+          // 已在视觉字段填过 MiniMax Key → 提升为主 Key
+          if (saved.visionKey) { saved.key = saved.visionKey; }
+          else saved.key = ''; // 平台已切换，旧 Key 不通用
+          saved.visionKey = '';
+        }
+        saved.visionBase = saved.visionBase || 'https://api.minimaxi.com';
+        saved.visionModel = saved.visionModel || 'MiniMax-M3';
+        saved.settingsVersion = SETTINGS_VERSION;
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(saved)); } catch (e) { /* ignore */ }
+      }
+      return saved;
     } catch (e) { /* ignore */ }
     return { ...DEFAULT_SETTINGS };
   }
@@ -481,7 +500,7 @@ export default class AIChatPanel {
 
   _welcome() {
     return '你好！我是小宝CAD 的 AI 助手 👋\n\n' +
-      '配置好 API Key 后（点击右上角 **⚙ 设置**），就能用自然语言让我帮你画图，例如：\n\n' +
+      '配置好 MiniMax 的 API Key 后（点击右上角 **⚙ 设置**，platform.minimaxi.com 申请），就能用自然语言让我帮你画图，例如：\n\n' +
       '- 「画一个 100×60 的矩形，四角各一个半径 5 的圆」\n' +
       '- 「把当前选中的图形向右移动 50mm」\n' +
       '- 「查询图纸里有哪些实体」\n\n' +
@@ -630,7 +649,7 @@ export default class AIChatPanel {
         '· API 地址错误或服务不可达（检查设置里的地址与域名拼写）\n' +
         '· 该 API 不允许浏览器跨域直连（CORS）\n' +
         '· 网络代理/防火墙拦截\n' +
-        '请打开浏览器控制台查看具体错误，或换一个支持 CORS 的接口（DeepSeek / MiniMax 均支持浏览器直连）。');
+        '请打开浏览器控制台查看具体错误，或换一个支持 CORS 的接口（MiniMax 支持浏览器直连）。');
       return;
     }
     if (e && (e.status === 401 || e.status === 403)) { this._addMessage('error', '🔑 API Key 无效，请在设置中检查并重新填写'); return; }
@@ -874,7 +893,7 @@ export default class AIChatPanel {
       base: endpointCfg.base !== undefined ? endpointCfg.base : s.base,
       key: endpointCfg.key !== undefined ? endpointCfg.key : s.key,
     };
-    let base = (cfg.base || '').trim() || 'https://api.deepseek.com';
+    let base = (cfg.base || '').trim() || 'https://api.minimaxi.com';
     if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
     base = base.replace(/\/+$/, '');
     // 智能路径：已含完整端点 → 直接用；以 /v1 结尾 → 补 /chat/completions；
@@ -1424,11 +1443,11 @@ export default class AIChatPanel {
       return inp;
     };
 
-    const baseInp = mkInput('text', s.base, 'https://api.deepseek.com');
-    row('API 地址', baseInp);
-    const modelInp = mkInput('text', s.model, 'deepseek-chat');
+    const baseInp = mkInput('text', s.base, 'https://api.minimaxi.com');
+    row('API 地址(主模型)', baseInp);
+    const modelInp = mkInput('text', s.model, 'MiniMax-M3');
     row('模型', modelInp);
-    const keyInp = mkInput('password', s.key, 'DeepSeek 平台 platform.deepseek.com 申请');
+    const keyInp = mkInput('password', s.key, 'MiniMax 平台 platform.minimaxi.com 申请');
     row('API Key', keyInp);
 
     const tempInp = mkInput('number', String(s.temperature));
@@ -1456,7 +1475,7 @@ export default class AIChatPanel {
     row('视觉 API 地址', vBaseInp);
     const vModelInp = mkInput('text', String(s.visionModel ?? 'MiniMax-M3'), 'MiniMax-M3');
     row('视觉模型', vModelInp);
-    const vKeyInp = mkInput('password', String(s.visionKey ?? ''), '默认沿用上方 API Key');
+    const vKeyInp = mkInput('password', String(s.visionKey ?? ''), '留空 = 沿用主模型 Key');
     row('视觉 Key(可选)', vKeyInp);
 
     const autoRow = document.createElement('div');
@@ -1549,6 +1568,7 @@ export default class AIChatPanel {
               autoReview: autoChk.checked,
               reviewRounds: Number.isFinite(reviewRounds) && reviewRounds >= 0 ? reviewRounds : 0,
               deepThink: thinkChk.checked,
+              settingsVersion: SETTINGS_VERSION,
             };
             try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch (e) { /* ignore */ }
             this._updateStatus();

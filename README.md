@@ -25,21 +25,23 @@ python3 -m http.server 8899
 ## 🤖 配置 AI 助手
 
 1. 点击右侧「🤖 AI 助手」标签 → 右上角 **⚙ 设置**；
-2. 填入大模型接口（默认 **DeepSeek**，兼容所有 OpenAI 风格接口，如 Qwen、GLM、Kimi、OpenAI 等）：
-   - **API 地址**：`https://api.deepseek.com`（默认）
-   - **模型**：`deepseek-chat`（默认）
-   - **API Key**：在 [platform.deepseek.com](https://platform.deepseek.com) 申请
+2. 项目**统一使用 MiniMax M3**（文本对话、工具调用、多模态看图审阅全部由它完成，只需一个 Key）：
+   - **API 地址**：`https://api.minimaxi.com`（默认，自动补全 /v1 路径）
+   - **模型**：`MiniMax-M3`（默认）
+   - **API Key**：在 [platform.minimaxi.com](https://platform.minimaxi.com) 申请
+   - 旧版 DeepSeek 默认配置会自动迁移（视觉 Key 会自动提升为主 Key）
 3. Key 仅保存在本浏览器 localStorage，不会上传到任何第三方。
+4. 也可在设置里换成任意 OpenAI 兼容接口（地址/模型/Key 均可改），但多模态审阅建议保持 MiniMax。
 
 ### 👁 多模态审阅（MiniMax M3 原生多模态）
 
 小宝CAD 引入 [MiniMax M3](https://platform.minimaxi.com/docs/api-reference/text-chat-openai)（1M 上下文、原生多模态、支持函数调用）作为**图纸审阅员**：
 
-- **自动审阅**（默认开启）：每次 AI 创作完成后，自动把当前图纸/模型的**实时渲染截图**发给 MiniMax M3，让它"看一遍"——发现问题就**直接调用工具修改**，改完再截图再检查，**循环优化直到模型回复「已满意」**
+- **自动审阅**（默认开启）：每次 AI 创作完成后，自动把当前图纸/模型的**实时渲染截图**发给 MiniMax M3（同一个模型，无需额外配置），让它"看一遍"——发现问题就**直接调用工具修改**，改完再截图再检查，**循环优化直到模型回复「已满意」**
 - **手动审阅**：聊天框头部「👁 审阅」按钮随时触发
 - **图片参考**：📎 附加 PNG/JPG 草图或参考图，模型直接"看懂"图片照着建模
 - **DWG 参考**：📎 支持附加 DWG 文件——自动识别版本并提取其中的文字/图层/块名等文本信息供 AI 参考；完整几何需转 DXF 后附加（浏览器无法解析专有二进制）
-- 设置里可配置视觉模型（默认 `MiniMax-M3` @ `https://api.minimaxi.com`，视觉 Key 默认沿用主 Key）、自动审阅开关、审阅轮数上限（0=不限制）、深度思考模式
+- 设置里可配置自动审阅开关、审阅轮数上限（0=不限制）、深度思考模式（视觉模型默认与主模型相同，可单独覆盖）
 - 安全性：审阅循环无硬性上限，但模型**连续多轮做完全相同修改**时自动停下防死循环；「停止」按钮随时手动打断
 
 ### 对话示例
