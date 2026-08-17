@@ -624,9 +624,17 @@ export default class AIChatPanel {
 
   _renderError(e) {
     if (e && e.aborted) { this._addMessage('system', '⏹ 已停止生成'); return; }
-    if (e && e.network) { this._addMessage('error', '🌐 网络请求失败，请检查 API 地址与网络连接'); return; }
+    if (e && e.network) {
+      this._addMessage('error',
+        '🌐 网络请求失败（Failed to fetch）。可能原因：\n' +
+        '· API 地址错误或服务不可达（检查设置里的地址与域名拼写）\n' +
+        '· 该 API 不允许浏览器跨域直连（CORS）\n' +
+        '· 网络代理/防火墙拦截\n' +
+        '请打开浏览器控制台查看具体错误，或换一个支持 CORS 的接口（DeepSeek / MiniMax 均支持浏览器直连）。');
+      return;
+    }
     if (e && (e.status === 401 || e.status === 403)) { this._addMessage('error', '🔑 API Key 无效，请在设置中检查并重新填写'); return; }
-    if (e && e.status === 402) { this._addMessage('error', '💰 余额不足，请前往 DeepSeek 平台充值'); return; }
+    if (e && e.status === 402) { this._addMessage('error', '💰 余额不足，请前往对应平台充值'); return; }
     if (e && e.status === 429) { this._addMessage('error', '⏳ 请求过于频繁（429），请稍后再试'); return; }
     this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
   }
@@ -643,7 +651,13 @@ export default class AIChatPanel {
         await this._visionReview();
       } catch (e) {
         if (e && e.aborted) { this._addMessage('system', '⏹ 已停止审阅'); return; }
-        this._addMessage('error', '👁 多模态审阅失败：' + (e && e.message ? e.message : e));
+        if (e && e.network) {
+          this._addMessage('error',
+            '👁 多模态审阅失败：网络请求不通（Failed to fetch）。\n' +
+            '请检查设置中的「视觉 API 地址」（MiniMax 应为 https://api.minimaxi.com，会自动补全 /v1 路径）、视觉 Key 是否正确，以及网络/防火墙是否放行。');
+        } else {
+          this._addMessage('error', '👁 多模态审阅失败：' + (e && e.message ? e.message : e));
+        }
       } finally {
         this._busy = false;
         this._ctrl = null;
@@ -863,18 +877,37 @@ export default class AIChatPanel {
     let base = (cfg.base || '').trim() || 'https://api.deepseek.com';
     if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
     base = base.replace(/\/+$/, '');
-    const url = base + '/chat/completions';
+    // 智能路径：已含完整端点 → 直接用；以 /v1 结尾 → 补 /chat/completions；
+    // 否则优先 /v1/chat/completions（MiniMax 等），404 时回退 /chat/completions（DeepSeek 等）
+    let candidates;
+    if (/\/chat\/completions$/i.test(base)) candidates = [base];
+    else if (/\/v1$/i.test(base)) candidates = [base + '/chat/completions'];
+    else candidates = [base + '/v1/chat/completions', base + '/chat/completions'];
     let resp;
-    try {
-      resp = await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${cfg.key || ''}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal,
-      });
-    } catch (e) {
-      if (e && e.name === 'AbortError') { const err = new Error('aborted'); err.aborted = true; throw err; }
-      const err = new Error((e && e.message) || '网络错误'); err.network = true; throw err;
+    let lastNetworkErr = null;
+    for (let i = 0; i < candidates.length; i++) {
+      const url = candidates[i];
+      try {
+        resp = await fetch(url, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${cfg.key || ''}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal,
+        });
+        // 404 = 路径不存在，尝试下一个候选；其余状态直接使用
+        if (resp.status === 404 && i < candidates.length - 1) continue;
+        break;
+      } catch (e) {
+        if (e && e.name === 'AbortError') { const err = new Error('aborted'); err.aborted = true; throw err; }
+        lastNetworkErr = e;
+        // 网络层失败（CORS/断网）不会因路径不同而改变，直接抛出
+        break;
+      }
+    }
+    if (!resp) {
+      const err = new Error((lastNetworkErr && lastNetworkErr.message) || '网络错误');
+      err.network = true;
+      throw err;
     }
     let text = '';
     try { text = await resp.text(); } catch (e) { text = ''; }
