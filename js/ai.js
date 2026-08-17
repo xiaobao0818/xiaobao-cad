@@ -439,6 +439,23 @@ export default class AIChatPanel {
   }
   _allTools() { return this._workspaceTools(); }
 
+  _exportAiLog() {
+    const log = window.__xbcadAiLog || [];
+    if (!log.length) { this.CAD.notify('暂无诊断日志', 'error'); return; }
+    try {
+      const text = JSON.stringify(log, null, 1);
+      const blob = new Blob([text], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'xbcad-ai-log.json';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+      this.CAD.notify('诊断日志已导出（' + log.length + ' 条记录）');
+    } catch (e) {
+      this.CAD.notify('日志导出失败: ' + (e && e.message), 'error');
+    }
+  }
+
   /* ---------------- 设置 ---------------- */
   _loadSettings() {
     try {
@@ -490,6 +507,9 @@ export default class AIChatPanel {
         const reviewBtn = this._btn('👁 审阅', () => this._manualReview(), 'ai-review');
         reviewBtn.title = '让多模态模型查看当前图纸并自动优化';
         btns.appendChild(reviewBtn);
+        const logBtn = this._btn('📋 日志', () => this._exportAiLog(), 'ai-log');
+        logBtn.title = '导出最近的 AI 对话诊断日志（排查问题时使用）';
+        btns.appendChild(logBtn);
         btns.appendChild(this._btn('⚙ 设置', () => this.openSettings()));
         btns.appendChild(this._btn('🗑 清空', () => this.clear()));
         head.appendChild(btns);
@@ -650,6 +670,14 @@ export default class AIChatPanel {
       this.openSettings();
       return;
     }
+    // 3D 工作区但内核未就绪 → 明确提示，避免模型空转
+    if (this.CAD.workspace === '3d' && !this.CAD.app3d?.ready) {
+      this._addMessage('system', '⏳ 三维实体内核还在加载（约几秒），请稍候再提问。加载完成后右上角会有提示。');
+      this.CAD.app3d?.ensureLoaded?.();
+      this._aiLog('blocked-kernel', '内核未就绪时提问被拦截');
+      return;
+    }
+    this._aiLog('ask', '用户提问（模型 ' + s.model + '）');
     this._busy = true;
     this._ctrl = new AbortController();
     this._updateStatus();
@@ -657,6 +685,7 @@ export default class AIChatPanel {
     try {
       let result;
       const toolBefore = this.messages.filter((m) => m.role === 'tool').length;
+      const visBefore = this._visibleContentKey();
       if (s.useTools) {
         result = await this._runWithTools();
         if (result && result.fallback) result = await this._runFallback();
@@ -664,8 +693,15 @@ export default class AIChatPanel {
         result = await this._runFallback();
       }
       if (result && result.text) this._addMessage('assistant', result.text);
-      // 自动多模态审阅：本次对话动过图纸后，让 MiniMax M3 看图检查并优化
+      // 可见内容变化检测
       const toolsUsed = this.messages.filter((m) => m.role === 'tool').length > toolBefore;
+      if (toolsUsed) {
+        const visAfter = this._visibleContentKey();
+        if (visAfter === visBefore) {
+          this._addMessage('system', '⚠️ 本次执行了工具操作，但工作区没有出现可见的图形变化（可能实体创建失败或坐标异常）。可查看上方工具执行记录，或回复「重试」。');
+        }
+      }
+      // 自动多模态审阅：本次对话动过图纸后，让 MiniMax M3 看图检查并优化
       if (toolsUsed && s.autoReview && result && !result.fallback) {
         try {
           await this._visionReview();
@@ -676,6 +712,7 @@ export default class AIChatPanel {
         }
       }
     } catch (e) {
+      this._aiLog('error', String(e && e.message ? e.message : e));
       this._renderError(e);
     } finally {
       this._busy = false;
@@ -706,6 +743,28 @@ export default class AIChatPanel {
     if (e && e.status === 402) { this._addMessage('error', '💰 余额不足，请前往对应平台充值'); return; }
     if (e && e.status === 429) { this._addMessage('error', '⏳ 请求过于频繁（429），请稍后再试'); return; }
     this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
+  }
+
+  /** 工作区可见内容指纹（用于判断工具是否真的画出了东西） */
+  _visibleContentKey() {
+    try {
+      if (this.CAD.workspace === '3d') {
+        const m = this.CAD.app3d?.model;
+        return '3d:' + (m ? m.visibleCount() : -1);
+      }
+      return '2d:' + (this.CAD.scene ? this.CAD.scene.count() : -1);
+    } catch (e) { return 'unknown'; }
+  }
+  /** 诊断日志：记录每轮工具调用，供排查「突然停止/没画出来」类问题 */
+  _aiLog(kind, detail) {
+    try {
+      if (!window.__xbcadAiLog) window.__xbcadAiLog = [];
+      window.__xbcadAiLog.push({
+        t: new Date().toISOString(), ws: this.CAD.workspace, kind,
+        d: typeof detail === 'string' ? detail.slice(0, 500) : detail,
+      });
+      if (window.__xbcadAiLog.length > 300) window.__xbcadAiLog.splice(0, 100);
+    } catch (e) { /* 日志失败不影响功能 */ }
   }
 
   /* ---------------- 多模态审阅（MiniMax M3 看图优化闭环） ---------------- */
@@ -831,6 +890,7 @@ export default class AIChatPanel {
         if (sig === lastSig) {
           repeatCount++;
           if (repeatCount >= REPEAT_LIMIT) {
+            this._addMessage('system', '🛡 检测到模型连续重复相同操作，已自动停止（防死循环）。下方是它的总结，可回复「继续」或换个说法重试。');
             return { fallback: false, text: await this._finalSummary(toolCallCount, '检测到模型在重复执行相同的操作，已自动停止以避免死循环') };
           }
         } else {
@@ -850,6 +910,7 @@ export default class AIChatPanel {
           this.messages.push({ role: 'tool', tool_call_id: tc.id, content: result });
         }
         toolCallCount += msg.tool_calls.length;
+        this._aiLog('tools', names.join(','));
         this._addMessage('system', `🔧 已执行工具：${names.join('、')}`);
         if (toolCallCount >= callLimit) {
           return { fallback: false, text: await this._finalSummary(toolCallCount, '已达到设置的工具调用总次数上限') };

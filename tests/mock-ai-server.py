@@ -118,6 +118,14 @@ def build_stage(stage, messages, has_tools):
                "content": "已满意 ✅ 重新检查截图：模型比例协调、零件位置正确，无需进一步修改。",
                "tool_calls": None}
         return resp(msg, "stop")
+    # 空操作剧本：只查询不画图（验证「无可见变化」提示）
+    if "空操作" in last_plain_ask(messages):
+        if not history_has(messages, "查询完成"):
+            msg = {"role": "assistant", "content": "查询一下图纸状态。",
+                   "tool_calls": [tool_call("cq1", "query_drawing", {"what": "summary"})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 查询完成，图纸没有变化。", "tool_calls": None}
+        return resp(msg, "stop")
     # 2D 制图剧本（仅看最后一次普通提问）
     if "矩形" in last_plain_ask(messages):
         if rect_rounds(messages) == 0:

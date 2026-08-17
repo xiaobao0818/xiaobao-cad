@@ -392,7 +392,20 @@ export class App3D {
   /* ---------------- 刷新 ---------------- */
   refresh(fitView = false) {
     if (!this.ready || !this.vp) return [];
-    const meshes = this.model.evaluate();
+    let meshes;
+    try {
+      meshes = this.model.evaluate();
+    } catch (e) {
+      console.error('[3d] 求值崩溃', e);
+      this._hint('⚠️ 模型求值异常（内核错误），已保留当前画面。可尝试撤销或刷新页面。');
+      return [];
+    }
+    // 有可见实体但网格为空 → 求值异常，保留现有画面不清空
+    if (!meshes.length && this.model.visibleCount() > 0) {
+      console.warn('[3d] 可见实体存在但网格为空，保留当前画面');
+      this._hint('⚠️ 模型求值异常（' + this.model.visibleCount() + ' 个可见实体未能生成网格），已保留当前画面。');
+      return [];
+    }
     this.vp.setBodies(meshes);
     this.vp.highlight([...this.model.selection][0] || null);
     if (fitView) this.vp.fitView(this.model.extents());
