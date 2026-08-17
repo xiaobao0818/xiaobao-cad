@@ -418,7 +418,7 @@ export default class AIChatPanel {
         files.appendChild(this.attachBtn);
         this.fileInput = document.createElement('input');
         this.fileInput.type = 'file';
-        this.fileInput.accept = '.dxf,.json,.xbcad,.svg,.txt,.png,.jpg,.jpeg,.webp,.gif';
+        this.fileInput.accept = '.dxf,.json,.xbcad,.svg,.txt,.dwg,.png,.jpg,.jpeg,.webp,.gif';
         this.fileInput.multiple = true;
         this.fileInput.style.display = 'none';
         this.fileInput.addEventListener('change', () => this._onFiles(this.fileInput.files));
@@ -1109,6 +1109,65 @@ export default class AIChatPanel {
     this.fileInput.value = '';
   }
 
+  /* ---------------- DWG 文本信息提取（专有二进制，尽力提取明文信息） ---------------- */
+  _dwgVersion(bytes) {
+    let head = '';
+    for (let i = 0; i < Math.min(bytes.length, 64); i++) head += String.fromCharCode(bytes[i]);
+    const m = head.match(/AC(\d{4})/);
+    if (!m) return '未知版本';
+    const map = { '1009': 'R12', '1012': 'R13', '1014': 'R14', '1015': '2000', '1018': '2004', '1021': '2007', '1024': '2010', '1027': '2013', '1032': '2018' };
+    return map[m[1]] || ('AC' + m[1]);
+  }
+  _extractASCII(bytes) {
+    const out = [];
+    let cur = '';
+    for (let i = 0; i < bytes.length; i++) {
+      const b = bytes[i];
+      if (b >= 0x20 && b <= 0x7e) cur += String.fromCharCode(b);
+      else { if (cur.length >= 4) out.push(cur); cur = ''; }
+    }
+    if (cur.length >= 4) out.push(cur);
+    const seen = new Set();
+    const res = [];
+    for (const s of out) {
+      if (seen.has(s)) continue;
+      seen.add(s);
+      // 过滤纯十六进制/噪声，保留疑似名称
+      if (!/^[A-Fa-f0-9]{8,}$/.test(s) && /[A-Za-z\u4e00-\u9fff]/.test(s) && !/^[\d.]+$/.test(s)) res.push(s);
+    }
+    return res;
+  }
+  _extractUTF16Text(bytes) {
+    const found = new Set();
+    for (const offset of [0, 1]) {
+      try {
+        const dec = new TextDecoder('utf-16le', { fatal: false }).decode(bytes.slice(offset));
+        const re = /[\u4e00-\u9fff][\u4e00-\u9fff\u3000-\u303fA-Za-z0-9 ，。、；：（）()\-+×xXΦφ°%./]{1,60}/g;
+        let m;
+        while ((m = re.exec(dec))) {
+          const t = m[0].trim();
+          if (t.length >= 2) found.add(t);
+        }
+      } catch (e) { /* 忽略 */ }
+    }
+    return [...found];
+  }
+  _summarizeDWG(bytes) {
+    const ver = this._dwgVersion(bytes);
+    const ascii = this._extractASCII(bytes);
+    const utf16 = this._extractUTF16Text(bytes);
+    const lines = [
+      `DWG 文件（版本 ${ver}，Autodesk 专有二进制格式）`,
+      '浏览器无法完整解析其几何实体；以下是从文件中提取的文本信息，仅供参考：',
+      '',
+    ];
+    if (ascii.length) lines.push(`疑似图层/块/路径等名称（${ascii.length} 个）: ` + ascii.slice(0, 40).join(', '));
+    if (utf16.length) lines.push(`疑似图纸文字（${utf16.length} 条）: ` + utf16.slice(0, 40).join(' | '));
+    lines.push('');
+    lines.push('⚠️ 如需完整几何：请先用 ODA File Converter 或 LibreDWG（dwg2dxf）转换为 DXF 后重新附加，即可完整读取并参考。');
+    return lines.join('\n').slice(0, 3000);
+  }
+
   async _attachFile(file) {
     const name = file.name || '未命名';
     const ext = (name.split('.').pop() || '').toLowerCase();
@@ -1132,6 +1191,23 @@ export default class AIChatPanel {
         this._addMessage('system', `🖼 已附加图片参考：${name}（模型将直接看懂这张图）`);
       } catch (e) {
         const msg = '🖼 图片参考失败: ' + (e && e.message ? e.message : e);
+        try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
+        this._addMessage('error', msg);
+      }
+      return;
+    }
+    // DWG：专有二进制格式，提取文本信息（图层名/文字/块名）供 AI 参考
+    if (ext === 'dwg') {
+      try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const summary = this._summarizeDWG(bytes);
+        const entry = { name, count: null, summary, ext };
+        this.fileContexts.push(entry);
+        this._addChip(entry);
+        this.messages.push({ role: 'user', content: `[参考文件] ${name}（DWG 专有二进制格式）\n${summary}` });
+        this._addMessage('system', `📎 已附加 ${name}：已提取其中的文字/图层等文本信息（DWG 几何需转 DXF 后才能完整读取）`);
+      } catch (e) {
+        const msg = '📎 读取 DWG 失败: ' + (e && e.message ? e.message : e);
         try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
         this._addMessage('error', msg);
       }
