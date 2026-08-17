@@ -157,24 +157,15 @@ localStorage.setItem('xbcad:ai-settings', JSON.stringify({
   const addedPart = panel.messages.some((m) => m.role === 'assistant' && /已添加小零件/.test(m.content || ''));
   log('诊断: 小零件已添加=' + addedPart + ' busy=' + panel._busy);
   log('自动审阅触发: ' + (autoReviewed ? 'OK' : 'FAIL'));
-  // DWG 参考文件附加测试
-  const dwgBytes = (() => {
-    const parts = [];
-    parts.push([0x41, 0x43, 0x31, 0x30, 0x32, 0x37]);
-    parts.push(Array.from({ length: 128 }, (_, i) => (i * 37) & 0xff));
-    const asc = (str) => [...str].map((c) => c.charCodeAt(0) & 0xff);
-    parts.push(asc('WALL-LAYER')); parts.push([0, 1]);
-    parts.push(asc('S-COLU')); parts.push([0xff]);
-    const utf16 = (str) => { const out = []; for (const ch of str) { const c = ch.codePointAt(0); out.push(c & 0xff, (c >> 8) & 0xff); } return out; };
-    parts.push(utf16('客厅')); parts.push(utf16('一层平面图'));
-    return new Uint8Array(parts.flat());
-  })();
-  const dwgFile = new File([dwgBytes], '平面图.dwg', { type: 'application/dwg' });
+  // DWG 参考文件附加测试（真实 DWG 文件，LibreDWG 解析）
+  const dwgResp = await fetch('/samples/sample_example_2007.dwg');
+  const dwgFile = new File([await dwgResp.arrayBuffer()], '平面图.dwg', { type: 'application/dwg' });
   await panel._attachFile(dwgFile);
-  const dwgOk = panel.fileContexts.some((e) => e.ext === 'dwg' && e.summary.includes('WALL-LAYER') && e.summary.includes('客厅') && e.summary.includes('2013'));
+  const dwgEntry = panel.fileContexts.find((e) => e.ext === 'dwg');
+  const dwgOk = !!(dwgEntry && dwgEntry.count >= 30 && dwgEntry.summary.includes('实体总数'));
   const dwgMsg = panel.messages.some((m) => m.role === 'user' && typeof m.content === 'string' && m.content.includes('[参考文件] 平面图.dwg'));
-  log('DWG 参考文件: ' + (dwgOk && dwgMsg ? 'OK（提取到图层名与中文文字）' : 'FAIL'));
-  log('DWG 摘要预览: ' + (panel.fileContexts.find((e) => e.ext === 'dwg')?.summary || '').split('\n')[0]);
+  log('DWG 参考文件: ' + (dwgOk && dwgMsg ? 'OK（解析 ' + dwgEntry.count + ' 个实体）' : 'FAIL'));
+  log('DWG 摘要预览: ' + (dwgEntry?.summary || '').split('\n').slice(0, 2).join(' | '));
   const ok = reviewed && hasImage && hasMark && m.count() >= 8 && lastMsg.includes('已满意') && autoReviewed && dwgOk && dwgMsg;
   log(ok ? 'AI_REVIEW_PASS' : 'AI_REVIEW_FAIL');
   out();

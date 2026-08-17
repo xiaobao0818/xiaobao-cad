@@ -1,0 +1,35 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">RUN</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const log = (x) => { out.push(x); flush(); };
+const resp = await fetch('/samples/sample_example_2007.dwg');
+const bytes = new Uint8Array(await resp.arrayBuffer());
+const mod = await import('/node_modules/@mlightcad/libredwg-web/dist/libredwg-web.js');
+const parseWith = async (lib) => {
+  const dwg = lib.dwg_read_data(bytes, mod.Dwg_File_Type.DWG);
+  const db = lib.convert(dwg);
+  return { dwg, n: db.entities.length };
+};
+try {
+  // 方案A：同一实例 + dwg_free 释放
+  const libA = await mod.LibreDwg.create('/node_modules/@mlightcad/libredwg-web/wasm');
+  const r1 = await parseWith(libA);
+  log('方案A 第1次: ' + r1.n + ' 个实体');
+  libA.dwg_free(r1.dwg);
+  try {
+    const r2 = await parseWith(libA);
+    log('方案A 第2次(free后): ' + r2.n + ' 个实体');
+    libA.dwg_free(r2.dwg);
+  } catch (e) { log('方案A 第2次失败: ' + e.message.slice(0, 60)); }
+  // 方案B：每次新建实例
+  const libB = await mod.LibreDwg.create('/node_modules/@mlightcad/libredwg-web/wasm');
+  const r3 = await parseWith(libB);
+  log('方案B 新实例: ' + r3.n + ' 个实体');
+  log('REENTRANT_DONE');
+} catch (e) {
+  log('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e));
+}
+flush();
+</script></body></html>

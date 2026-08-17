@@ -23,11 +23,19 @@ export function fileExt(name) {
 export async function openFile(app, file) {
   const ext = fileExt(file.name);
   if (ext === 'dwg') {
-    throw new Error(
-      'DWG 是 Autodesk 专有格式，浏览器无法直接解析。\n' +
-      '建议先用 ODA File Converter 或 LibreDWG（dwg2dxf 命令）转换为 DXF 后打开。\n' +
-      '本软件原生支持：DXF / 小宝CAD(JSON) / SVG。'
-    );
+    // 浏览器内直接解析 DWG（LibreDWG WASM）
+    try {
+      const { parseDWG } = await import('./dwg.js');
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const data = await parseDWG(bytes);
+      applyDXFData(app.scene, data);
+      return { type: 'dwg', count: app.scene.count(), note: 'DWG 已解析（标注/样条/填充等复杂对象已跳过）' };
+    } catch (e) {
+      throw new Error(
+        'DWG 解析失败：' + (e && e.message ? e.message : e) + '\n' +
+        '可改用 ODA File Converter 或 LibreDWG 转换为 DXF 后打开。'
+      );
+    }
   }
   if (ext === 'dxf') {
     const CAD = window.CAD;

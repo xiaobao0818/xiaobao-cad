@@ -1329,16 +1329,33 @@ export default class AIChatPanel {
       }
       return;
     }
-    // DWG：专有二进制格式，提取文本信息（图层名/文字/块名）供 AI 参考
+    // DWG：本软件直接解析（LibreDWG WASM），把实体/图层信息交给模型
     if (ext === 'dwg') {
       try {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const summary = this._summarizeDWG(bytes);
-        const entry = { name, count: null, summary, ext };
+        let summary; let count = 0; let parsed = false;
+        try {
+          const { parseDWG } = await import('./dwg.js');
+          const data = await parseDWG(bytes);
+          count = data.entities.length;
+          summary = buildDataSummary(data, { maxEntities: 80 });
+          parsed = true;
+        } catch (parseErr) {
+          // 解析失败 → 退化为文本信息提取
+          summary = this._summarizeDWG(bytes);
+        }
+        const entry = { name, count: parsed ? count : null, summary, ext };
         this.fileContexts.push(entry);
         this._addChip(entry);
-        this.messages.push({ role: 'user', content: `[参考文件] ${name}（DWG 专有二进制格式）\n${summary}` });
-        this._addMessage('system', `📎 已附加 ${name}：已提取其中的文字/图层等文本信息（DWG 几何需转 DXF 后才能完整读取）`);
+        this.messages.push({
+          role: 'user',
+          content: parsed
+            ? `[参考文件] ${name}\n本软件已解析该 DWG 文件，以下内容可直接使用（无需也无法查看原文件）：\n${summary}`
+            : `[参考文件] ${name}（DWG 专有二进制格式，完整解析失败）\n${summary}`,
+        });
+        this._addMessage('system', parsed
+          ? `📎 已解析 ${name}：${count} 个实体、${(summary.split('图层: ')[1] || '').split('\n')[0] || '图层信息'} 已提供给模型`
+          : `📎 已附加 ${name}：仅提取到文本信息（完整解析失败）`);
       } catch (e) {
         const msg = '📎 读取 DWG 失败: ' + (e && e.message ? e.message : e);
         try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }

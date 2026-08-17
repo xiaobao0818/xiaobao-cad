@@ -158,6 +158,10 @@ class App {
       window.CAD.dxf = dxfMod;
     } catch (e) { console.warn('DXF 模块加载失败:', e); }
     try {
+      const dwgMod = await import('./dwg.js');
+      window.CAD.dwg = { parseDWG: dwgMod.parseDWG };
+    } catch (e) { console.warn('DWG 模块加载失败:', e); }
+    try {
       const aiMod = await import('./ai.js');
       if (aiMod.default) window.__aiPanel = new aiMod.default(window.CAD);
     } catch (e) {
@@ -1045,6 +1049,7 @@ window.CAD = {
   get workspace() { return app.workspace; },
   get app3d() { return app.app3d; },
   dxf: null,
+  dwg: null,
   ai: null,
   ai3d: null,
   aiAsk: null,

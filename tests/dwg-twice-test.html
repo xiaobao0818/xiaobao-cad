@@ -1,0 +1,20 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">RUN</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const log = (x) => { out.push(x); flush(); };
+try {
+  const resp = await fetch('/samples/sample_example_2007.dwg');
+  const bytes = new Uint8Array(await resp.arrayBuffer());
+  const { parseDWG } = await import('/js/dwg.js');
+  const d1 = await parseDWG(bytes);
+  log('第一次解析: ' + d1.entities.length + ' 个实体');
+  const d2 = await parseDWG(bytes);
+  log('第二次解析: ' + d2.entities.length + ' 个实体');
+  log('DWG_TWICE_PASS');
+} catch (e) {
+  log('FAIL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+}
+flush();
+</script></body></html>
