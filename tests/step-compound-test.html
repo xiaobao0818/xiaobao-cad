@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+try {
+  const a = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const b = new oc.BRepPrimAPI_MakeSphere_1(5).Shape();
+  const builder = new oc.BRep_Builder();
+  const comp = new oc.TopoDS_Compound();
+  builder.MakeCompound(comp);
+  builder.Add(comp, a);
+  builder.Add(comp, b);
+  const w = new oc.STEPControl_Writer_1();
+  const tr = w.Transfer(comp, 1, true);
+  out.push('Transfer(compound,1,true) = ' + JSON.stringify(tr) + (tr?.value !== undefined ? ' value=' + tr.value : ''));
+  const wr = w.Write('xbcad_comp.step');
+  out.push('Write = ' + JSON.stringify(wr) + (wr?.value !== undefined ? ' value=' + wr.value : ''));
+  try { out.push('bytes=' + oc.FS.readFile('/xbcad_comp.step').length); } catch (e) { out.push('根目录: ' + oc.FS.readdir('/').join(',')); out.push('cwd=' + oc.FS.cwd()); try { out.push('相对读: ' + oc.FS.readFile('xbcad_comp.step').length); } catch(e2) { out.push('相对读也失败'); } }
+  const r = new oc.STEPControl_Reader_1();
+  const rd = r.ReadFile('xbcad_comp.step');
+  out.push('ReadFile = ' + JSON.stringify(rd) + (rd?.value !== undefined ? ' value=' + rd.value : ''));
+  const nb = r.TransferRoots();
+  out.push('TransferRoots = ' + nb + ', NbRootsForTransfer = ' + r.NbRootsForTransfer());
+  const one = r.OneShape();
+  out.push('OneShape = ' + (one ? 'yes' : 'null'));
+  // 枚举返回的 shape 类型：用 TopoDS_Iterator 看 compound 子形状数
+  const it = new oc.TopoDS_Iterator_1(one);
+  let n = 0;
+  while (it.More()) { n++; it.Next(); }
+  out.push('回读形状子实体数 = ' + n);
+} catch (e) { out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0,4).join(' | ') : e)); }
+out.push('DONE'); flush();
+</script></body></html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 探索10</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+try {
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const cylShape = new oc.BRepPrimAPI_MakeCylinder_1(2, 2).Shape();
+  const cut = new oc.BRepAlgoAPI_Cut_3(boxShape, cylShape);
+  cut.Build();
+  const cutShape = cut.Shape();
+
+  // 0. FS 写读验证
+  {
+    oc.FS.writeFile('/tmp/probe.txt', new Uint8Array([65, 66, 67]));
+    const back = oc.FS.readFile('/tmp/probe.txt');
+    out.push('FS 写读: ' + (back.length === 3 ? 'OK' : 'FAIL'));
+  }
+
+  // 1. Explorer Init（无后缀）枚举暴力
+  {
+    for (let fv = 1; fv <= 9; fv++) {
+      try {
+        const ex = new oc.TopExp_Explorer_1();
+        ex.Init(boxShape, fv, 1);
+        let n = 0;
+        while (ex.More()) { n++; ex.Next(); }
+        if (n > 0) out.push(`Init(box, ${fv}, 1) → ${n}`);
+      } catch (e) {}
+    }
+  }
+
+  // 2. 三角化（静态 Triangulation）
+  {
+    new oc.BRepMesh_IncrementalMesh_2(cutShape, 0.5, false, 0.5, false);
+    const loc = new oc.TopLoc_Location_1();
+    const ex = new oc.TopExp_Explorer_1();
+    ex.Init(cutShape, 4, 1);
+    let faces = 0, tris = 0, p0 = null;
+    while (ex.More()) {
+      faces++;
+      const tri = oc.BRep_Tool.Triangulation(ex.Current(), loc);
+      if (tri?.NbTriangles) {
+        tris += tri.NbTriangles();
+        if (!p0) { const p = tri.Node_1(1); p0 = [p.X(), p.Y(), p.Z()]; }
+      }
+      ex.Next();
+    }
+    out.push(`三角化: faces=${faces} tris=${tris} p0=[${p0}]`);
+  }
+
+  // 3. STL（网格化后）
+  {
+    new oc.BRepMesh_IncrementalMesh_2(boxShape, 0.5, false, 0.5, false);
+    const w = new oc.StlAPI_Writer();
+    let r2 = null;
+    try { r2 = w.Write(boxShape, '/tmp/x.stl'); } catch (e) { r2 = 'err:' + e.message.slice(0, 80); }
+    out.push('STL Write(2参): ' + JSON.stringify(r2));
+    let sz = -1;
+    try { sz = oc.FS.readFile('/tmp/x.stl').length; } catch (e) {}
+    out.push('STL 文件大小: ' + sz);
+    if (sz > 0) out.push('STL 头: ' + new TextDecoder().decode(oc.FS.readFile('/tmp/x.stl').slice(0, 20)).replace(/\n/g, ' '));
+  }
+
+  // 4. STEP（试多种 Write 形式）
+  {
+    const w = new oc.STEPControl_Writer_1();
+    w.Transfer(cutShape, 1, true);
+    const attempts = [];
+    for (const args of [['/tmp/x.step'], ['/tmp/x2.step', 1], ['/tmp/x3.step', 'ISO-10303-21']]) {
+      try {
+        const r = w.Write(...args);
+        attempts.push(`${args.length}参(${args[1] ?? ''}) → ${JSON.stringify(r)}`);
+      } catch (e) { attempts.push(`${args.length}参 失败: ${e.message.slice(0, 60)}`); }
+    }
+    out.push('STEP Write 尝试: ' + attempts.join(' | '));
+    out.push('/tmp 目录: ' + oc.FS.readdir('/tmp').join(','));
+  }
+
+  // 5. 圆角（用边枚举值 6）
+  {
+    const f = new oc.BRepFilletAPI_MakeFillet(boxShape, 0);
+    const ex = new oc.TopExp_Explorer_1();
+    ex.Init(boxShape, 6, 1);
+    let edges = 0, added = 0;
+    while (ex.More()) {
+      edges++;
+      try { f.Add(ex.Current(), 1.5); added++; } catch (e) {}
+      ex.Next();
+    }
+    f.Build();
+    out.push(`圆角: edges=${edges} added=${added} done=${f.IsDone()}`);
+    if (f.IsDone()) {
+      const props = new oc.GProp_GProps_1();
+      oc.BRepGProp.VolumeProperties_1(f.Shape(), props, 1e-5, false, false);
+      out.push('圆角后体积 = ' + props.Mass());
+    }
+  }
+  // 6. 倒角
+  {
+    const f = new oc.BRepFilletAPI_MakeChamfer(boxShape);
+    const ex = new oc.TopExp_Explorer_1();
+    ex.Init(boxShape, 6, 1);
+    let added = 0;
+    while (ex.More()) {
+      try { f.Add(ex.Current(), 1.5); added++; } catch (e) {}
+      ex.Next();
+    }
+    f.Build();
+    out.push(`倒角: added=${added} done=${f.IsDone()}`);
+  }
+  // 7. 包围盒（静态 Add）
+  {
+    const bb = new oc.Bnd_Box_1();
+    oc.BRepBndLib.Add(cutShape, bb);
+    const cmin = bb.CornerMin(), cmax = bb.CornerMax();
+    out.push(`包围盒: min=[${cmin.X()},${cmin.Y()},${cmin.Z()}] max=[${cmax.X()},${cmax.Y()},${cmax.Z()}]`);
+  }
+  // 8. 复合体（多体导出）
+  {
+    const comp = new oc.TopoDS_Compound();
+    const b = new oc.BRep_Builder();
+    b.MakeCompound(comp);
+    b.Add(comp, boxShape);
+    b.Add(comp, cylShape);
+    out.push('复合体 MakeCompound+Add×2 OK');
+  }
+  // 9. 平移/缩放/旋转三合一（gp_Vec SetX/Y/Z）
+  {
+    const vec = new oc.gp_Vec_1();
+    vec.SetX(50); vec.SetY(10); vec.SetZ(5);
+    const trsf = new oc.gp_Trsf_1();
+    trsf.SetTranslation_1(vec);
+    const moved = new oc.BRepBuilderAPI_Transform_2(boxShape, trsf, true).Shape();
+    out.push('平移 OK');
+    const trsf2 = new oc.gp_Trsf_1();
+    trsf2.SetScale(new oc.gp_Pnt_3(0, 0, 0), 2);
+    new oc.BRepBuilderAPI_Transform_2(boxShape, trsf2, true);
+    out.push('缩放 OK');
+  }
+} catch (e) {
+  out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+}
+out.push('EXPLORE10_DONE'); flush();
+</script>
+</body>
+</html>

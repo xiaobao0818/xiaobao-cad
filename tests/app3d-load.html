@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">RUN</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+try {
+  const m = await import('/js/three-dim/app3d.js');
+  out.push('app3d 模块加载 OK, exports: ' + Object.keys(m).join(','));
+  out.push('App3D typeof: ' + typeof m.App3D);
+} catch (e) {
+  out.push('FAIL: ' + (e?.message || e));
+  out.push(e?.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : '');
+}
+flush();
+</script></body></html>

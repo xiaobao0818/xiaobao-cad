@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">RUN</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const log = (x) => { out.push(x); flush(); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+const vol = (s) => { const p = new oc.GProp_GProps_1(); oc.BRepGProp.VolumeProperties_1(s, p, 1e-5, false, false); return p.Mass(); };
+try {
+  // 场景1：fuse 两个不相交的 box
+  const a = new oc.BRepPrimAPI_MakeBox_1(10, 10, 10).Shape();
+  const b = new oc.BRepPrimAPI_MakeBox_1(10, 10, 10).Shape();
+  const moved = new oc.BRepBuilderAPI_Transform_2(b, (() => { const t = new oc.gp_Trsf_1(); const v = new oc.gp_Vec_1(); v.SetX(100); v.SetY(100); v.SetZ(100); t.SetTranslation_1(v); return t; })(), true).Shape();
+  try {
+    const f = new oc.BRepAlgoAPI_Fuse_3(a, moved);
+    f.Build();
+    log('fuse 不相交: IsDone=' + f.IsDone() + ' Shape=' + (f.Shape() ? '有' : 'null'));
+    try { log('  fuse 体积=' + vol(f.Shape())); } catch (e) { log('  体积读取失败: ' + e.message.slice(0, 60)); }
+  } catch (e) { log('fuse 不相交异常: ' + e.message.slice(0, 80)); }
+  // 场景2：cut 工具与目标不相交
+  try {
+    const c = new oc.BRepAlgoAPI_Cut_3(a, moved);
+    c.Build();
+    log('cut 不相交: IsDone=' + c.IsDone() + ' Shape=' + (c.Shape() ? '有' : 'null'));
+    try { log('  cut 体积=' + vol(c.Shape())); } catch (e) { log('  体积读取失败: ' + e.message.slice(0, 60)); }
+  } catch (e) { log('cut 不相交异常: ' + e.message.slice(0, 80)); }
+  // 场景3：common 不相交
+  try {
+    const m = new oc.BRepAlgoAPI_Common_3(a, moved);
+    m.Build();
+    log('common 不相交: IsDone=' + m.IsDone() + ' Shape=' + (m.Shape() ? '有' : 'null'));
+    try { log('  common 体积=' + vol(m.Shape())); } catch (e) { log('  体积读取失败: ' + e.message.slice(0, 60)); }
+  } catch (e) { log('common 不相交异常: ' + e.message.slice(0, 80)); }
+  // 场景4：fuse 相邻（接触）box
+  const c2 = new oc.BRepPrimAPI_MakeBox_1(10, 10, 10).Shape();
+  const moved2 = new oc.BRepBuilderAPI_Transform_2(c2, (() => { const t = new oc.gp_Trsf_1(); const v = new oc.gp_Vec_1(); v.SetX(10); v.SetY(0); v.SetZ(0); t.SetTranslation_1(v); return t; })(), true).Shape();
+  try {
+    const f2 = new oc.BRepAlgoAPI_Fuse_3(a, moved2);
+    f2.Build();
+    log('fuse 相邻接触: IsDone=' + f2.IsDone() + ' 体积=' + vol(f2.Shape()));
+  } catch (e) { log('fuse 接触异常: ' + e.message.slice(0, 80)); }
+} catch (e) { log('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e)); }
+log('DONE');
+</script></body></html>

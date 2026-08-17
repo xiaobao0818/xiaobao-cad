@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 3D 冒烟测试</title></head>
+<body style="background:#222;color:#eee;font-family:monospace">
+<pre id="results">等待加载…</pre>
+<iframe id="f" src="/" style="width:1400px;height:900px;border:0"></iframe>
+<script>
+const results = [];
+const out = () => { document.getElementById('results').textContent = results.join('\n'); };
+const log = (x) => { results.push(x); out(); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  const iframe = document.getElementById('f');
+  await new Promise((r) => { iframe.addEventListener('load', r); });
+  const w = iframe.contentWindow;
+  for (let i = 0; i < 400 && !w.app; i++) await wait(50);
+  const CAD = w.CAD;
+  try {
+    log('app booted: ' + !!w.app);
+    // 等 3D 模块加载 + 内核就绪（63MB WASM 下载，最多 90 秒）
+    let app3dSeen = false;
+    for (let i = 0; i < 900; i++) {
+      await wait(100);
+      if (CAD.app3d) app3dSeen = true;
+      if (CAD.app3d?.ready) break;
+    }
+    log('3D kernel ready: ' + !!CAD.app3d?.ready + ' (' + (CAD.app3d ? 'loaded' : app3dSeen ? 'loading' : 'no app3d') + ')');
+    if (!CAD.app3d?.ready) { results.push('KERNEL_FAIL'); out(); return; }
+    const a3d = CAD.app3d;
+    const m = a3d.model;
+    log('ai3d registered: ' + !!CAD.ai3d);
+    log('ai tools registered: ' + (typeof CAD.aiRegisterTools === 'function'));
+
+    await wait(300);
+    log('workspace: ' + CAD.workspace);
+
+    // 创建基本体
+    log('-> ' + CAD.ai3d.create_primitive_3d({ kind: 'box', dx: 60, dy: 40, dz: 30 }));
+    log('-> ' + CAD.ai3d.create_primitive_3d({ kind: 'cylinder', r: 10, h: 50, x: 0, y: 0, z: 10 }));
+    log('bodies: ' + m.count() + ' expect=2');
+
+    // 布尔差集（特征树：输入保留但被消费）
+    const boxId = m.bodies.find((b) => b.kind === 'box').id;
+    const cylId = m.bodies.find((b) => b.kind === 'cylinder').id;
+    log('-> ' + CAD.ai3d.boolean_3d({ op: 'cut', a: boxId, b: [cylId] }));
+    log('features after cut: ' + m.count() + ' expect=3, visible: ' + m.visibleCount() + ' expect=1');
+
+    // 内核验证体积：60*40*30 - π*100*30(相交高度30)
+    const expectVol = 60 * 40 * 30 - Math.PI * 100 * 30;
+    const resultBody = m.bodies.find((b) => b.kind === 'boolean');
+    const meshes = a3d.refresh();
+    const kId = m._kernelIds.get(resultBody.id);
+    const vol = a3d.kernel.volume(kId);
+    log('volume: ' + Math.round(vol * 100) / 100 + ' expect≈' + Math.round(expectVol * 100) / 100 + ' (' + (Math.abs(vol - expectVol) / expectVol < 0.01 ? 'OK' : 'FAIL') + ')');
+
+    // 网格
+    log('mesh triangles: ' + meshes[0].indices.length / 3 + ' (expect > 100)');
+    log('mesh check: ' + (meshes[0].indices.length % 3 === 0 && meshes[0].positions.length > 1000 ? 'OK' : 'FAIL'));
+
+    // 变换（作用于布尔结果）
+    log('-> ' + CAD.ai3d.transform_3d({ id: resultBody.id, dx: 100, rz: 45 }));
+    const bb1 = m.extents();
+    log('bbox after move: minX=' + Math.round(bb1.minX) + ' (expect 50~85): ' + (bb1.minX > 50 && bb1.minX < 85 ? 'OK' : 'FAIL'));
+
+    // 撤销/重做
+    m.undo();
+    log('undo transform: bodies=' + m.count());
+    m.redo();
+
+    // STL 导出
+    const stl = a3d.kernel.exportSTL(m._kernelIds.get(resultBody.id));
+    log('STL export: ' + stl.length + ' bytes, header=' + new TextDecoder().decode(stl.slice(0, 5)));
+
+    // STEP 导出/导入
+    const step = a3d.kernel.exportSTEP([m._kernelIds.get(resultBody.id)]);
+    log('STEP export: ' + step.length + ' bytes');
+    const imported = a3d.kernel.importSTEP(step);
+    log('STEP import: ' + imported.length + ' body(ies) expect=1');
+    if (imported.length) {
+      const iv = a3d.kernel.volume(imported[0]);
+      log('STEP roundtrip volume: ' + Math.round(iv * 100) / 100 + ' vs ' + Math.round(vol * 100) / 100 + ' (' + (Math.abs(iv - vol) / vol < 0.01 ? 'OK' : 'FAIL') + ')');
+    }
+
+    // 视口有内容
+    log('viewport meshes: ' + a3d.vp._meshes.size + ' expect>=1');
+
+    // 回 2D 不影响
+    w.app.showWorkspace('2d');
+    await wait(200);
+    log('back to 2D: ' + CAD.workspace + ', 2D entities intact: ' + CAD.scene.count());
+
+    log('SMOKE3D_PASS');
+  } catch (e) {
+    log('ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e));
+    log('SMOKE3D_FAIL');
+  }
+  out();
+})();
+</script>
+</body>
+</html>

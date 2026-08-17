@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 探索11</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+try {
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  out.push('TopoDS 相关键: ' + Object.keys(oc).filter((k) => /^TopoDS(_|\.)/.test(k)).slice(0, 20).join(','));
+  out.push('typeof oc.TopoDS: ' + typeof oc.TopoDS + (oc.TopoDS ? ' keys=' + Object.keys(oc.TopoDS).slice(0, 20).join(',') : ''));
+  const faceEnum = oc.TopAbs.ShapeTypeFromString_1('FACE');
+  const edgeEnum = oc.TopAbs.ShapeTypeFromString_1('EDGE');
+  const shapeEnum = oc.TopAbs.ShapeTypeFromString_1('SHAPE');
+  out.push('枚举对象: FACE.value=' + faceEnum.value + ' EDGE.value=' + edgeEnum.value + ' SHAPE.value=' + shapeEnum.value);
+
+  // Explorer：各种参数组合
+  const tryExp = (label, fn) => {
+    try {
+      const ex = new oc.TopExp_Explorer_1();
+      fn(ex);
+      let n = 0;
+      while (ex.More()) { n++; ex.Next(); }
+      out.push(label + ' → ' + n + ' 个');
+    } catch (e) { out.push(label + ' → 错误: ' + e.message.slice(0, 70)); }
+  };
+  tryExp('Init(box, faceEnum, shapeEnum)', (ex) => ex.Init(boxShape, faceEnum, shapeEnum));
+  tryExp('Init(box, 4, shapeEnum)', (ex) => ex.Init(boxShape, 4, shapeEnum));
+  tryExp('Init(box, faceEnum, 1)', (ex) => ex.Init(boxShape, faceEnum, 1));
+  tryExp('Init(box, 4, 1)', (ex) => ex.Init(boxShape, 4, 1));
+  tryExp('Init(box, faceEnum.value, shapeEnum.value)', (ex) => ex.Init(boxShape, faceEnum.value, shapeEnum.value));
+  flush();
+
+  // 下转型：拿一个 face
+  const ex = new oc.TopExp_Explorer_1();
+  ex.Init(boxShape, faceEnum, shapeEnum);
+  const cur = ex.Current();
+  out.push('Current() typeof: ' + typeof cur + ' keys=' + Object.keys(cur).join(','));
+  out.push('Current() 方法: ' + (() => { const found = []; let p = cur; while (p && p !== Object.prototype) { for (const nm of Object.getOwnPropertyNames(p)) if (nm !== 'constructor' && !found.includes(nm)) found.push(nm); p = Object.getPrototypeOf(p); } return found.slice(0, 25).join(','); })());
+  // 尝试各种下转
+  const downcasts = Object.keys(oc).filter((k) => /^TopoDS_Face/.test(k));
+  out.push('TopoDS_Face 变体: ' + downcasts.join(','));
+  for (const dc of downcasts) {
+    try {
+      const face = new oc[dc](cur);
+      out.push('new ' + dc + '(shape) 成功 → keys=' + Object.keys(face).join(','));
+      // 用转换后的 face 试 Triangulation
+      new oc.BRepMesh_IncrementalMesh_2(boxShape, 0.5, false, 0.5, false);
+      const loc = new oc.TopLoc_Location_1();
+      const tri = oc.BRep_Tool.Triangulation(face, loc);
+      out.push('Triangulation 成功 → tris=' + (tri.NbTriangles ? tri.NbTriangles() : '?'));
+      break;
+    } catch (e) {
+      out.push('new ' + dc + '(shape) → ' + e.message.slice(0, 60));
+    }
+  }
+  flush();
+
+  // 若下转都失败，试 ShapeTypeFromString 拿 ShapeEnum 传给 Triangulation 的其他重载
+  out.push('BRep_Tool.Triangulation 是静态: ' + typeof oc.BRep_Tool.Triangulation);
+} catch (e) {
+  out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+}
+out.push('EXPLORE11_DONE'); flush();
+</script>
+</body>
+</html>

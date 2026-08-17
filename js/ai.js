@@ -1,0 +1,1206 @@
+/* ============================================================
+ * 小宝CAD AI 助手 —— 对话式 CAD 创作（DeepSeek / OpenAI 兼容接口）
+ * ============================================================ */
+import { escapeHtml, D2R, dist, translationM, rotationM, scaleM, mirrorM } from './util.js';
+import { make } from './entities.js';
+import { Scene } from './scene.js';
+import { fileToText, buildDataSummary, buildSceneSummary, svgToEntities } from './io.js';
+
+/* ---------------- 常量 ---------------- */
+const SETTINGS_KEY = 'xbcad:ai-settings';
+const DEFAULT_SETTINGS = {
+  base: 'https://api.deepseek.com',
+  model: 'deepseek-chat',
+  key: '',
+  temperature: 0.2,
+  maxTokens: 4000,
+  useTools: true,
+  toolRoundLimit: 0, // 工具调用轮数上限，0 = 不限制
+  toolCallLimit: 0,  // 工具调用总次数上限，0 = 不限制
+};
+const REPEAT_LIMIT = 2; // 死循环防护：连续重复相同工具调用达到该值 → 停止（不是上限，是防空转烧额度）
+const MAX_SUMMARY_LEN = 3000;
+
+const SYSTEM_PROMPT = [
+  '你是"小宝CAD"内置的 CAD 专家助手，帮助用户通过对话完成 CAD 绘图创作。',
+  '重要约定：',
+  '- 当前图纸单位为 mm，Y 轴向上，坐标原点是世界原点。',
+  '- 默认当前图层可通过 query_drawing 工具（what="layers" 或 "summary"）获知；',
+  '  画图前建议先了解图层，并把不同内容放到合适图层（用 set_layer 工具创建/切换）。',
+  '- 优先使用 draw_entities 工具精确创建几何，坐标要合理（机械零件通常 0~200mm 量级，建筑可用 mm 大数值，如房间几千 mm）。',
+  '- 圆弧角度单位为度，0° 指向 +X 方向，逆时针为正。',
+  '- 支持中文标注文字（text 图元）。',
+  '- 回答要简洁：先说明思路，再调用工具执行，最后汇报结果（创建/修改/删除了多少实体、实体 id 等）。',
+  '- 尽量在一次回复中批量调用工具（例如用一次 draw_entities 创建全部图元），不要把一个任务拆成过多轮调用。',
+  '- 三维建模同理：尽可能用一次 create_primitive_3d 创建全部零件，再用一次 boolean_3d 完成合并；list_3d 只在需要实体 id 时查询一次，不要反复查询。',
+  '- 不要重复调用查询工具确认相同信息；执行完操作后直接总结结果，不要无意义地反复调用工具。',
+].join('\n');
+
+const FALLBACK_INSTRUCTION =
+  '\n\n如果无法调用函数工具，请用如下 JSON 代码块输出 CAD 命令（一次可多条）：\n' +
+  '```cad\n' +
+  '{"commands":["L 0,0 100,0","C 50,50 10"]}\n' +
+  '```\n' +
+  '命令语法同 CAD 命令行（空格分隔坐标，如 L x1,y1 x2,y2、REC x1,y1 x2,y2、C cx,cy r、TEXT 由 MOVE 等）；' +
+  '另外支持 {"draw":[{"type":"line","x1":0,"y1":0,"x2":100,"y2":0}]} 与 {"query":"summary"}。';
+
+const num = (v, d = 0) => { const x = Number(v); return Number.isFinite(x) ? x : d; };
+
+/* ---------------- 工具定义（OpenAI function calling 格式） ---------------- */
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'draw_entities',
+      description: '精确创建 CAD 图元（直线/圆/圆弧/椭圆/多段线/矩形/点/文字）。一次可创建多个，坐标单位为 mm，Y 轴向上。',
+      parameters: {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            description: '要创建的图元列表',
+            items: {
+              type: 'object',
+              description: '单个图元。根据 type 选择对应几何字段。',
+              properties: {
+                type: { type: 'string', enum: ['line', 'circle', 'arc', 'ellipse', 'polyline', 'rectangle', 'point', 'text'], description: '图元类型' },
+                layer: { type: 'string', description: '所属图层名称，缺省使用当前图层' },
+                color: { type: 'string', description: '颜色，形如 #rrggbb，缺省随层' },
+                x1: { type: 'number', description: '直线起点 X；矩形第一角 X' },
+                y1: { type: 'number', description: '直线起点 Y；矩形第一角 Y' },
+                x2: { type: 'number', description: '直线终点 X；矩形对角 X' },
+                y2: { type: 'number', description: '直线终点 Y；矩形对角 Y' },
+                cx: { type: 'number', description: '圆/圆弧/椭圆中心的 X' },
+                cy: { type: 'number', description: '圆/圆弧/椭圆中心的 Y' },
+                r: { type: 'number', description: '圆/圆弧的半径' },
+                startAngle: { type: 'number', description: '圆弧起始角（度，0°=+X 方向，逆时针为正）' },
+                endAngle: { type: 'number', description: '圆弧终止角（度，逆时针为正）' },
+                rx: { type: 'number', description: '椭圆 X 轴半径' },
+                ry: { type: 'number', description: '椭圆 Y 轴半径' },
+                rotation: { type: 'number', description: '椭圆/文字的旋转角（度，可选）' },
+                points: { type: 'array', description: '多段线顶点，[[x,y], ...]', items: { type: 'array', items: { type: 'number' } } },
+                closed: { type: 'boolean', description: '多段线是否闭合（可选）' },
+                x: { type: 'number', description: '点/文字插入点的 X' },
+                y: { type: 'number', description: '点/文字插入点的 Y' },
+                text: { type: 'string', description: '文字内容（支持中文）' },
+                height: { type: 'number', description: '文字字高' },
+                halign: { type: 'string', enum: ['left', 'center', 'right'], description: '文字水平对齐方式（可选）' },
+              },
+              required: ['type'],
+            },
+          },
+        },
+        required: ['items'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'modify_entities',
+      description: '移动/复制/旋转/缩放/镜像现有实体。ids 缺省时作用于当前选择集（可先用 select_entities 选择）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          operation: { type: 'string', enum: ['move', 'copy', 'rotate', 'scale', 'mirror'], description: '操作类型' },
+          ids: { type: 'array', items: { type: 'string' }, description: '实体 id 数组，缺省=当前选择集' },
+          dx: { type: 'number', description: 'move/copy 的 X 位移（mm）' },
+          dy: { type: 'number', description: 'move/copy 的 Y 位移（mm）' },
+          cx: { type: 'number', description: 'rotate/scale 的基点 X（可选，默认 0）' },
+          cy: { type: 'number', description: 'rotate/scale 的基点 Y（可选，默认 0）' },
+          angle: { type: 'number', description: 'rotate 旋转角（度，逆时针为正）' },
+          factor: { type: 'number', description: 'scale 缩放系数' },
+          x1: { type: 'number', description: 'mirror 镜像轴第一点 X' },
+          y1: { type: 'number', description: 'mirror 镜像轴第一点 Y' },
+          x2: { type: 'number', description: 'mirror 镜像轴第二点 X' },
+          y2: { type: 'number', description: 'mirror 镜像轴第二点 Y' },
+        },
+        required: ['operation'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'erase_entities',
+      description: '删除实体（按 ids / 全部 / 条件过滤）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          ids: { type: 'array', items: { type: 'string' }, description: '要删除的实体 id 列表' },
+          all: { type: 'boolean', description: '为 true 时删除全部实体' },
+          filter: {
+            type: 'object',
+            description: '条件过滤',
+            properties: {
+              type: { type: 'string', description: '只删除该类型的实体' },
+              layer: { type: 'string', description: '只删除该图层上的实体' },
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_layer',
+      description: '创建/切换图层。可用它把不同几何放到合适图层。',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '图层名称' },
+          color: { type: 'string', description: '图层颜色 #rrggbb（可选）' },
+          current: { type: 'boolean', description: '是否设为当前图层（可选）' },
+        },
+        required: ['name'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'set_layer_props',
+      description: '设置图层的显示/锁定状态。',
+      parameters: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: '图层名称' },
+          on: { type: 'boolean', description: '是否显示该图层（可选）' },
+          locked: { type: 'boolean', description: '是否锁定该图层（可选）' },
+        },
+        required: ['name'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'query_drawing',
+      description: '查询图纸信息（摘要/单个实体/某类型/图层/选择集/范围）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          what: { type: 'string', enum: ['summary', 'entity', 'type', 'layers', 'selection', 'extents'], description: '查询类型' },
+          id: { type: 'string', description: 'what=entity 时的实体 id' },
+          type: { type: 'string', description: 'what=type 时的实体类型' },
+          layer: { type: 'string', description: '可选：按图层过滤' },
+        },
+        required: ['what'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'select_entities',
+      description: '选择实体（供后续修改/删除操作使用）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          ids: { type: 'array', items: { type: 'string' }, description: '实体 id 列表' },
+          all: { type: 'boolean', description: '为 true 时全选' },
+          filter: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', description: '按类型过滤' },
+              layer: { type: 'string', description: '按图层过滤' },
+            },
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'zoom_view',
+      description: '视图缩放/平移。',
+      parameters: {
+        type: 'object',
+        properties: {
+          mode: { type: 'string', enum: ['extents', 'in', 'out', 'fit'], description: 'extents/fit=缩放至全图, in=放大, out=缩小' },
+          center: { type: 'array', items: { type: 'number' }, description: '可选：[x,y]，先把视口中心移动到该点' },
+        },
+      },
+    },
+  },
+  { type: 'function', function: { name: 'undo', description: '撤销上一步操作。', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'redo', description: '重做上一步撤销。', parameters: { type: 'object', properties: {} } } },
+  {
+    type: 'function',
+    function: {
+      name: 'measure',
+      description: '测量两点之间的距离（mm）。',
+      parameters: {
+        type: 'object',
+        properties: {
+          x1: { type: 'number', description: '第一点 X' },
+          y1: { type: 'number', description: '第一点 Y' },
+          x2: { type: 'number', description: '第二点 X' },
+          y2: { type: 'number', description: '第二点 Y' },
+        },
+        required: ['x1', 'y1', 'x2', 'y2'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_file_context',
+      description: '获取已附加参考文件（DXF/JSON/SVG/TXT）的摘要内容。',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+];
+
+/* ---------------- 样式注入 ---------------- */
+const STYLE_TEXT = `
+#tab-ai .ai-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.ai-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex: none; }
+.ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-dim); flex: none; }
+.ai-dot.on { background: var(--green); }
+.ai-dot.busy { background: var(--accent); }
+.ai-model { flex: 1; font-size: 12.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-head-btns { display: flex; gap: 6px; flex: none; }
+.ai-head-btns button {
+  background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  border-radius: 5px; padding: 3px 9px; cursor: pointer; font-size: 12px; font-family: var(--font);
+}
+.ai-head-btns button:hover { border-color: var(--accent); color: var(--accent); }
+.ai-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.ai-msg { display: flex; }
+.ai-msg.user { justify-content: flex-end; }
+.ai-msg.assistant { justify-content: flex-start; }
+.ai-msg.system, .ai-msg.error { justify-content: center; }
+.ai-bubble {
+  max-width: 84%; padding: 8px 11px; border-radius: 10px; font-size: 12.5px; line-height: 1.55;
+  white-space: pre-wrap; word-break: break-word; user-select: text; overflow-wrap: anywhere;
+}
+.ai-msg.user .ai-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 3px; }
+.ai-msg.assistant .ai-bubble { background: var(--bg3); color: var(--text); border-bottom-left-radius: 3px; }
+.ai-msg.system .ai-bubble { background: rgba(93,179,255,.13); color: var(--blue); }
+.ai-msg.error .ai-bubble { background: rgba(255,107,107,.13); color: var(--red); }
+.ai-bubble .md-code {
+  background: var(--canvas-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px; margin: 6px 0; font-family: var(--mono); font-size: 11.5px; white-space: pre; overflow-x: auto;
+}
+.ai-bubble .md-inline { background: rgba(255,255,255,.1); padding: 1px 4px; border-radius: 3px; font-family: var(--mono); font-size: 11.5px; }
+.ai-files { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 6px 10px; border-top: 1px solid var(--border); flex: none; }
+.ai-chip {
+  display: inline-flex; align-items: center; gap: 5px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: 12px; padding: 2px 8px; font-size: 11.5px; color: var(--text-dim);
+}
+.ai-chip .ai-chip-x { cursor: pointer; color: var(--text-dim); font-style: normal; }
+.ai-chip .ai-chip-x:hover { color: var(--red); }
+.ai-input { display: flex; gap: 8px; padding: 8px 10px; border-top: 1px solid var(--border); flex: none; align-items: flex-end; }
+.ai-attach {
+  flex: none; background: var(--bg3); border: 1px solid var(--border); color: var(--text);
+  border-radius: 6px; padding: 8px 10px; cursor: pointer; font-size: 13px; font-family: var(--font); line-height: 1.4;
+}
+.ai-attach:hover { border-color: var(--accent); color: var(--accent); }
+.ai-textarea {
+  flex: 1; resize: none; min-height: 44px; max-height: 140px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px;
+  font-family: var(--font); font-size: 13px; outline: none; line-height: 1.5;
+}
+.ai-textarea:focus { border-color: var(--accent); }
+.ai-send {
+  flex: none; background: var(--accent); border: none; color: #fff; border-radius: 6px;
+  padding: 9px 14px; cursor: pointer; font-size: 13px; font-family: var(--font);
+}
+.ai-send:hover { filter: brightness(1.1); }
+.ai-send.stop { background: var(--red); }
+`;
+
+/* ============================================================ */
+export default class AIChatPanel {
+  constructor(CAD) {
+    this.CAD = CAD;
+    this.scene = CAD.scene;
+    this.viewport = CAD.viewport;
+
+    this.settings = this._loadSettings();
+    this.messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+    this.fileContexts = [];
+    this._busy = false;
+    this._ctrl = null;
+    this._pendingSend = false;
+
+    this._injectStyle();
+    this._buildUI();
+    this._registerTools();
+    CAD.ai = this._tools;
+    CAD.aiAsk = (text) => this.ask(text);
+    this._extraTools = [];
+    this._extraPrompt = '';
+    CAD.aiRegisterTools = (tools, promptLine) => this.registerExtraTools(tools, promptLine);
+
+    this._addMessage('assistant', this._welcome());
+    this._updateStatus();
+
+    const statusEl = document.getElementById('aiStatus');
+    if (statusEl) statusEl.addEventListener('click', () => this.openSettings());
+  }
+
+  /** 供其他模块（如 3D 建模）注册额外工具与系统提示 */
+  registerExtraTools(tools, promptLine = '') {
+    this._extraTools.push(...(Array.isArray(tools) ? tools : []));
+    if (promptLine) {
+      this._extraPrompt += promptLine + '\n';
+      if (this.messages[0]?.role === 'system') {
+        this.messages[0].content = SYSTEM_PROMPT + '\n\n[三维能力]\n' + this._extraPrompt.trim();
+      }
+    }
+  }
+  _allTools() { return [...TOOLS, ...this._extraTools]; }
+
+  /* ---------------- 设置 ---------------- */
+  _loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    } catch (e) { /* ignore */ }
+    return { ...DEFAULT_SETTINGS };
+  }
+
+  /* ---------------- 样式 ---------------- */
+  _injectStyle() {
+    if (document.getElementById('xbcad-ai-style')) return;
+    const st = document.createElement('style');
+    st.id = 'xbcad-ai-style';
+    st.textContent = STYLE_TEXT;
+    document.head.appendChild(st);
+  }
+
+  /* ---------------- UI 构建 ---------------- */
+  _buildUI() {
+    const root = document.getElementById('tab-ai');
+    root.innerHTML = '';
+    root.appendChild(this._el('div', 'ai-panel', (panel) => {
+      // 头部
+      panel.appendChild(this._el('div', 'ai-head', (head) => {
+        this.dot = this._el('span', 'ai-dot');
+        head.appendChild(this.dot);
+        this.modelEl = this._el('span', 'ai-model', (s) => { s.textContent = this.settings.model || '未配置'; });
+        head.appendChild(this.modelEl);
+        const btns = this._el('div', 'ai-head-btns');
+        btns.appendChild(this._btn('⚙ 设置', () => this.openSettings()));
+        btns.appendChild(this._btn('🗑 清空', () => this.clear()));
+        head.appendChild(btns);
+      }));
+      // 消息区
+      this.messagesEl = this._el('div', 'ai-messages');
+      panel.appendChild(this.messagesEl);
+      // 参考文件区
+      panel.appendChild(this._el('div', 'ai-files', (files) => {
+        this.attachBtn = this._btn('📎 参考文件', () => this.fileInput.click(), 'ai-attach');
+        files.appendChild(this.attachBtn);
+        this.fileInput = document.createElement('input');
+        this.fileInput.type = 'file';
+        this.fileInput.accept = '.dxf,.json,.xbcad,.svg,.txt';
+        this.fileInput.multiple = true;
+        this.fileInput.style.display = 'none';
+        this.fileInput.addEventListener('change', () => this._onFiles(this.fileInput.files));
+        files.appendChild(this.fileInput);
+        this.chipsEl = document.createElement('div');
+        this.chipsEl.style.cssText = 'display:contents;';
+        files.appendChild(this.chipsEl);
+      }));
+      // 输入区
+      panel.appendChild(this._el('div', 'ai-input', (input) => {
+        this.textarea = document.createElement('textarea');
+        this.textarea.className = 'ai-textarea';
+        this.textarea.placeholder = '描述你想画的图形，Enter 发送，Shift+Enter 换行…';
+        this.textarea.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            this._sendFromInput();
+          }
+        });
+        input.appendChild(this.textarea);
+        this.sendBtn = this._btn('发送', () => {
+          if (this._busy) this._stop();
+          else this._sendFromInput();
+        }, 'ai-send');
+        input.appendChild(this.sendBtn);
+      }));
+    }));
+  }
+
+  _el(tag, cls, fn) {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (fn) fn(el);
+    return el;
+  }
+  _btn(label, onClick, cls) {
+    const b = document.createElement('button');
+    if (cls) b.className = cls;
+    b.textContent = label;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  _welcome() {
+    return '你好！我是小宝CAD 的 AI 助手 👋\n\n' +
+      '配置好 API Key 后（点击右上角 **⚙ 设置**），就能用自然语言让我帮你画图，例如：\n\n' +
+      '- 「画一个 100×60 的矩形，四角各一个半径 5 的圆」\n' +
+      '- 「把当前选中的图形向右移动 50mm」\n' +
+      '- 「查询图纸里有哪些实体」\n\n' +
+      '也可以点击 **📎 参考文件** 附加 DXF/JSON/SVG 图纸作为创作参考。';
+  }
+
+  /* ---------------- 状态同步 ---------------- */
+  _updateStatus() {
+    const el = document.getElementById('aiStatus');
+    if (el) {
+      el.classList.remove('ready', 'busy');
+      if (this._busy) {
+        el.textContent = '🤖 AI 思考中…';
+        el.classList.add('busy');
+      } else if (this.settings.key) {
+        el.textContent = `🤖 AI 就绪 · ${this.settings.model}`;
+        el.classList.add('ready');
+      } else {
+        el.textContent = '🤖 AI 未配置';
+      }
+    }
+    if (this.dot) {
+      this.dot.className = 'ai-dot' + (this._busy ? ' busy' : this.settings.key ? ' on' : '');
+    }
+    if (this.modelEl) this.modelEl.textContent = this.settings.model || '未配置';
+  }
+
+  /* ---------------- 对外方法 ---------------- */
+  openSettings() { this._openSettingsDialog(); }
+
+  ask(text) {
+    text = String(text == null ? '' : text).trim();
+    if (!text) return;
+    this._addMessage('user', text);
+    this.messages.push({ role: 'user', content: text });
+    this._send();
+  }
+
+  clear() {
+    this.messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+    this.messagesEl.innerHTML = '';
+    this._addMessage('system', '对话已清空');
+    this._pendingSend = false;
+  }
+
+  /* ---------------- 消息渲染 ---------------- */
+  _addMessage(role, content) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-msg ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'ai-bubble';
+    const str = String(content == null ? '' : content);
+    if (role === 'assistant') bubble.innerHTML = this._md(str);
+    else bubble.innerHTML = escapeHtml(str).replace(/\n/g, '<br>');
+    wrap.appendChild(bubble);
+    this.messagesEl.appendChild(wrap);
+    this._scrollBottom();
+  }
+  _scrollBottom() {
+    requestAnimationFrame(() => { this.messagesEl.scrollTop = this.messagesEl.scrollHeight; });
+  }
+
+  /* 轻量 markdown：先 escapeHtml，再处理代码块/加粗/行内码/换行 */
+  _md(text) {
+    let esc = escapeHtml(text);
+    const blocks = [];
+    esc = esc.replace(/```([\w-]*)\n?([\s\S]*?)```/g, (m, lang, code) => {
+      blocks.push(`<pre class="md-code"><code>${code}</code></pre>`);
+      return `\u0000B${blocks.length - 1}\u0000`;
+    });
+    esc = esc.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    esc = esc.replace(/`([^`]+)`/g, '<code class="md-inline">$1</code>');
+    esc = esc.replace(/\n/g, '<br>');
+    esc = esc.replace(/\u0000B(\d+)\u0000/g, (m, i) => blocks[+i] || '');
+    return esc;
+  }
+
+  /* ---------------- 输入 / 发送 ---------------- */
+  _sendFromInput() {
+    const text = this.textarea.value.trim();
+    if (!text) return;
+    this.textarea.value = '';
+    this.ask(text);
+  }
+  _stop() { if (this._ctrl) this._ctrl.abort(); }
+
+  _send() {
+    if (this._busy) { this._pendingSend = true; return; }
+    this._runConversation();
+  }
+
+  /* ---------------- 主流程 ---------------- */
+  async _runConversation() {
+    const s = this.settings;
+    if (!s.key) {
+      this._addMessage('error', '⚠️ 尚未配置 API Key，请先在设置中填写。');
+      this.openSettings();
+      return;
+    }
+    this._busy = true;
+    this._ctrl = new AbortController();
+    this._updateStatus();
+    this._setSendButton(true);
+    try {
+      let result;
+      if (s.useTools) {
+        result = await this._runWithTools();
+        if (result && result.fallback) result = await this._runFallback();
+      } else {
+        result = await this._runFallback();
+      }
+      if (result && result.text) this._addMessage('assistant', result.text);
+    } catch (e) {
+      this._renderError(e);
+    } finally {
+      this._busy = false;
+      this._ctrl = null;
+      this._updateStatus();
+      this._setSendButton(false);
+      if (this._pendingSend) { this._pendingSend = false; this._runConversation(); }
+    }
+  }
+
+  _setSendButton(busy) {
+    this.sendBtn.textContent = busy ? '停止' : '发送';
+    this.sendBtn.classList.toggle('stop', busy);
+  }
+
+  _renderError(e) {
+    if (e && e.aborted) { this._addMessage('system', '⏹ 已停止生成'); return; }
+    if (e && e.network) { this._addMessage('error', '🌐 网络请求失败，请检查 API 地址与网络连接'); return; }
+    if (e && (e.status === 401 || e.status === 403)) { this._addMessage('error', '🔑 API Key 无效，请在设置中检查并重新填写'); return; }
+    if (e && e.status === 402) { this._addMessage('error', '💰 余额不足，请前往 DeepSeek 平台充值'); return; }
+    if (e && e.status === 429) { this._addMessage('error', '⏳ 请求过于频繁（429），请稍后再试'); return; }
+    this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
+  }
+
+  async _runWithTools() {
+    const s = this.settings;
+    const roundLimit = Number(s.toolRoundLimit) > 0 ? Number(s.toolRoundLimit) : Infinity;
+    const callLimit = Number(s.toolCallLimit) > 0 ? Number(s.toolCallLimit) : Infinity;
+    let toolCallCount = 0;
+    let lastSig = null;
+    let repeatCount = 0;
+    for (let round = 0; round < roundLimit; round++) {
+      const body = {
+        model: s.model,
+        messages: this.messages,
+        temperature: s.temperature,
+        max_tokens: s.maxTokens,
+        stream: false,
+        tools: this._allTools(),
+        tool_choice: 'auto',
+      };
+      let data;
+      try {
+        data = await this._post(body, this._ctrl.signal);
+      } catch (e) {
+        if (e.aborted || e.network) throw e;
+        if (e.status === 400 || e.status === 404) return { fallback: true };
+        throw e;
+      }
+      const msg = data.choices?.[0]?.message;
+      if (!msg) throw new Error('响应格式异常');
+      if (msg.tool_calls && msg.tool_calls.length) {
+        // 死循环检测：连续多轮发出完全相同的工具调用 → 中断
+        const sig = msg.tool_calls.map((tc) => `${tc.function?.name}(${tc.function?.arguments || ''})`).join('|');
+        if (sig === lastSig) {
+          repeatCount++;
+          if (repeatCount >= REPEAT_LIMIT) {
+            return { fallback: false, text: await this._finalSummary(toolCallCount, '检测到模型在重复执行相同的操作，已自动停止以避免死循环') };
+          }
+        } else {
+          lastSig = sig;
+          repeatCount = 0;
+        }
+        const names = [];
+        this.messages.push({ role: 'assistant', content: msg.content || '', tool_calls: msg.tool_calls });
+        for (const tc of msg.tool_calls) {
+          let result;
+          try {
+            result = this._callTool(tc.function?.name, this._parseArgs(tc.function?.arguments));
+          } catch (err) {
+            result = '工具执行错误: ' + (err && err.message ? err.message : err);
+          }
+          names.push(tc.function?.name || 'unknown');
+          this.messages.push({ role: 'tool', tool_call_id: tc.id, content: result });
+        }
+        toolCallCount += msg.tool_calls.length;
+        this._addMessage('system', `🔧 已执行工具：${names.join('、')}`);
+        if (toolCallCount >= callLimit) {
+          return { fallback: false, text: await this._finalSummary(toolCallCount, '已达到设置的工具调用总次数上限') };
+        }
+        continue;
+      }
+      const text = msg.content || '';
+      this.messages.push({ role: 'assistant', content: text });
+      return { fallback: false, text };
+    }
+    // 仅在用户显式设置了上限时才会走到这里
+    return { fallback: false, text: await this._finalSummary(toolCallCount, '已达到设置的工具调用轮数上限') };
+  }
+  _capMessage(count, reason) {
+    return `⚠️ ${reason}。\n本次共执行了 ${count} 次工具操作，已完成的图形都保留在图纸中（可按 Ctrl+Z 或输入命令 U 撤销）。\n💡 建议：把任务拆分成更小的步骤再让我继续，或直接回复「继续完成剩余部分」。`;
+  }
+  /** 达到上限时：请求模型做一次不带工具的最终总结，替代生硬的警告 */
+  async _finalSummary(count, reason) {
+    const s = this.settings;
+    try {
+      this.messages.push({
+        role: 'user',
+        content: `[系统提示] 工具调用已达到安全上限（${reason}，本轮共执行 ${count} 次操作）。请停止调用工具，直接总结：已完成哪些建模步骤、当前模型状态、以及用户可以让你继续完成什么。`,
+      });
+      const body = {
+        model: s.model, messages: this.messages, temperature: s.temperature,
+        max_tokens: s.maxTokens, stream: false,
+      };
+      const data = await this._post(body, this._ctrl.signal);
+      const text = data.choices?.[0]?.message?.content || '';
+      this.messages.push({ role: 'assistant', content: text });
+      if (text) return text;
+    } catch (e) {
+      console.warn('[ai] 最终总结请求失败', e);
+    }
+    return this._capMessage(count, reason);
+  }
+
+  async _runFallback() {
+    const s = this.settings;
+    this._appendFallbackInstruction();
+    // 清理历史中的工具调用痕迹，避免无工具请求报错
+    this.messages = this.messages
+      .filter((m) => m.role !== 'tool')
+      .map((m) => (m.role === 'assistant' ? { role: m.role, content: m.content } : m));
+
+    const body = {
+      model: s.model,
+      messages: this.messages,
+      temperature: s.temperature,
+      max_tokens: s.maxTokens,
+      stream: false,
+    };
+    const data = await this._post(body, this._ctrl.signal);
+    const msg = data.choices?.[0]?.message;
+    const text = msg?.content || '';
+    this.messages.push({ role: 'assistant', content: text });
+
+    const execResult = await this._executeCodeBlocks(text);
+    if (execResult) {
+      this._addMessage('system', execResult);
+      this.messages.push({ role: 'user', content: '[执行结果反馈]\n' + execResult });
+      const data2 = await this._post(body, this._ctrl.signal);
+      const msg2 = data2.choices?.[0]?.message;
+      const text2 = msg2?.content || '';
+      this.messages.push({ role: 'assistant', content: text2 });
+      return { text: text2 };
+    }
+    return { text };
+  }
+
+  _appendFallbackInstruction() {
+    const last = [...this.messages].reverse().find((m) => m.role === 'user' && !String(m.content).startsWith('[参考文件]'));
+    if (last) last.content = String(last.content) + FALLBACK_INSTRUCTION;
+    else this.messages.push({ role: 'user', content: FALLBACK_INSTRUCTION.trim() });
+  }
+
+  /* ---------------- 网络请求 ---------------- */
+  async _post(body, signal) {
+    const s = this.settings;
+    let base = (s.base || '').trim() || 'https://api.deepseek.com';
+    if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+    base = base.replace(/\/+$/, '');
+    const url = base + '/chat/completions';
+    let resp;
+    try {
+      resp = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${s.key || ''}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (e) {
+      if (e && e.name === 'AbortError') { const err = new Error('aborted'); err.aborted = true; throw err; }
+      const err = new Error((e && e.message) || '网络错误'); err.network = true; throw err;
+    }
+    let text = '';
+    try { text = await resp.text(); } catch (e) { text = ''; }
+    if (!resp.ok) {
+      const err = new Error(this._apiErrorMessage(resp.status, text));
+      err.status = resp.status;
+      throw err;
+    }
+    try { return JSON.parse(text); }
+    catch (e) { throw new Error('响应解析失败'); }
+  }
+  _apiErrorMessage(status, text) {
+    let msg = '';
+    try { const j = JSON.parse(text); msg = j?.error?.message || ''; } catch (e) { /* ignore */ }
+    return msg ? `HTTP ${status}: ${msg}` : `HTTP ${status}: ${(text || '').slice(0, 200)}`;
+  }
+
+  /* ---------------- 工具调度 ---------------- */
+  _registerTools() {
+    this._tools = {
+      draw_entities: (a) => this._toolDrawEntities(a),
+      modify_entities: (a) => this._toolModifyEntities(a),
+      erase_entities: (a) => this._toolEraseEntities(a),
+      set_layer: (a) => this._toolSetLayer(a),
+      set_layer_props: (a) => this._toolSetLayerProps(a),
+      query_drawing: (a) => this._toolQueryDrawing(a),
+      select_entities: (a) => this._toolSelectEntities(a),
+      zoom_view: (a) => this._toolZoomView(a),
+      undo: () => this._toolUndo(),
+      redo: () => this._toolRedo(),
+      measure: (a) => this._toolMeasure(a),
+      get_file_context: () => this._toolGetFileContext(),
+    };
+  }
+  _parseArgs(str) {
+    if (!str) return {};
+    try { return JSON.parse(str); } catch (e) { return {}; }
+  }
+  _callTool(name, args) {
+    // 优先 2D 工具，其次 3D 工具（CAD.ai3d，由 3D 工作区注册）
+    const fn = this._tools[name] || (this.CAD.ai3d && this.CAD.ai3d[name]);
+    if (!fn) throw new Error('未知工具: ' + name);
+    return fn(args || {});
+  }
+
+  /* ---------------- 工具实现 ---------------- */
+  _toolDrawEntities(args) {
+    const items = Array.isArray(args.items) ? args.items : [];
+    if (!items.length) throw new Error('items 不能为空');
+    const scene = this.scene;
+    const out = [];
+    for (const it of items) {
+      const layer = it.layer || scene.currentLayer;
+      const opts = { layer };
+      if (it.color) opts.color = it.color;
+      let e;
+      switch (it.type) {
+        case 'line': e = make.line({ x: num(it.x1), y: num(it.y1) }, { x: num(it.x2), y: num(it.y2) }, opts); break;
+        case 'circle': e = make.circle({ x: num(it.cx), y: num(it.cy) }, num(it.r), opts); break;
+        case 'arc': e = make.arc({ x: num(it.cx), y: num(it.cy) }, num(it.r), num(it.startAngle) * D2R, num(it.endAngle) * D2R, opts); break;
+        case 'ellipse': e = make.ellipse({ x: num(it.cx), y: num(it.cy) }, num(it.rx), num(it.ry), num(it.rotation) * D2R, opts); break;
+        case 'polyline': {
+          const pts = (Array.isArray(it.points) ? it.points : []).map((p) => {
+            if (Array.isArray(p)) return { x: num(p[0]), y: num(p[1]) };
+            return { x: num(p.x), y: num(p.y) };
+          });
+          e = make.polyline(pts, { ...opts, closed: !!it.closed });
+          break;
+        }
+        case 'rectangle': e = make.rectangle({ x: num(it.x1), y: num(it.y1) }, { x: num(it.x2), y: num(it.y2) }, opts); break;
+        case 'point': e = make.point({ x: num(it.x), y: num(it.y) }, opts); break;
+        case 'text': {
+          const o = { ...opts };
+          if (it.halign) o.halign = it.halign;
+          e = make.text({ x: num(it.x), y: num(it.y) }, String(it.text ?? ''), num(it.height, 4), num(it.rotation) * D2R, o);
+          break;
+        }
+        default: throw new Error('未知图元类型: ' + it.type);
+      }
+      out.push(e);
+    }
+    scene.beginUndoGroup('AI 绘图');
+    scene.addEntities(out);
+    scene.endUndoGroup();
+    this.viewport.requestRender();
+    let msg = `已创建 ${out.length} 个实体: [${out.map((e) => e.id).join(', ')}]`;
+    if (this.CAD.workspace === '3d') {
+      msg += '\n⚠️ 注意：这些是 2D 实体，已画在 2D 图纸上，当前处于 3D 建模工作区看不到它们。若用户想要三维模型，请改用 create_primitive_3d / boolean_3d 等三维工具。';
+    }
+    return msg;
+  }
+
+  _toolModifyEntities(args) {
+    const op = args.operation;
+    if (!['move', 'copy', 'rotate', 'scale', 'mirror'].includes(op)) throw new Error('未知操作: ' + op);
+    let ids = Array.isArray(args.ids) && args.ids.length ? args.ids : [...this.scene.selection];
+    ids = ids.filter((id) => this.scene.get(id));
+    if (!ids.length) throw new Error('未指定 ids 且当前没有选择集');
+    let matrix; let copy = false; let desc;
+    if (op === 'move') { matrix = translationM(num(args.dx), num(args.dy)); desc = '移动'; }
+    else if (op === 'copy') { matrix = translationM(num(args.dx), num(args.dy)); copy = true; desc = '复制'; }
+    else if (op === 'rotate') { matrix = rotationM(num(args.angle) * D2R, num(args.cx), num(args.cy)); desc = '旋转'; }
+    else if (op === 'scale') { matrix = scaleM(num(args.factor, 1), num(args.factor, 1), num(args.cx), num(args.cy)); desc = '缩放'; }
+    else { matrix = mirrorM({ x: num(args.x1), y: num(args.y1) }, { x: num(args.x2), y: num(args.y2) }); copy = true; desc = '镜像'; }
+    this.scene.transformEntities(matrix, ids, { copy, group: 'AI 修改' });
+    this.viewport.requestRender();
+    return `已${desc} ${ids.length} 个实体${copy ? '（保留原件）' : ''}`;
+  }
+
+  _toolEraseEntities(args) {
+    const scene = this.scene;
+    let ids = [];
+    if (args.all) ids = scene.all().map((e) => e.id);
+    else if (Array.isArray(args.ids)) ids = args.ids;
+    else if (args.filter) {
+      ids = scene.all()
+        .filter((e) => (!args.filter.type || e.type === args.filter.type) && (!args.filter.layer || e.layer === args.filter.layer))
+        .map((e) => e.id);
+    }
+    ids = ids.filter((id) => scene.get(id));
+    if (!ids.length) return '未删除任何实体（无匹配对象）';
+    const removed = [];
+    scene.beginUndoGroup('AI 删除');
+    removed.push(...scene.removeEntities(ids));
+    scene.endUndoGroup();
+    this.viewport.requestRender();
+    return `已删除 ${removed.length} 个实体`;
+  }
+
+  _toolSetLayer(args) {
+    const scene = this.scene;
+    if (!args.name) throw new Error('缺少图层名称');
+    const name = String(args.name);
+    const color = args.color;
+    const current = !!args.current;
+    if (scene.layers.has(name)) {
+      if (color) { const l = scene.layer(name); if (l) l.color = color; }
+    } else {
+      scene.ensureLayer(name, color ? { color } : {});
+    }
+    if (current) scene.setCurrentLayer(name);
+    scene.emit('layers');
+    this.viewport.requestRender();
+    return `图层「${name}」已就绪${current ? '，并设为当前图层' : ''}`;
+  }
+
+  _toolSetLayerProps(args) {
+    const scene = this.scene;
+    if (!args.name) throw new Error('缺少图层名称');
+    const l = scene.layer(String(args.name));
+    if (!l) throw new Error(`图层「${args.name}」不存在`);
+    if (args.on !== undefined) l.on = !!args.on;
+    if (args.locked !== undefined) l.locked = !!args.locked;
+    scene.emit('layers');
+    this.viewport.requestRender();
+    return `图层「${args.name}」：${l.on ? '显示' : '隐藏'}，${l.locked ? '锁定' : '解锁'}`;
+  }
+
+  _toolQueryDrawing(args) {
+    const scene = this.scene;
+    const what = args.what || 'summary';
+    switch (what) {
+      case 'summary': return buildSceneSummary(scene, { maxEntities: 60 });
+      case 'entity': {
+        if (!args.id) throw new Error('entity 查询需要 id');
+        const e = scene.get(args.id);
+        if (!e) return `实体 ${args.id} 不存在`;
+        return `实体 ${args.id}: ${JSON.stringify(e)}`;
+      }
+      case 'type': {
+        if (!args.type) throw new Error('type 查询需要 type');
+        const list = scene.byType(args.type);
+        return `类型 ${args.type} 共 ${list.length} 个:\n` + list.map((e) => `[${e.id}] ${this._brief(e)}`).join('\n');
+      }
+      case 'layers': {
+        const rows = [...scene.layers.values()].map((l) =>
+          `${l.name}: 颜色=${l.color}, ${l.on ? '显示' : '隐藏'}, ${l.locked ? '锁定' : '解锁'}${l.name === scene.currentLayer ? '（当前）' : ''}`);
+        return '图层清单:\n' + rows.join('\n');
+      }
+      case 'selection': {
+        const sel = scene.selected();
+        return `当前选择 ${sel.length} 个实体:\n` + sel.map((e) => `[${e.id}] ${e.type} ${this._brief(e)}`).join('\n');
+      }
+      case 'extents': {
+        const bb = scene.extents();
+        if (!bb) return '图纸为空';
+        return `包围盒: X ${Math.round(bb[0] * 100) / 100} ~ ${Math.round(bb[2] * 100) / 100}, Y ${Math.round(bb[1] * 100) / 100} ~ ${Math.round(bb[3] * 100) / 100}（可用 zoom_view mode=extents 查看全图）`;
+      }
+      default: throw new Error('未知查询类型: ' + what);
+    }
+  }
+
+  _toolSelectEntities(args) {
+    const scene = this.scene;
+    let ids = [];
+    if (args.all) ids = scene.all().map((e) => e.id);
+    else if (Array.isArray(args.ids)) ids = args.ids;
+    else if (args.filter) {
+      ids = scene.all()
+        .filter((e) => (!args.filter.type || e.type === args.filter.type) && (!args.filter.layer || e.layer === args.filter.layer))
+        .map((e) => e.id);
+    }
+    ids = ids.filter((id) => scene.get(id));
+    scene.select(ids, 'set');
+    this.viewport.requestRender();
+    return `已选择 ${ids.length} 个实体`;
+  }
+
+  _toolZoomView(args) {
+    const vp = this.viewport;
+    const mode = args.mode || 'extents';
+    if (Array.isArray(args.center) && args.center.length >= 2) {
+      vp.centerOn(num(args.center[0]), num(args.center[1]));
+    }
+    if (mode === 'extents' || mode === 'fit') vp.zoomExtents();
+    else if (mode === 'in') vp.zoomBy(1.25);
+    else if (mode === 'out') vp.zoomBy(0.8);
+    else throw new Error('未知缩放模式: ' + mode);
+    this.viewport.requestRender();
+    return `已执行视图缩放（${mode}）`;
+  }
+
+  _toolUndo() { return this.scene.undo() ? '已撤销上一步操作' : '没有可撤销的操作'; }
+  _toolRedo() { return this.scene.redo() ? '已重做' : '没有可重做的操作'; }
+
+  _toolMeasure(args) {
+    const d = dist({ x: num(args.x1), y: num(args.y1) }, { x: num(args.x2), y: num(args.y2) });
+    return `两点距离 = ${Math.round(d * 1000) / 1000} mm`;
+  }
+
+  _toolGetFileContext() {
+    if (!this.fileContexts.length) return '（当前无参考文件）';
+    return this.fileContexts
+      .map((c) => `[${c.name}] ${c.count} 个实体\n${c.summary}`)
+      .join('\n\n');
+  }
+
+  /* 实体简要描述（供工具返回精简文本） */
+  _brief(e) {
+    const f = (v) => (Number.isFinite(v) ? String(Math.round(v * 100) / 100) : '');
+    switch (e.type) {
+      case 'line': return `(${f(e.x1)},${f(e.y1)})-(${f(e.x2)},${f(e.y2)})`;
+      case 'circle': return `圆心(${f(e.cx)},${f(e.cy)}) r=${f(e.r)}`;
+      case 'arc': return `圆心(${f(e.cx)},${f(e.cy)}) r=${f(e.r)}`;
+      case 'ellipse': return `中心(${f(e.cx)},${f(e.cy)}) ${f(e.rx)}×${f(e.ry)}`;
+      case 'polyline': return `${e.points?.length || 0}点${e.closed ? '闭合' : ''}`;
+      case 'text': return `"${String(e.text || '').slice(0, 20)}" @(${f(e.x)},${f(e.y)})`;
+      case 'point': return `(${f(e.x)},${f(e.y)})`;
+      case 'insert': return `块[${e.block}] @(${f(e.x)},${f(e.y)})`;
+      case 'dimension': return '标注';
+      case 'hatch': return '填充';
+      default: return '';
+    }
+  }
+
+  /* ---------------- 文件参考 ---------------- */
+  _onFiles(fileList) {
+    for (const f of fileList) this._attachFile(f);
+    this.fileInput.value = '';
+  }
+
+  async _attachFile(file) {
+    const name = file.name || '未命名';
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    try {
+      const text = await fileToText(file);
+      let summary; let count = 0; let isText = false;
+      if (ext === 'dxf') {
+        if (!this.CAD.dxf) throw new Error('DXF 模块未加载');
+        const data = this.CAD.dxf.parseDXF(text);
+        count = (data && data.entities ? data.entities : []).length;
+        summary = buildDataSummary(data, { maxEntities: 60 });
+      } else if (ext === 'json' || ext === 'xbcad') {
+        const json = JSON.parse(text);
+        const s = Scene.load(json);
+        count = s.count();
+        summary = buildSceneSummary(s, { maxEntities: 60 });
+      } else if (ext === 'svg') {
+        const entities = svgToEntities(text);
+        count = entities.length;
+        summary = buildDataSummary({ layers: [], entities, units: 'mm' }, { maxEntities: 60 });
+      } else if (ext === 'txt') {
+        summary = text.slice(0, MAX_SUMMARY_LEN);
+        if (text.length > MAX_SUMMARY_LEN) summary += '\n…（已截断）';
+        isText = true;
+      } else {
+        throw new Error('不支持的文件格式: .' + ext);
+      }
+
+      let finalSummary = summary;
+      if (!isText && finalSummary.length > MAX_SUMMARY_LEN) {
+        finalSummary = finalSummary.slice(0, MAX_SUMMARY_LEN) + '\n…（摘要已截断）';
+      }
+
+      const entry = { name, count, summary: finalSummary, ext };
+      this.fileContexts.push(entry);
+      this._addChip(entry);
+
+      const ctxMsg = `[参考文件] ${name}（${count} 个实体）\n摘要:\n${finalSummary}`;
+      this.messages.push({ role: 'user', content: ctxMsg });
+
+      const note = isText
+        ? `已读取文件 ${name}（文本参考）`
+        : `已读取文件 ${name}，共 ${count} 个实体`;
+      this._addMessage('system', note);
+    } catch (e) {
+      const msg = '📎 读取参考文件失败: ' + (e && e.message ? e.message : e);
+      try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
+      this._addMessage('error', msg);
+    }
+  }
+
+  _addChip(entry) {
+    const chip = document.createElement('span');
+    chip.className = 'ai-chip';
+    chip.title = entry.name;
+    const label = document.createElement('span');
+    label.textContent = `📎 ${entry.name}${entry.count != null ? `（${entry.count}）` : ''}`;
+    const x = document.createElement('i');
+    x.className = 'ai-chip-x';
+    x.textContent = '×';
+    x.title = '移除该参考文件';
+    x.addEventListener('click', () => {
+      const i = this.fileContexts.indexOf(entry);
+      if (i >= 0) this.fileContexts.splice(i, 1);
+      chip.remove();
+    });
+    chip.appendChild(label);
+    chip.appendChild(x);
+    this.chipsEl.appendChild(chip);
+  }
+
+  /* ---------------- 降级模式：解析并执行代码块 ---------------- */
+  async _executeCodeBlocks(text) {
+    const blocks = [];
+    const re = /```(?:json|cad)\s*\n?([\s\S]*?)```/gi;
+    let m;
+    while ((m = re.exec(text))) blocks.push(m[1]);
+    if (!blocks.length) return null;
+    const results = [];
+    for (const code of blocks) {
+      try {
+        const obj = JSON.parse(code.trim());
+        results.push(...this._applyCadJSON(obj));
+      } catch (e) {
+        results.push('JSON 解析失败: ' + (e && e.message ? e.message : e));
+      }
+    }
+    return results.length ? '📐 已解析并执行 CAD 指令：\n' + results.join('\n') : null;
+  }
+
+  _applyCadJSON(obj) {
+    const results = [];
+    if (obj && Array.isArray(obj.commands)) {
+      for (const cmd of obj.commands) {
+        try {
+          this.CAD.commander.execAndEnd(String(cmd));
+          results.push('已执行命令: ' + cmd);
+        } catch (e) {
+          results.push('命令执行失败: ' + cmd + ' → ' + (e && e.message ? e.message : e));
+        }
+      }
+    }
+    if (obj && Array.isArray(obj.draw)) {
+      try { results.push(this._toolDrawEntities({ items: obj.draw })); }
+      catch (e) { results.push('draw 执行失败: ' + (e && e.message ? e.message : e)); }
+    }
+    if (obj && obj.query) {
+      try { results.push(this._toolQueryDrawing({ what: obj.query })); }
+      catch (e) { results.push('query 执行失败: ' + (e && e.message ? e.message : e)); }
+    }
+    return results;
+  }
+
+  /* ---------------- 设置对话框 ---------------- */
+  _openSettingsDialog() {
+    const s = this.settings;
+    const box = document.createElement('div');
+    const row = (label, control) => {
+      const r = document.createElement('div');
+      r.className = 'form-row';
+      const l = document.createElement('label');
+      l.textContent = label;
+      r.appendChild(l);
+      r.appendChild(control);
+      box.appendChild(r);
+      return control;
+    };
+    const mkInput = (type, value, ph) => {
+      const inp = document.createElement('input');
+      inp.type = type;
+      inp.value = value;
+      if (ph) inp.placeholder = ph;
+      return inp;
+    };
+
+    const baseInp = mkInput('text', s.base, 'https://api.deepseek.com');
+    row('API 地址', baseInp);
+    const modelInp = mkInput('text', s.model, 'deepseek-chat');
+    row('模型', modelInp);
+    const keyInp = mkInput('password', s.key, 'DeepSeek 平台 platform.deepseek.com 申请');
+    row('API Key', keyInp);
+
+    const tempInp = mkInput('number', String(s.temperature));
+    tempInp.min = '0'; tempInp.max = '1'; tempInp.step = '0.1';
+    row('温度', tempInp);
+
+    const maxInp = mkInput('number', String(s.maxTokens));
+    maxInp.min = '1'; maxInp.step = '100';
+    row('最大 token', maxInp);
+
+    const roundLimitInp = mkInput('number', String(s.toolRoundLimit ?? 0), '0 = 不限制');
+    roundLimitInp.min = '0'; roundLimitInp.step = '1';
+    row('工具轮数上限', roundLimitInp);
+    const callLimitInp = mkInput('number', String(s.toolCallLimit ?? 0), '0 = 不限制');
+    callLimitInp.min = '0'; callLimitInp.step = '10';
+    row('工具次数上限', callLimitInp);
+
+    const toolsRow = document.createElement('div');
+    toolsRow.className = 'form-row';
+    const toolsLabel = document.createElement('label');
+    toolsLabel.textContent = '函数调用';
+    const toolsChk = document.createElement('input');
+    toolsChk.type = 'checkbox';
+    toolsChk.checked = !!s.useTools;
+    toolsChk.style.cssText = 'flex:none;width:16px;height:16px;accent-color:var(--accent);';
+    const toolsText = document.createElement('span');
+    toolsText.textContent = '启用函数调用(工具)';
+    toolsText.style.cssText = 'color:var(--text-dim);font-size:12px;';
+    toolsRow.appendChild(toolsLabel);
+    toolsRow.appendChild(toolsChk);
+    toolsRow.appendChild(toolsText);
+    box.appendChild(toolsRow);
+
+    const help = document.createElement('div');
+    help.className = 'form-help';
+    help.textContent = 'Key 仅保存在本浏览器 localStorage，不会上传到任何第三方。工具轮数/次数上限默认 0（不限制）；无论是否设上限，模型连续重复相同操作时都会自动停下防死循环，也可随时点「停止」手动打断。';
+    box.appendChild(help);
+
+    this.CAD.ui.dialog({
+      title: 'AI 助手设置',
+      body: box,
+      buttons: [
+        { label: '取消' },
+        {
+          label: '保存',
+          primary: true,
+          onClick: () => {
+            const base = baseInp.value.trim();
+            const model = modelInp.value.trim();
+            const key = keyInp.value.trim();
+            if (!base || !model) { this.CAD.notify('请填写 API 地址与模型', 'error'); return false; }
+            const temp = parseFloat(tempInp.value);
+            const maxTokens = parseInt(maxInp.value, 10);
+            const roundLimit = parseInt(roundLimitInp.value, 10);
+            const callLimit = parseInt(callLimitInp.value, 10);
+            this.settings = {
+              base,
+              model,
+              key,
+              temperature: Number.isFinite(temp) ? Math.min(1, Math.max(0, temp)) : DEFAULT_SETTINGS.temperature,
+              maxTokens: Number.isFinite(maxTokens) && maxTokens > 0 ? maxTokens : DEFAULT_SETTINGS.maxTokens,
+              useTools: toolsChk.checked,
+              toolRoundLimit: Number.isFinite(roundLimit) && roundLimit >= 0 ? roundLimit : 0,
+              toolCallLimit: Number.isFinite(callLimit) && callLimit >= 0 ? callLimit : 0,
+            };
+            try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(this.settings)); } catch (e) { /* ignore */ }
+            this._updateStatus();
+            this.CAD.notify('AI 设置已保存');
+          },
+        },
+      ],
+    });
+  }
+}

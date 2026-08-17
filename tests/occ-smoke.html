@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC 内核冒烟测试</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:20px">
+<pre id="out">正在加载 OpenCASCADE 内核（63MB WASM）…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const t0 = Date.now();
+try {
+  const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+  out.push('模块加载 ' + (Date.now() - t0) + 'ms'); flush();
+  const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+  out.push('内核初始化 ' + (Date.now() - t0) + 'ms, 导出 ' + Object.keys(oc).length + ' 个符号'); flush();
+  const q = (re) => Object.keys(oc).filter((k) => re.test(k)).slice(0, 20).join(',');
+  out.push('MakeBox: ' + q(/MakeBox/)); flush();
+  out.push('Cut: ' + q(/BRepAlgoAPI_Cut|BRepAlgoAPI_Fuse|BRepAlgoAPI_Common/)); flush();
+  out.push('StlAPI: ' + q(/StlAPI/)); flush();
+  out.push('STEP: ' + q(/STEPControl/)); flush();
+  out.push('Mesh: ' + q(/BRepMesh|TopExp_Explorer|BRep_Tool/)); flush();
+  out.push('Trsf: ' + q(/BRepBuilderAPI_Transform|gp_Trsf/)); flush();
+  out.push('Fillet: ' + q(/MakeFillet|MakeChamfer/)); flush();
+  out.push('FS: ' + typeof oc.FS); flush();
+  out.push('OCC_DONE'); flush();
+} catch (e) {
+  out.push('ERROR: ' + (e && e.message ? e.message : e));
+  out.push('OCC_FAIL'); flush();
+}
+</script>
+</body>
+</html>

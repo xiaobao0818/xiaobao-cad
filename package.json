@@ -1,0 +1,15 @@
+{
+  "name": "xiaobao-cad",
+  "version": "1.1.0",
+  "description": "小宝CAD —— 网页版 2D/3D CAD 软件，DXF/STEP 读写，OpenCASCADE 三维实体内核，集成 AI 大模型助手",
+  "type": "module",
+  "scripts": {
+    "serve": "python3 -m http.server 8899",
+    "test": "node tests/core.test.mjs && node tests/dxf.test.mjs && node tests/model3d.test.mjs && node tests/kernel.test.mjs",
+    "check": "for f in js/*.js js/three-dim/*.js tests/*.mjs; do echo \"== $f\"; node --check \"$f\" || exit 1; done"
+  },
+  "dependencies": {
+    "opencascade.js": "1.1.1",
+    "three": "0.185.1"
+  }
+}

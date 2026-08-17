@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 探索9</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+const chainMethods = (inst) => {
+  const found = [];
+  let p = inst;
+  while (p && p !== Object.prototype) {
+    for (const nm of Object.getOwnPropertyNames(p)) if (nm !== 'constructor' && !found.includes(nm)) found.push(nm);
+    p = Object.getPrototypeOf(p);
+  }
+  return found.sort();
+};
+try {
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const cylShape = new oc.BRepPrimAPI_MakeCylinder_1(2, 2).Shape();
+  const cut = new oc.BRepAlgoAPI_Cut_3(boxShape, cylShape);
+  cut.Build();
+  const cutShape = cut.Shape();
+
+  // 1. Explorer: 0 参构造 + Init
+  {
+    const ex = new oc.TopExp_Explorer_1();
+    out.push('Explorer_1 方法: ' + chainMethods(ex).filter((m) => /Init|More|Next|Current|ReInit/i.test(m)).join(','));
+    for (let fv = 1; fv <= 9; fv++) {
+      try {
+        const e2 = new oc.TopExp_Explorer_1();
+        e2.Init_1(boxShape, fv, 1);
+        let n = 0;
+        while (e2.More()) { n++; e2.Next(); }
+        if (n > 0) out.push(`Init_1(box, ${fv}, 1) → ${n} 个子形状`);
+      } catch (e) { /* 忽略 */ }
+    }
+    // 也试第3参数 0
+    for (let fv = 1; fv <= 9; fv++) {
+      try {
+        const e2 = new oc.TopExp_Explorer_1();
+        e2.Init_1(boxShape, fv, 0);
+        let n = 0;
+        while (e2.More()) { n++; e2.Next(); }
+        if (n > 0) out.push(`Init_1(box, ${fv}, 0) → ${n} 个子形状`);
+      } catch (e) {}
+    }
+  }
+
+  // 2. BRep_Tool 静态
+  {
+    out.push('BRep_Tool 静态: ' + Object.getOwnPropertyNames(oc.BRep_Tool).join(','));
+    out.push('BRepBndLib 静态: ' + Object.getOwnPropertyNames(oc.BRepBndLib).join(','));
+    out.push('BRepMesh_IncrementalMesh 静态: ' + Object.getOwnPropertyNames(oc.BRepMesh_IncrementalMesh).join(','));
+  }
+
+  // 3. STEP 全链路（先做，避开 STL 崩溃）
+  {
+    const w = new oc.STEPControl_Writer_1();
+    const tr = w.Transfer(cutShape, 1, true);
+    out.push('Transfer(3参) = ' + tr);
+    const wr = w.Write('/tmp/x.step');
+    out.push('Write = ' + JSON.stringify(wr) + ' bytes=' + oc.FS.readFile('/tmp/x.step').length);
+    const r = new oc.STEPControl_Reader_1();
+    const rd = r.ReadFile('/tmp/x.step');
+    out.push('ReadFile = ' + rd);
+    const roots = r.TransferRoots();
+    out.push('TransferRoots = ' + roots);
+    const one = r.OneShape();
+    out.push('OneShape = ' + (one ? 'yes' : 'null'));
+    if (one) {
+      const props = new oc.GProp_GProps_1();
+      oc.BRepGProp.VolumeProperties_1(one, props, 1e-5, false, false);
+      out.push('回读体积 = ' + props.Mass() + '（原 ' + (() => { const p2 = new oc.GProp_GProps_1(); oc.BRepGProp.VolumeProperties_1(cutShape, p2, 1e-5, false, false); return p2.Mass(); })() + '）');
+    }
+  }
+
+  // 4. STL（网格化后 2 参 / 3 参 / ASCIIMode 无参）
+  {
+    new oc.BRepMesh_IncrementalMesh_2(boxShape, 0.5, false, 0.5, false);
+    const w = new oc.StlAPI_Writer();
+    let asciiRet = null;
+    try { asciiRet = w.ASCIIMode(); } catch (e) { asciiRet = 'err:' + e.message.slice(0, 60); }
+    out.push('ASCIIMode() 无参 = ' + JSON.stringify(asciiRet));
+    try {
+      const r2 = w.Write(boxShape, '/tmp/x.stl');
+      out.push('Write(2参) = ' + r2);
+      if (r2) {
+        const bytes = oc.FS.readFile('/tmp/x.stl');
+        out.push('STL bytes=' + bytes.length + ' 头=' + new TextDecoder().decode(bytes.slice(0, 12)).replace(/\n/g, ' '));
+      }
+    } catch (e) { out.push('Write(2参) 失败: ' + e.message.slice(0, 100)); }
+    try {
+      const w2 = new oc.StlAPI_Writer();
+      const r3 = w2.Write(boxShape, '/tmp/x3.stl', 0.5);
+      out.push('Write(3参) = ' + r3 + (r3 ? ' bytes=' + oc.FS.readFile('/tmp/x3.stl').length : ''));
+    } catch (e) { out.push('Write(3参) 失败: ' + e.message.slice(0, 100)); }
+  }
+
+  // 5. 圆角：枚举 EDGE 值
+  {
+    const f = new oc.BRepFilletAPI_MakeFillet(boxShape, 0);
+    let added = 0, edges = 0;
+    for (const ev of [5, 6, 7]) {
+      try {
+        const ex = new oc.TopExp_Explorer_1();
+        ex.Init_1(boxShape, ev, 1);
+        while (ex.More()) {
+          edges++;
+          try { f.Add(ex.Current(), 1.5); added++; } catch (e) {}
+          ex.Next();
+        }
+      } catch (e) {}
+    }
+    f.Build();
+    out.push(`圆角: 试过的边数=${edges} added=${added} done=${f.IsDone()}`);
+    if (f.IsDone()) {
+      const props = new oc.GProp_GProps_1();
+      oc.BRepGProp.VolumeProperties_1(f.Shape(), props, 1e-5, false, false);
+      out.push('圆角后体积 = ' + props.Mass());
+    }
+  }
+
+  // 6. 包围盒
+  {
+    const bb = new oc.Bnd_Box_1();
+    out.push('Bnd_Box 方法: ' + chainMethods(bb).join(','));
+    const lib = new oc.BRepBndLib();
+    out.push('BRepBndLib 实例方法: ' + chainMethods(lib).join(','));
+  }
+
+  // 7. 复合体 + 三角面统计（用 Init 枚举 FACE）
+  {
+    new oc.BRepMesh_IncrementalMesh_2(cutShape, 0.5, false, 0.5, false);
+    const ex = new oc.TopExp_Explorer_1();
+    ex.Init_1(cutShape, 4, 1);
+    let faces = 0;
+    while (ex.More()) { faces++; ex.Next(); }
+    out.push('cut 面数(Init, fv=4) = ' + faces);
+    // BRep_Tool 静态 Triangulation 尝试
+    for (const nm of ['Triangulation', 'Triangulation_1', 'Triangulation_2']) {
+      if (typeof oc.BRep_Tool[nm] === 'function') {
+        const ex2 = new oc.TopExp_Explorer_1();
+        ex2.Init_1(cutShape, 4, 1);
+        const loc = new oc.TopLoc_Location_1();
+        let tris = 0;
+        while (ex2.More()) {
+          try {
+            const tri = oc.BRep_Tool[nm](ex2.Current(), loc);
+            if (tri?.NbTriangles) tris += tri.NbTriangles();
+          } catch (e) {}
+          ex2.Next();
+        }
+        out.push('BRep_Tool.' + nm + ' 静态 → tris=' + tris);
+        break;
+      }
+    }
+  }
+} catch (e) {
+  out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+}
+out.push('EXPLORE9_DONE'); flush();
+</script>
+</body>
+</html>

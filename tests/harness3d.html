@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 3D 冒烟测试</title>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "/node_modules/three/build/three.module.js",
+      "three/addons/": "/node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+<pre id="results" style="position:fixed;top:0;left:0;z-index:9999;background:rgba(0,0,0,.85);color:#7ee08a;font-family:monospace;font-size:11px;padding:8px;max-width:480px;max-height:60vh;overflow:auto">等待加载…</pre>
+
+  <div id="app">
+    <header id="topbar">
+      <div class="logo" title="小宝CAD">
+        <span class="logo-icon">
+          <svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="6" fill="#ff8c42"/><path d="M9 12 L15 7 L23 12 M15 7 V24 M11 17 L21 17" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="logo-text">小宝<em>CAD</em></span>
+      </div>
+      <nav id="menubar"></nav>
+      <div id="wsSwitch" class="ws-switch">
+        <button class="ws-btn active" data-ws="2d" title="二维制图工作区">📐 2D 制图</button>
+        <button class="ws-btn" data-ws="3d" title="三维实体建模工作区">🧊 3D 建模</button>
+      </div>
+      <div class="topbar-right">
+        <span id="aiStatus" class="ai-status" title="AI 助手状态">🤖 AI 未配置</span>
+        <span id="docTitle" class="doc-title">未命名图纸</span>
+      </div>
+    </header>
+
+    <div id="toolbar"></div>
+    <div id="toolbar3d" style="display:none"></div>
+
+    <main id="main">
+      <div id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div id="viewHint" class="view-hint">滚轮缩放 · 按住中键/右键拖动平移 · 命令行输入 L 画线 · 点击右侧 🤖 与 AI 对话创作</div>
+      </div>
+      <div id="canvas3dWrap" style="display:none">
+        <div id="canvas3d"></div>
+        <div id="kernelLoading" class="kernel-loading">
+          <div class="kl-spinner"></div>
+          <div class="kl-text">正在加载三维实体内核 OpenCASCADE（约 63MB，仅首次加载）…</div>
+        </div>
+      </div>
+      <aside id="sidePanel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="ai">🤖 AI 助手</button>
+          <button class="tab-btn" data-tab="layers">图层</button>
+          <button class="tab-btn" data-tab="props">属性</button>
+        </div>
+        <div id="tab-ai" class="tab-pane active"></div>
+        <div id="tab-layers" class="tab-pane"></div>
+        <div id="tab-props" class="tab-pane"></div>
+      </aside>
+    </main>
+
+    <div id="cmdbar">
+      <span id="cmdPrompt">命令:</span>
+      <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="输入命令，如 L、C、REC；输入坐标如 100,50 或 @50&lt;45 …" />
+      <button id="cmdOk" title="执行命令">⏎</button>
+    </div>
+    <div id="statusbar3d" style="display:none">
+      <span id="st3dInfo" class="st-item">3D 建模工作区：鼠标左键旋转 · 滚轮缩放 · 右键平移 · 点击实体选择</span>
+    </div>
+    <footer id="statusbar">
+      <span id="stCoords" class="st-item">0.000, 0.000</span>
+      <span id="stSnapInfo" class="st-item dim"></span>
+      <span class="spacer"></span>
+      <span class="st-toggle" id="stOsnap" data-toggle="osnap" title="对象捕捉 (点击切换)">捕捉</span>
+      <span class="st-toggle" id="stOrtho" data-toggle="ortho" title="正交模式 F8">正交</span>
+      <span class="st-toggle" id="stGrid" data-toggle="grid" title="显示栅格 F7">栅格</span>
+      <span class="st-toggle" id="stSnap" data-toggle="gridsnap" title="栅格捕捉">栅格捕捉</span>
+      <span id="stLayer" class="st-item" title="当前图层">图层: 0</span>
+      <span id="stZoom" class="st-item" title="缩放比例">100%</span>
+    </footer>
+
+    <div id="dialogs"></div>
+    <div id="toast"></div>
+  </div>
+  <script type="module" src="/js/app.js"></script>
+
+<script>
+const results = [];
+const out = () => { document.getElementById('results').textContent = results.join('\n'); };
+const log = (x) => { results.push(x); out(); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  for (let i = 0; i < 400 && !(window.CAD && window.CAD.scene); i++) await wait(50);
+  const w = window;
+  const CAD = window.CAD;
+  window.__xbcadDebug = (m) => log(m);
+  try {
+    log('app booted: ' + !!(window.CAD && window.CAD.scene));
+    // 清除自动保存定时器，让虚拟时间可以等待内核网络下载
+    if (CAD.app._autosaveTimer) clearInterval(CAD.app._autosaveTimer);
+    // 切到 3D 工作区触发内核懒加载，直接 await readyPromise
+    CAD.app.showWorkspace('3d');
+    let app3dSeen = false;
+    for (let i = 0; i < 200 && !CAD.app3d; i++) { await wait(50); app3dSeen = !!CAD.app3d; }
+    log('3D module: ' + (CAD.app3d ? 'loaded' : 'no app3d'));
+    if (!CAD.app3d) { log('KERNEL_FAIL'); out(); return; }
+    CAD.app3d.ensureLoaded(); // 双保险：确保内核加载已触发
+    try {
+      await CAD.app3d.readyPromise;
+      log('3D kernel ready: true');
+    } catch (e) {
+      log('3D kernel ready: false → ' + (e?.message || e));
+      log('KERNEL_FAIL'); out(); return;
+    }
+    const a3d = CAD.app3d;
+    const m = a3d.model;
+    log('ai3d registered: ' + !!CAD.ai3d);
+    log('ai tools registered: ' + (typeof CAD.aiRegisterTools === 'function'));
+
+    await wait(300);
+    log('workspace: ' + CAD.workspace);
+
+    // 创建基本体
+    log('-> ' + CAD.ai3d.create_primitive_3d({ kind: 'box', dx: 60, dy: 40, dz: 30 }));
+    log('-> ' + CAD.ai3d.create_primitive_3d({ kind: 'cylinder', r: 10, h: 50, x: 0, y: 0, z: 10 }));
+    log('bodies: ' + m.count() + ' expect=2');
+
+    // 布尔差集（特征树：输入保留但被消费）
+    const boxId = m.bodies.find((b) => b.kind === 'box').id;
+    const cylId = m.bodies.find((b) => b.kind === 'cylinder').id;
+    log('-> ' + CAD.ai3d.boolean_3d({ op: 'cut', a: boxId, b: [cylId] }));
+    log('features after cut: ' + m.count() + ' expect=3, visible: ' + m.visibleCount() + ' expect=1');
+
+    // 内核验证体积：60*40*30 - π*100*30(相交高度30)
+    const expectVol = 60 * 40 * 30 - Math.PI * 100 * 30;
+    const resultBody = m.bodies.find((b) => b.kind === 'boolean');
+    const meshes = a3d.refresh();
+    const kId = m._kernelIds.get(resultBody.id);
+    const vol = a3d.kernel.volume(kId);
+    log('volume: ' + Math.round(vol * 100) / 100 + ' expect≈' + Math.round(expectVol * 100) / 100 + ' (' + (Math.abs(vol - expectVol) / expectVol < 0.01 ? 'OK' : 'FAIL') + ')');
+
+    // 网格
+    log('mesh triangles: ' + meshes[0].indices.length / 3 + ' (expect > 100)');
+    log('mesh positions.length=' + meshes[0].positions.length + ' indices.length=' + meshes[0].indices.length);
+    const maxIdx = Math.max(...meshes[0].indices);
+    log('mesh check: ' + (meshes[0].indices.length % 3 === 0 && meshes[0].positions.length > 100 && maxIdx < meshes[0].positions.length / 3 ? 'OK' : 'FAIL'));
+
+    // 变换（作用于布尔结果）
+    log('-> ' + CAD.ai3d.transform_3d({ id: resultBody.id, dx: 100, rz: 45 }));
+    const bb1 = m.extents();
+    log('bbox after move: minX=' + Math.round(bb1.minX) + ' (expect 50~85): ' + (bb1.minX > 50 && bb1.minX < 85 ? 'OK' : 'FAIL'));
+
+    // 撤销/重做
+    m.undo();
+    log('undo transform: bodies=' + m.count());
+    m.redo();
+
+    // STL 导出
+    const stl = a3d.kernel.exportSTL(m._kernelIds.get(resultBody.id));
+    log('STL export: ' + stl.length + ' bytes, header=' + new TextDecoder().decode(stl.slice(0, 5)));
+
+    // STEP 导出/导入
+    const step = a3d.kernel.exportSTEP([m._kernelIds.get(resultBody.id)]);
+    log('STEP export: ' + step.length + ' bytes');
+    const imported = a3d.kernel.importSTEP(step);
+    log('STEP import: ' + imported.length + ' body(ies) expect=1');
+    if (imported.length) {
+      const iv = a3d.kernel.volume(imported[0]);
+      log('STEP roundtrip volume: ' + Math.round(iv * 100) / 100 + ' vs ' + Math.round(vol * 100) / 100 + ' (' + (Math.abs(iv - vol) / vol < 0.01 ? 'OK' : 'FAIL') + ')');
+    }
+
+    // 视口有内容
+    log('viewport meshes: ' + a3d.vp._meshes.size + ' expect>=1');
+
+    // ===== 水泵场景回归：不相交实体做交集 =====
+    log('== 布尔失败回归 ==');
+    CAD.ai3d.create_primitive_3d({ kind: 'cylinder', x: 0, y: 0, z: 0, r: 15, h: 20 });
+    CAD.ai3d.create_primitive_3d({ kind: 'box', x: 300, y: 300, z: 0, dx: 20, dy: 20, dz: 20 });
+    const sep = m.bodies.slice(-2).map((b) => b.id);
+    const visBefore = m.visibleCount();
+    let boolErr = '';
+    try { CAD.ai3d.boolean_3d({ op: 'common', a: sep[0], b: [sep[1]] }); }
+    catch (e) { boolErr = String(e.message || e); }
+    log('不相交交集报错: ' + (boolErr.includes('失败') ? 'OK' : 'FAIL') + ' → ' + boolErr.slice(0, 60));
+    log('失败后可见实体数: ' + m.visibleCount() + ' expect=' + visBefore);
+    log('失败布尔已回滚: ' + (m.bodies.filter((b) => b.kind === 'boolean' && m._booleanFailed.has(b.id)).length === 0 ? 'OK' : 'FAIL'));
+    log('视口仍有网格: ' + (a3d.vp._meshes.size >= 1 ? 'OK' : 'FAIL') + ' (' + a3d.vp._meshes.size + ' 个)');
+    // 相交实体的正常布尔仍然工作
+    const okCut = CAD.ai3d.boolean_3d({ op: 'cut', a: sep[0], b: [sep[1]] });
+    log('相交 cut 仍可用: ' + (okCut.includes('完成') ? 'OK' : 'FAIL'));
+
+    // 回 2D 不影响
+    CAD.app.showWorkspace('2d');
+    await wait(200);
+    log('back to 2D: ' + CAD.workspace + ', 2D entities intact: ' + CAD.scene.count());
+
+    log('SMOKE3D_PASS');
+  } catch (e) {
+    log('ERROR: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e));
+    log('SMOKE3D_FAIL');
+  }
+  out();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD AI 水泵实测</title>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "/node_modules/three/build/three.module.js",
+      "three/addons/": "/node_modules/three/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+<pre id="results" style="position:fixed;top:0;left:0;z-index:9999;background:rgba(0,0,0,.85);color:#7ee08a;font-family:monospace;font-size:11px;padding:8px;max-width:520px;max-height:55vh;overflow:auto">等待加载…</pre>
+
+  <div id="app">
+    <header id="topbar">
+      <div class="logo" title="小宝CAD">
+        <span class="logo-icon">
+          <svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="6" fill="#ff8c42"/><path d="M9 12 L15 7 L23 12 M15 7 V24 M11 17 L21 17" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="logo-text">小宝<em>CAD</em></span>
+      </div>
+      <nav id="menubar"></nav>
+      <div id="wsSwitch" class="ws-switch">
+        <button class="ws-btn active" data-ws="2d" title="二维制图工作区">📐 2D 制图</button>
+        <button class="ws-btn" data-ws="3d" title="三维实体建模工作区">🧊 3D 建模</button>
+      </div>
+      <div class="topbar-right">
+        <span id="aiStatus" class="ai-status" title="AI 助手状态">🤖 AI 未配置</span>
+        <span id="docTitle" class="doc-title">未命名图纸</span>
+      </div>
+    </header>
+
+    <div id="toolbar"></div>
+    <div id="toolbar3d" style="display:none"></div>
+
+    <main id="main">
+      <div id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div id="viewHint" class="view-hint">滚轮缩放 · 按住中键/右键拖动平移 · 命令行输入 L 画线 · 点击右侧 🤖 与 AI 对话创作</div>
+      </div>
+      <div id="canvas3dWrap" style="display:none">
+        <div id="canvas3d"></div>
+        <div id="kernelLoading" class="kernel-loading">
+          <div class="kl-spinner"></div>
+          <div class="kl-text">正在加载三维实体内核 OpenCASCADE（约 63MB，仅首次加载）…</div>
+        </div>
+      </div>
+      <aside id="sidePanel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="ai">🤖 AI 助手</button>
+          <button class="tab-btn" data-tab="layers">图层</button>
+          <button class="tab-btn" data-tab="props">属性</button>
+        </div>
+        <div id="tab-ai" class="tab-pane active"></div>
+        <div id="tab-layers" class="tab-pane"></div>
+        <div id="tab-props" class="tab-pane"></div>
+      </aside>
+    </main>
+
+    <div id="cmdbar">
+      <span id="cmdPrompt">命令:</span>
+      <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="输入命令，如 L、C、REC；输入坐标如 100,50 或 @50&lt;45 …" />
+      <button id="cmdOk" title="执行命令">⏎</button>
+    </div>
+    <div id="statusbar3d" style="display:none">
+      <span id="st3dInfo" class="st-item">3D 建模工作区：鼠标左键旋转 · 滚轮缩放 · 右键平移 · 点击实体选择</span>
+    </div>
+    <footer id="statusbar">
+      <span id="stCoords" class="st-item">0.000, 0.000</span>
+      <span id="stSnapInfo" class="st-item dim"></span>
+      <span class="spacer"></span>
+      <span class="st-toggle" id="stOsnap" data-toggle="osnap" title="对象捕捉 (点击切换)">捕捉</span>
+      <span class="st-toggle" id="stOrtho" data-toggle="ortho" title="正交模式 F8">正交</span>
+      <span class="st-toggle" id="stGrid" data-toggle="grid" title="显示栅格 F7">栅格</span>
+      <span class="st-toggle" id="stSnap" data-toggle="gridsnap" title="栅格捕捉">栅格捕捉</span>
+      <span id="stLayer" class="st-item" title="当前图层">图层: 0</span>
+      <span id="stZoom" class="st-item" title="缩放比例">100%</span>
+    </footer>
+
+    <div id="dialogs"></div>
+    <div id="toast"></div>
+  </div>
+  <script type="module" src="/js/app.js"></script>
+
+<script>
+const results = [];
+const out = () => { document.getElementById('results').textContent = results.join('\n'); };
+const log = (x) => { results.push(x); out(); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+localStorage.setItem('xbcad:ai-settings', JSON.stringify({
+  base: 'http://localhost:8898', model: 'mock-water-pump', key: 'test-key-123',
+  temperature: 0.2, maxTokens: 4000, useTools: true,
+}));
+(async () => {
+  for (let i = 0; i < 400 && !(window.CAD && window.CAD.scene); i++) await wait(50);
+  const CAD = window.CAD;
+  log('app: ' + !!(CAD && CAD.scene));
+  if (CAD.app._autosaveTimer) clearInterval(CAD.app._autosaveTimer);
+  CAD.app.showWorkspace('3d');
+  for (let i = 0; i < 200 && !CAD.app3d; i++) await wait(50);
+  CAD.app3d?.ensureLoaded();
+  try { await CAD.app3d?.readyPromise; } catch (e) { log('kernel fail: ' + (e?.message || e)); }
+  log('kernel: ' + !!CAD.app3d?.ready);
+  const panel = window.__aiPanel;
+  log('aiPanel: ' + !!panel);
+  if (!panel || !CAD.app3d?.ready) { log('AI_PUMP_FAIL'); out(); return; }
+  const prompt = '请绘制一个水泵的三维模型：底座、泵壳、进出水法兰。';
+  log('提问: ' + prompt);
+  panel.ask(prompt);
+  let done = false;
+  for (let i = 0; i < 600; i++) {
+    await wait(200);
+    const final = panel.messages.some((m) => m.role === 'assistant' && /水泵三维模型已完成/.test(m.content || ''));
+    if (final && !panel._busy) { done = true; break; }
+  }
+  log('对话完成: ' + done);
+  const systemNotes = [...document.querySelectorAll('.ai-msg.system .ai-bubble')].map((el) => el.textContent);
+  log('工具执行轨迹: ' + systemNotes.length + ' 轮');
+  const bubbles = [...document.querySelectorAll('.ai-msg.assistant .ai-bubble')].map((el) => el.textContent);
+  const finalMsg = bubbles[bubbles.length - 1] || '';
+  log('助手最终回复: ' + finalMsg.slice(0, 80).replace(/\n/g, ' '));
+  const m = CAD.app3d.model;
+  log('模型特征数: ' + m.count() + ' (期望 6)');
+  log('可见实体数: ' + m.visibleCount() + ' (期望 1)');
+  log('视口网格数: ' + CAD.app3d.vp._meshes.size + ' (期望 1)');
+  const ext = m.extents();
+  if (ext) log('模型包围盒: ' + Math.round(ext.minX) + '~' + Math.round(ext.maxX) + ', ' + Math.round(ext.minY) + '~' + Math.round(ext.maxY) + ', ' + Math.round(ext.minZ) + '~' + Math.round(ext.maxZ));
+  const visBefore = m.visibleCount();
+  const meshBefore = CAD.app3d.vp._meshes.size;
+  const pumpOk = done && visBefore === 1 && meshBefore === 1 && /水泵三维模型已完成/.test(finalMsg);
+  log('水泵模型: ' + (pumpOk ? 'OK' : 'FAIL'));
+  // 布尔失败防御：在很远的地方建一个不相交的球，与现有实体做交集（应报错并保留原模型）
+  CAD.ai3d.create_primitive_3d({ kind: 'sphere', x: 500, y: 500, z: 500, r: 10 });
+  const far = m.bodies[m.bodies.length - 1].id;
+  const target = m.bodies.find((b) => !m._booleanFailed.has(b.id)).id;
+  let boolErr = '';
+  try { CAD.ai3d.boolean_3d({ op: 'common', a: target, b: [far] }); } catch (e) { boolErr = String(e.message || e); }
+  log('布尔防御: ' + (boolErr.includes('失败') ? 'OK' : 'FAIL') + ' → ' + boolErr.slice(0, 40));
+  m.removeBody(far); // 清理防御测试用的球
+  CAD.app3d.refresh();
+  log('清理后可见实体数: ' + m.visibleCount() + ' (期望 ' + visBefore + ')');
+  const ok = pumpOk && boolErr.includes('失败') && m.visibleCount() === visBefore;
+  log(ok ? 'AI_PUMP_PASS' : 'AI_PUMP_FAIL');
+  out();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">RUN</pre>
+<div id="toolbar3d" style="display:none"></div>
+<div id="canvas3d"></div>
+<div id="st3dInfo"></div>
+<div id="kernelLoading"><div class="kl-text">x</div></div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const log = (x) => { out.push(x); flush(); };
+try {
+  log('importing app3d...');
+  const { App3D } = await import('/js/three-dim/app3d.js');
+  log('app3d imported OK');
+  const fakeApp = {
+    workspace: '3d',
+    notify: (m) => log('[notify] ' + m),
+    openDialog: () => {},
+    promptDialog: async () => null,
+    chooseBlock: async () => null,
+  };
+  const a3d = new App3D(fakeApp);
+  log('App3D constructed');
+  a3d.ensureLoaded();
+  const t0 = Date.now();
+  for (let i = 0; i < 600; i++) {
+    await new Promise((r) => setTimeout(r, 100));
+    if (a3d.ready) break;
+  }
+  log('ready=' + a3d.ready + ' elapsed=' + (Date.now() - t0) + 'ms');
+  if (!a3d.ready) { log('KERNEL_DIRECT_FAIL'); flush(); } else {
+  // 建一个 box
+  const box = a3d.model.addPrimitive('box', { dx: 50, dy: 30, dz: 20 });
+  const meshes = a3d.refresh();
+  log('mesh count=' + meshes.length + ' tris=' + (meshes[0]?.indices?.length / 3));
+  log('extents=' + JSON.stringify(a3d.model.extents()));
+  log('KERNEL_DIRECT_PASS');
+}
+} catch (e) {
+  log('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+  log('KERNEL_DIRECT_FAIL');
+}
+flush();
+</script></body></html>

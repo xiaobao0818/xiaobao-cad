@@ -1,0 +1,28 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="background:#111;color:#eee;font-family:monospace">
+<pre id="r">RUN</pre><div id="c" style="width:600px;height:400px"></div>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+const out = [];
+const flush = () => document.getElementById('r').textContent = out.join('\n');
+try {
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(600, 400);
+  document.getElementById('c').appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(45, 1.5, 0.1, 1000);
+  cam.position.set(50, 40, 80);
+  const controls = new OrbitControls(cam, renderer.domElement);
+  const box = new THREE.Mesh(new THREE.BoxGeometry(30, 20, 10), new THREE.MeshStandardMaterial({ color: '#7fb2e8' }));
+  box.position.y = 5;
+  scene.add(box);
+  scene.add(new THREE.HemisphereLight('#dfe8ff', '#2a2d36', 1.2));
+  renderer.render(scene, cam);
+  out.push('three.js OK: ' + THREE.REVISION);
+  out.push('OrbitControls OK');
+  out.push('box tris: ' + box.geometry.index.count / 3);
+  out.push('THREE_PASS');
+} catch (e) { out.push('ERROR: ' + (e?.message || e)); out.push('THREE_FAIL'); }
+flush();
+</script></body></html>

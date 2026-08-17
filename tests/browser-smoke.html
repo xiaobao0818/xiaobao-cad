@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 冒烟测试</title></head>
+<body style="background:#222;color:#eee;font-family:monospace">
+<pre id="results">等待加载…</pre>
+<iframe id="f" src="/" style="width:1400px;height:900px;border:0"></iframe>
+<script>
+const results = [];
+const out = () => { document.getElementById('results').textContent = results.join('\n'); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  const iframe = document.getElementById('f');
+  await new Promise((r) => { iframe.addEventListener('load', r); });
+  const w = iframe.contentWindow;
+  for (let i = 0; i < 200 && !w.app; i++) await wait(50);
+  const CAD = w.CAD;
+  for (let i = 0; i < 200 && !CAD.ai; i++) await wait(50);
+  try {
+    results.push('app booted: ' + !!w.app);
+    results.push('CAD.ai loaded: ' + !!CAD.ai);
+    results.push('CAD.dxf loaded: ' + !!CAD.dxf);
+    const scene = CAD.scene;
+    const n0 = scene.count();
+    results.push('demo entities: ' + n0);
+    results.push('demo layers: ' + [...scene.layers.keys()].join(','));
+
+    // 命令行绘制（队列模式 + 自动回车结束连续命令）
+    w.app.commander.execAndEnd('L 200,0 300,100');
+    await wait(120);
+    results.push('LINE via command: count=' + scene.count() + ' expect=' + (n0 + 1));
+    w.app.commander.execAndEnd('C 400,100 25');
+    await wait(120);
+    results.push('CIRCLE via command: count=' + scene.count() + ' expect=' + (n0 + 2));
+    const line = scene.byType('line').find((e) => Math.abs(e.x1 - 200) < 1e-6);
+    results.push('line coords ok: ' + (line && Math.abs(line.x2 - 300) < 1e-6 && Math.abs(line.y2 - 100) < 1e-6));
+
+    // 撤销/重做
+    scene.undo();
+    results.push('undo: count=' + scene.count() + ' expect=' + (n0 + 1));
+    scene.redo();
+    results.push('redo: count=' + scene.count() + ' expect=' + (n0 + 2));
+
+    // AI 工具层
+    const r1 = CAD.ai.draw_entities({ items: [
+      { type: 'circle', cx: 500, cy: 200, r: 30 },
+      { type: 'rectangle', x1: 550, y1: 200, x2: 650, y2: 260 },
+      { type: 'text', x: 500, y: 280, text: 'AI测试', height: 8 },
+    ]});
+    results.push('AI draw_entities: ' + r1);
+    const r2 = CAD.ai.modify_entities({ operation: 'move', ids: [r1.match(/\[(.*?)\]/)[1].split(',')[0]], dx: 10, dy: 0 });
+    results.push('AI modify_entities: ' + r2);
+    const q = CAD.ai.query_drawing({ what: 'summary' });
+    results.push('AI query_drawing: ' + (String(q).includes('实体总数') ? 'OK (' + String(q).split('\n')[2] + ')' : 'FAIL: ' + String(q).slice(0, 80)));
+    const q2 = CAD.ai.query_drawing({ what: 'layers' });
+    results.push('AI query layers: ' + (String(q2).includes('0') ? 'OK' : 'FAIL'));
+
+    // AI 删除
+    const r3 = CAD.ai.erase_entities({ filter: { type: 'text' } });
+    results.push('AI erase text entities: ' + r3);
+    scene.undo();
+    results.push('undo AI erase: count=' + scene.count());
+
+    // DXF 导出/导入
+    const dxfText = CAD.dxf.writeDXF(scene);
+    const data = CAD.dxf.parseDXF(dxfText);
+    results.push('DXF roundtrip: ' + data.entities.length + ' entities (scene=' + scene.count() + ')');
+    const circ = data.entities.find((e) => e.type === 'circle' && Math.abs(e.r - 30) < 1e-6 && Math.abs(e.cx - 510) < 1e-6);
+    results.push('DXF circle preserved (moved): ' + (circ ? 'OK' : 'FAIL'));
+
+    // 摘要（供 AI 参考文件）
+    results.push('buildSceneSummary: ' + (CAD.summarize({ maxEntities: 10 }).includes('实体总数') ? 'OK' : 'FAIL'));
+
+    // 属性/图层操作
+    CAD.scene.ensureLayer('测试层', { color: '#00ff00' });
+    CAD.scene.setCurrentLayer('测试层');
+    const r4 = CAD.ai.draw_entities({ items: [{ type: 'line', x1: 0, y1: 0, x2: 50, y2: 0 }] });
+    results.push('AI draw on current layer: ' + r4);
+    results.push('layer of new line: ' + (CAD.scene.all().find((e) => Math.abs(e.x1) < 1e-6 && e.type === 'line' && e.layer === '测试层') ? '测试层 OK' : 'FAIL'));
+
+    // 示例 DXF 文件解析（AI 文件参考路径）
+    const resp = await fetch('/samples/sample_floorplan.dxf');
+    const sampleText = await resp.text();
+    const sd = CAD.dxf.parseDXF(sampleText);
+    results.push('sample DXF parse: ' + sd.entities.length + ' entities, layers=' + sd.layers.map((l) => l.name).join('/'));
+
+    results.push('SMOKE_PASS');
+  } catch (e) {
+    results.push('ERROR: ' + (e && e.stack ? e.stack.split('\n')[0] : e));
+  }
+  out();
+})();
+</script>
+</body>
+</html>

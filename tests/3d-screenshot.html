@@ -1,0 +1,42 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out" style="position:fixed;top:0;left:0;z-index:9999;background:rgba(0,0,0,.8);color:#7ee08a;font-size:11px">RUN</pre>
+<iframe id="f" src="/" style="width:1500px;height:900px;border:0"></iframe>
+<script>
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const log = (x) => { out.push(x); flush(); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+(async () => {
+  const f = document.getElementById('f');
+  await new Promise((r) => { f.addEventListener('load', r); });
+  const w = f.contentWindow;
+  for (let i = 0; i < 400 && !(w.CAD && w.CAD.scene); i++) await wait(50);
+  const CAD = w.CAD;
+  log('app: ' + !!(CAD && CAD.scene));
+  CAD.app.showWorkspace('3d');
+  for (let i = 0; i < 200 && !CAD.app3d; i++) await wait(50);
+  CAD.app3d?.ensureLoaded();
+  try { await CAD.app3d?.readyPromise; } catch (e) { log('kernel fail: ' + e.message); }
+  log('kernel: ' + !!CAD.app3d?.ready);
+  if (!CAD.app3d?.ready) return;
+  // 建一个示范零件：带孔底板 + 凸台
+  CAD.ai3d.create_primitive_3d({ kind: 'box', dx: 80, dy: 50, dz: 12, color: '#7fb2e8' });
+  CAD.ai3d.create_primitive_3d({ kind: 'cylinder', r: 8, h: 30, z: 5, color: '#e8a07f' });
+  CAD.ai3d.create_primitive_3d({ kind: 'cylinder', r: 14, h: 16, z: 8, color: '#8fd3a8' });
+  const ids = CAD.app3d.model.bodies.map((b) => b.id);
+  CAD.ai3d.boolean_3d({ op: 'fuse', a: ids[0], b: [ids[2]] });
+  const newIds = CAD.app3d.model.bodies.map((b) => b.id);
+  const boxId = newIds[0], cylId = newIds[1];
+  // 打两个孔
+  CAD.app3d.model.addPrimitive('cylinder', { x: -25, y: -15, z: 0, r: 4, h: 30 }, { color: '#e8a07f' });
+  CAD.app3d.model.addPrimitive('cylinder', { x: 25, y: 15, z: 0, r: 4, h: 30 }, { color: '#e8a07f' });
+  const holes = CAD.app3d.model.bodies.filter((b) => b.kind === 'cylinder' && b.params.r === 4).map((b) => b.id);
+  const fusedId = CAD.app3d.model.bodies.find((b) => b.kind === 'boolean').id;
+  CAD.app3d.model.boolean('cut', fusedId, holes);
+  CAD.app3d.model.transformBody(CAD.app3d.model.bodies[CAD.app3d.model.bodies.length - 1].id, { rz: 15 });
+  CAD.app3d.refresh(true);
+  log('model: ' + CAD.app3d.model.visibleCount() + ' visible');
+  await wait(1500);
+  log('DONE');
+})();
+</script></body></html>

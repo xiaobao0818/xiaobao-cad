@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 系统探索</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+
+const classes = [
+  'BRepPrimAPI_MakeBox', 'BRepPrimAPI_MakeCylinder', 'BRepPrimAPI_MakeSphere',
+  'BRepPrimAPI_MakeCone', 'BRepPrimAPI_MakeTorus',
+  'BRepAlgoAPI_Cut', 'BRepAlgoAPI_Fuse', 'BRepAlgoAPI_Common',
+  'BRepBuilderAPI_Transform',
+  'gp_Vec', 'gp_Pnt', 'gp_Dir', 'gp_Trsf', 'gp_Ax1', 'gp_Ax3',
+  'BRepMesh_IncrementalMesh', 'TopExp_Explorer', 'BRep_Tool',
+  'GProp_GProps', 'BRepGProp',
+  'StlAPI_Writer', 'StlAPI_Reader', 'STEPControl_Writer', 'STEPControl_Reader',
+  'BRepFilletAPI_MakeFillet', 'BRepFilletAPI_MakeChamfer',
+  'TopoDS_Compound', 'BRep_Builder', 'BRepBndLib', 'Bnd_Box',
+];
+// 枚举该类的全部变体名（含 _N 后缀）
+function variants(base) {
+  return Object.keys(oc).filter((k) => k === base || new RegExp('^' + base + '_\\d+$').test(k)).sort();
+}
+// 用 0..6 个 0 参数尝试构造，从错误信息里挖出期望参数个数
+function ctorArity(name) {
+  const C = oc[name];
+  if (typeof C !== 'function') return '非构造器';
+  const infos = [];
+  for (let n = 0; n <= 6; n++) {
+    try {
+      const inst = new C(...Array(n).fill(0));
+      return { arity: n, ok: true, instance: inst };
+    } catch (e) {
+      const m = String(e?.message || e);
+      const mm = m.match(/expected \((\d+)\)/);
+      if (mm) return { arity: parseInt(mm[1], 10), ok: false, note: m.slice(0, 60) };
+      if (/invalid parameter|is not a|Wrong type|Type error|invalid type/i.test(m)) {
+        return { arity: n, ok: false, note: 'n=' + n + ' ' + m.slice(0, 80) };
+      }
+      // 其他错误（如内部状态）继续试
+    }
+  }
+  return { arity: -1, ok: false, note: '无法确定' };
+}
+for (const base of classes) {
+  const vs = variants(base);
+  const line = [`== ${base}（变体: ${vs.join(',')}）`];
+  for (const v of vs.slice(0, 4)) {
+    const r = ctorArity(v);
+    line.push(`   ${v}: ${r.ok ? '可用' : '需'} ${r.arity} 个参数${r.note ? ' [' + r.note + ']' : ''}`);
+  }
+  out.push(line.join('\n'));
+  flush();
+}
+
+// 方法枚举：对能构造成功的实例列原型方法
+out.push('\n== 实例方法枚举 ==');
+const probe = {
+  'BRepPrimAPI_MakeBox_1': [10, 20, 30],
+  'BRepAlgoAPI_Cut_3': () => {
+    const a = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+    const b = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+    return [a, b];
+  },
+  'gp_Trsf_1': [],
+  'StlAPI_Writer': [],
+  'StlAPI_Writer_1': [],
+  'STEPControl_Writer': [],
+  'STEPControl_Writer_1': [],
+  'STEPControl_Reader': [],
+  'STEPControl_Reader_1': [],
+  'BRepFilletAPI_MakeFillet': [],
+  'BRepFilletAPI_MakeFillet_1': [],
+  'GProp_GProps_1': [],
+  'BRepGProp': [],
+};
+for (const [name, args] of Object.entries(probe)) {
+  try {
+    const inst = typeof args === 'function' ? new oc[name](...args()) : new oc[name](...args);
+    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(inst)).filter((m) => m !== 'constructor');
+    out.push(`${name} 方法: ${methods.slice(0, 30).join(', ')}`);
+  } catch (e) {
+    out.push(`${name} 无法实例化: ${String(e?.message || e).slice(0, 60)}`);
+  }
+  flush();
+}
+
+// TopAbs 枚举
+out.push('\n== TopAbs 枚举 ==');
+const topabs = Object.keys(oc).filter((k) => /TopAbs/i.test(k));
+out.push('TopAbs 相关键: ' + topabs.slice(0, 30).join(', '));
+out.push('TopAbs_FACE 直接值: ' + oc.TopAbs_FACE);
+// 也许挂在某个对象上
+for (const k of topabs) {
+  if (typeof oc[k] === 'object' && oc[k]) {
+    out.push(k + ' 是对象: ' + Object.keys(oc[k]).slice(0, 10).join(','));
+  }
+}
+
+// 运行时试出面的枚举值（Explorer 每个枚举值都试试，报告哪些能遍历出面）
+out.push('\n== TopAbs_FACE 数值探测 ==');
+{
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  for (let fv = 1; fv <= 10; fv++) {
+    try {
+      const ex = new oc.TopExp_Explorer_1(boxShape, fv, 1);
+      let n = 0;
+      while (ex.More()) { n++; ex.Next(); }
+      if (n > 0) out.push(`TopExp_Explorer_1(shape, ${fv}, 1) → 遍历到 ${n} 个子形状`);
+    } catch (e) { /* 忽略 */ }
+  }
+  // 也试无后缀构造器
+  for (const v of variants('TopExp_Explorer')) {
+    const r = ctorArity(v);
+    out.push(`ctor ${v}: ${r.arity} 参数`);
+  }
+}
+flush();
+out.push('EXPLORE2_DONE'); flush();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+try {
+  const a = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const b = new oc.BRepPrimAPI_MakeSphere_1(5).Shape();
+  const tryCase = (label, shape, mode, fname) => {
+    const w = new oc.STEPControl_Writer_1();
+    const tr = w.Transfer(shape, mode, true);
+    const wr = w.Write(fname);
+    const files = oc.FS.readdir('/').filter((f) => !['.', '..', 'tmp', 'home', 'dev', 'proc'].includes(f));
+    let bytes = -1;
+    for (const f of files) {
+      try { if (f === fname) bytes = oc.FS.readFile('/' + f).length; } catch (e) {}
+    }
+    out.push(`${label}: Transfer.value=${tr?.value} Write.value=${wr?.value} 文件=[${files.join(',')}] 匹配=${bytes}`);
+    // 清理
+    for (const f of files) { try { oc.FS.unlink('/' + f); } catch (e) {} }
+  };
+  tryCase('单shape mode1', a, 1, 'a1.step');
+  tryCase('单shape mode0', a, 0, 'a0.step');
+  const bd = new oc.BRep_Builder(); const c = new oc.TopoDS_Compound(); bd.MakeCompound(c); bd.Add(c, a); bd.Add(c, b);
+  tryCase('compound2 mode1', c, 1, 'c1.step');
+  tryCase('compound2 mode0', c, 0, 'c0.step');
+  tryCase('sphere mode1', b, 1, 's1.step');
+} catch (e) { out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0,4).join(' | ') : e)); }
+out.push('DONE'); flush();
+</script></body></html>

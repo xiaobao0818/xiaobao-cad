@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 探索8</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+const chainMethods = (inst) => {
+  const found = [];
+  let p = inst;
+  while (p && p !== Object.prototype) {
+    for (const nm of Object.getOwnPropertyNames(p)) if (nm !== 'constructor' && !found.includes(nm)) found.push(nm);
+    p = Object.getPrototypeOf(p);
+  }
+  return found.sort();
+};
+const probe = (inst, names, mkArgs) => {
+  let lastErr = null;
+  for (const nm of names) {
+    if (typeof inst[nm] !== 'function') continue;
+    try { return { name: nm, result: inst[nm](...mkArgs()) }; } catch (e) { lastErr = String(e?.message || e); }
+  }
+  return lastErr ? { error: lastErr } : null;
+};
+try {
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const cylShape = new oc.BRepPrimAPI_MakeCylinder_1(2, 2).Shape();
+  const cut = new oc.BRepAlgoAPI_Cut_3(boxShape, cylShape);
+  cut.Build();
+  const cutShape = cut.Shape();
+
+  // 1. 体积（静态）
+  {
+    const props = new oc.GProp_GProps_1();
+    oc.BRepGProp.VolumeProperties_1(cutShape, props, 1e-5, false, false);
+    out.push('体积(静态 VolumeProperties_1) = ' + props.Mass() + ' (期望 6000-π·8≈5974.87)');
+  }
+
+  // 2. Explorer 枚举暴力测试（box 应 6 面 12 边 8 顶点 1 实体）
+  {
+    for (const [shape, label] of [[boxShape, 'box'], [cutShape, 'cut']]) {
+      const counts = [];
+      for (let fv = 0; fv <= 12; fv++) {
+        try {
+          const ex = new oc.TopExp_Explorer_2(shape, fv, 1);
+          let n = 0;
+          while (ex.More()) { n++; ex.Next(); }
+          if (n > 0) counts.push(fv + '→' + n);
+        } catch (e) {}
+      }
+      out.push(`${label} 枚举值→子形状数: ${counts.join(', ')}`);
+    }
+  }
+
+  // 3. BRep_Tool 完整方法
+  {
+    const tool = new oc.BRep_Tool();
+    out.push('BRep_Tool 方法: ' + chainMethods(tool).join(','));
+    out.push('TopLoc_Location 方法: ' + chainMethods(new oc.TopLoc_Location_1()).join(','));
+  }
+
+  // 4. 网格化 + 三角化（用面值 4）
+  {
+    new oc.BRepMesh_IncrementalMesh_2(boxShape, 0.5, false, 0.5, false);
+    const tool = new oc.BRep_Tool();
+    const ex = new oc.TopExp_Explorer_2(boxShape, 4, 1);
+    const loc = new oc.TopLoc_Location_1();
+    let faces = 0, tris = 0, p0 = null, triName = null;
+    while (ex.More()) {
+      faces++;
+      const r = probe(tool, ['Triangulation', 'Triangulation_1', 'Triangulation_2', 'Triangulation_3'], () => [ex.Current(), loc]);
+      if (r?.result) {
+        triName = r.name;
+        tris += r.result.NbTriangles();
+        if (!p0) { const p = r.result.Node_1(1); p0 = [p.X(), p.Y(), p.Z()]; }
+      }
+      ex.Next();
+    }
+    out.push(`三角化(${triName}): faces=${faces} tris=${tris} p0=[${p0}]`);
+  }
+
+  // 5. STL
+  {
+    const w = new oc.StlAPI_Writer();
+    w.ASCIIMode(true);
+    const r = probe(w, ['Write', 'Write_1', 'Write_2'], () => [boxShape, '/tmp/x.stl', 0.5]);
+    out.push('STL(ASCII+3参): ' + JSON.stringify(r));
+    if (r?.name && r.result !== false) out.push('STL bytes=' + oc.FS.readFile('/tmp/x.stl').length);
+    else {
+      const r2 = probe(w, ['Write'], () => [boxShape, '/tmp/x.stl']);
+      out.push('STL(ASCII+2参): ' + JSON.stringify(r2));
+      if (r2?.name && r2.result !== false) out.push('STL bytes=' + oc.FS.readFile('/tmp/x.stl').length);
+    }
+  }
+
+  // 6. STEP
+  {
+    const w = new oc.STEPControl_Writer_1();
+    const tr = probe(w, ['Transfer'], () => [cutShape, 1, true]);
+    out.push('Transfer(3参): ' + JSON.stringify(tr));
+    const wr = probe(w, ['Write'], () => ['/tmp/x.step']);
+    out.push('Write: ' + JSON.stringify(wr));
+    if (wr?.name) {
+      out.push('STEP bytes=' + oc.FS.readFile('/tmp/x.step').length);
+      const r = new oc.STEPControl_Reader_1();
+      const rd = probe(r, ['ReadFile'], () => ['/tmp/x.step']);
+      out.push('ReadFile: ' + JSON.stringify(rd));
+      if (rd?.name) {
+        const roots = probe(r, ['TransferRoots'], () => []);
+        out.push('TransferRoots: ' + JSON.stringify(roots));
+        const one = probe(r, ['OneShape'], () => []);
+        out.push('OneShape: ' + (one?.result ? 'yes' : JSON.stringify(one)));
+        if (one?.result) {
+          const props = new oc.GProp_GProps_1();
+          oc.BRepGProp.VolumeProperties_1(one.result, props, 1e-5, false, false);
+          out.push('回读体积 = ' + props.Mass());
+        }
+      }
+    }
+  }
+
+  // 7. 平移
+  {
+    const vec = new oc.gp_Vec_1();
+    vec.SetX(50); vec.SetY(0); vec.SetZ(0);
+    const trsf = new oc.gp_Trsf_1();
+    trsf.SetTranslation_1(vec);
+    const moved = new oc.BRepBuilderAPI_Transform_2(boxShape, trsf, true).Shape();
+    out.push('平移 OK（SetX/SetY/SetZ + SetTranslation_1）');
+  }
+  // 8. 缩放
+  {
+    const trsf = new oc.gp_Trsf_1();
+    trsf.SetScale(new oc.gp_Pnt_3(0, 0, 0), 2);
+    new oc.BRepBuilderAPI_Transform_2(boxShape, trsf, true);
+    out.push('缩放 OK（SetScale）');
+  }
+  // 9. 圆角（枚举 EDGE=6）
+  {
+    const f = new oc.BRepFilletAPI_MakeFillet(boxShape, 0);
+    const ex = new oc.TopExp_Explorer_2(boxShape, 6, 1);
+    let edges = 0, added = 0, addName = null;
+    while (ex.More()) {
+      edges++;
+      const r = probe(f, ['Add', 'Add_1', 'Add_2', 'Add_3', 'Add_4'], () => [ex.Current(), 1.5]);
+      if (r?.name) { addName = r.name; added++; }
+      ex.Next();
+    }
+    f.Build();
+    out.push(`圆角: edges=${edges} Add=${addName} added=${added} done=${f.IsDone()}`);
+    if (f.IsDone()) {
+      const props = new oc.GProp_GProps_1();
+      oc.BRepGProp.VolumeProperties_1(f.Shape(), props, 1e-5, false, false);
+      out.push('圆角后体积 = ' + props.Mass() + ' (< 6000)');
+    }
+  }
+  // 10. 包围盒
+  {
+    const lib = new oc.BRepBndLib();
+    out.push('BRepBndLib 方法: ' + chainMethods(lib).join(','));
+    const bb = new oc.Bnd_Box_1();
+    out.push('Bnd_Box 方法: ' + chainMethods(bb).join(','));
+  }
+  // 11. 复合体
+  {
+    const comp = new oc.TopoDS_Compound();
+    const b = new oc.BRep_Builder();
+    b.MakeCompound(comp);
+    b.Add(comp, boxShape);
+    out.push('复合体 MakeCompound+Add OK');
+  }
+} catch (e) {
+  out.push('FATAL: ' + (e?.stack ? e.stack.split('\n').slice(0, 4).join(' | ') : e));
+}
+out.push('EXPLORE8_DONE'); flush();
+</script>
+</body>
+</html>

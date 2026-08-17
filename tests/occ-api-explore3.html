@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>OCC API 探索3</title></head>
+<body style="background:#111;color:#eee;font-family:monospace;padding:16px">
+<pre id="out">加载中…</pre>
+<script type="module">
+const out = [];
+const flush = () => { document.getElementById('out').textContent = out.join('\n'); };
+const factory = (await import('/node_modules/opencascade.js/dist/opencascade.wasm.js')).default;
+const oc = await factory({ locateFile: (f) => '/node_modules/opencascade.js/dist/' + f });
+out.push('内核就绪'); flush();
+
+// 1. 实例方法在自身属性上
+{
+  const box = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30);
+  out.push('MakeBox_1 实例方法: ' + Object.getOwnPropertyNames(box).join(','));
+  const cut = new oc.BRepAlgoAPI_Cut_1();
+  out.push('Cut_1 实例方法: ' + Object.getOwnPropertyNames(cut).join(','));
+  const trsf = new oc.gp_Trsf_1();
+  out.push('gp_Trsf_1 实例方法: ' + Object.getOwnPropertyNames(trsf).join(','));
+  const vec = new oc.gp_Vec_1();
+  out.push('gp_Vec_1 实例方法: ' + Object.getOwnPropertyNames(vec).join(','));
+  const props = new oc.GProp_GProps_1();
+  out.push('GProp_GProps_1 实例方法: ' + Object.getOwnPropertyNames(props).join(','));
+  const bgp = new oc.BRepGProp();
+  out.push('BRepGProp 实例方法: ' + Object.getOwnPropertyNames(bgp).join(','));
+  const sw = new oc.STEPControl_Writer_1();
+  out.push('STEPControl_Writer_1 实例方法: ' + Object.getOwnPropertyNames(sw).join(','));
+  const sr = new oc.STEPControl_Reader_1();
+  out.push('STEPControl_Reader_1 实例方法: ' + Object.getOwnPropertyNames(sr).join(','));
+  const tool = new oc.BRep_Tool();
+  out.push('BRep_Tool 实例方法: ' + Object.getOwnPropertyNames(tool).join(','));
+  const ex = new oc.TopExp_Explorer_1();
+  out.push('TopExp_Explorer_1 实例方法: ' + Object.getOwnPropertyNames(ex).join(','));
+  flush();
+}
+
+// 2. TopAbs 结构
+{
+  out.push('oc.TopAbs typeof: ' + typeof oc.TopAbs);
+  if (typeof oc.TopAbs === 'object' && oc.TopAbs) {
+    out.push('oc.TopAbs keys: ' + Object.keys(oc.TopAbs).join(','));
+  } else if (typeof oc.TopAbs === 'function') {
+    const t = new oc.TopAbs();
+    out.push('new TopAbs() keys: ' + Object.keys(t).join(','));
+    out.push('TopAbs own: ' + Object.getOwnPropertyNames(t).join(','));
+  }
+  flush();
+}
+
+// 3. 用探索到的枚举值做完整链路
+try {
+  const FACE = (typeof oc.TopAbs === 'object' && oc.TopAbs && oc.TopAbs.TopAbs_FACE != null)
+    ? oc.TopAbs.TopAbs_FACE : (typeof oc.TopAbs === 'object' && oc.TopAbs ? oc.TopAbs.FACE : null);
+  out.push('探测到的 TopAbs.FACE = ' + FACE);
+  const EDGE = oc.TopAbs && (oc.TopAbs.TopAbs_EDGE != null ? oc.TopAbs.TopAbs_EDGE : oc.TopAbs.EDGE);
+  out.push('探测到的 TopAbs.EDGE = ' + EDGE);
+
+  const boxShape = new oc.BRepPrimAPI_MakeBox_1(10, 20, 30).Shape();
+  const cylShape = new oc.BRepPrimAPI_MakeCylinder_1(2, 2).Shape(); // (r, h) 2 参数
+
+  // 体积
+  const props = new oc.GProp_GProps_1();
+  const bgp = new oc.BRepGProp();
+  const volMethods = Object.getOwnPropertyNames(bgp).filter((m) => /Volume/i.test(m));
+  out.push('BRepGProp Volume 方法: ' + volMethods.join(','));
+  for (const m of volMethods) {
+    try { bgp[m](boxShape, props); out.push('体积调用成功: ' + m + ' → ' + props.Mass()); break; } catch (e) { /* 试下一个 */ }
+  }
+
+  // 布尔
+  const cut = new oc.BRepAlgoAPI_Cut_3(boxShape, cylShape);
+  const cutMethods = Object.getOwnPropertyNames(cut).filter((m) => /Build|IsDone|Shape|SetTools|SetArguments/i.test(m));
+  out.push('Cut_3 关键方法: ' + cutMethods.join(','));
+  cut.Build();
+  const cutShape = cut.Shape();
+  out.push('cut IsDone=' + cut.IsDone());
+
+  // 网格化: BRepMesh_IncrementalMesh_3(shape, def) 2 参数
+  const mesh = new oc.BRepMesh_IncrementalMesh_3(cutShape, 0.5);
+  out.push('网格化 _3(shape,0.5) 成功');
+
+  // 面遍历
+  const ex2 = new oc.TopExp_Explorer_2(cutShape, FACE, 1);
+  const exMethods = Object.getOwnPropertyNames(ex2).filter((m) => /More|Next|Current|Init|ReInit/i.test(m));
+  out.push('Explorer 关键方法: ' + exMethods.join(','));
+  let faces = 0;
+  while (ex2.More()) { faces++; ex2.Next(); }
+  out.push('面数: ' + faces);
+
+  // 三角面提取
+  const tool = new oc.BRep_Tool();
+  const toolMethods = Object.getOwnPropertyNames(tool).filter((m) => /Triang|Polygon|Surface/i.test(m));
+  out.push('BRep_Tool Triang 方法: ' + toolMethods.join(','));
+  const loc = new oc.TopLoc_Location_1();
+  const ex3 = new oc.TopExp_Explorer_2(cutShape, FACE, 1);
+  let tris = 0, nodes = 0;
+  while (ex3.More()) {
+    const face = ex3.Current();
+    const tri = tool.Triangulation_2(face, loc);
+    if (tri) { tris += tri.NbTriangles(); nodes += tri.NbNodes(); }
+    ex3.Next();
+  }
+  out.push('三角形: ' + tris + ', 节点: ' + nodes);
+
+  // STL
+  const stlw = new oc.StlAPI_Writer();
+  const stlMethods = Object.getOwnPropertyNames(stlw);
+  out.push('StlAPI_Writer 方法: ' + stlMethods.join(','));
+  try { out.push('Write_2: ' + stlw.Write_2(cutShape, '/tmp/x.stl') + ' size=' + oc.FS.readFile('/tmp/x.stl').length); } catch (e) { out.push('Write_2 失败: ' + e.message); }
+  try { out.push('Write(shape,path,defl): ' + stlw.Write(cutShape, '/tmp/x2.stl', 0.5) + ' size=' + oc.FS.readFile('/tmp/x2.stl').length); } catch (e) { out.push('Write(3参) 失败: ' + e.message); }
+
+  // STEP
+  const sw = new oc.STEPControl_Writer_1();
+  try { out.push('Transfer_2(shape,1): ' + sw.Transfer_2(cutShape, 1)); } catch (e) { out.push('Transfer_2 失败: ' + e.message); }
+  try { out.push('Write_1(path): ' + sw.Write_1('/tmp/x.step') + ' size=' + oc.FS.readFile('/tmp/x.step').length); } catch (e) { out.push('Write_1 失败: ' + e.message); }
+
+  const sr2 = new oc.STEPControl_Reader_1();
+  try { out.push('ReadFile_1: ' + sr2.ReadFile_1('/tmp/x.step')); } catch (e) { out.push('ReadFile_1 失败: ' + e.message); }
+  try { sr2.TransferRoots_1(); out.push('TransferRoots_1 ok, OneShape=' + (sr2.OneShape() ? 'yes' : 'null')); } catch (e) { out.push('TransferRoots 失败: ' + e.message); }
+
+  // 圆角：BRepFilletAPI_MakeFillet 需 2 参数 (shape, chamfer)
+  try {
+    const f = new oc.BRepFilletAPI_MakeFillet(boxShape, 0);
+    out.push('MakeFillet(shape,0) 成功, 方法: ' + Object.getOwnPropertyNames(f).filter((m) => /Add|Build|IsDone|Shape/i.test(m)).join(','));
+    const exe = new oc.TopExp_Explorer_2(boxShape, EDGE, 1);
+    let added = 0;
+    while (exe.More()) {
+      try { f.Add_2(exe.Current(), 1.5); added++; } catch (e) {}
+      exe.Next();
+    }
+    f.Build();
+    out.push('圆角 added=' + added + ' done=' + f.IsDone());
+  } catch (e) { out.push('MakeFillet 失败: ' + e.message); }
+
+  // 变换：平移
+  try {
+    const vec = new oc.gp_Vec_1();
+    vec.SetCoord_1(50, 0, 0);
+    const trsf2 = new oc.gp_Trsf_1();
+    trsf2.SetTranslation_1(vec);
+    const tr = new oc.BRepBuilderAPI_Transform_2(boxShape, trsf2, true);
+    out.push('平移变换成功');
+  } catch (e) { out.push('平移失败: ' + e.message); }
+
+  // 缩放
+  try {
+    const trsf3 = new oc.gp_Trsf_1();
+    const setScale = Object.getOwnPropertyNames(trsf3).filter((m) => /Scale/i.test(m));
+    out.push('gp_Trsf Scale 方法: ' + setScale.join(','));
+    trsf3.SetScale_1(new oc.gp_Pnt_3(0, 0, 0), 2);
+    const tr = new oc.BRepBuilderAPI_Transform_2(boxShape, trsf3, true);
+    out.push('缩放变换成功');
+  } catch (e) { out.push('缩放失败: ' + e.message); }
+} catch (e) {
+  out.push('链路错误: ' + (e?.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e));
+}
+flush();
+out.push('EXPLORE3_DONE'); flush();
+</script>
+</body>
+</html>
