@@ -131,13 +131,14 @@ function finalize(e) {
 /* ---------------- MTEXT 内容清理 ---------------- */
 function cleanMText(s) {
   let t = String(s ?? '').replace(/\r\n?/g, '\n');
-  t = t.replace(/\\P/gi, '\n');                 // 段落换行
   t = t.replace(/\\\{/g, '\u0000').replace(/\\\}/g, '\u0001'); // 字面大括号
+  t = t.replace(/\\\\/g, '\u0002');                            // 字面反斜杠占位（必须先于控制码剥离，否则 C:\\temp → C:\）
+  t = t.replace(/\\P/gi, '\n');                 // 段落换行
   t = t.replace(/[{}]/g, '');                   // 删除大括号
   t = t.replace(/\u0000/g, '{').replace(/\u0001/g, '}');
   t = t.replace(/\\[A-Za-z][^;\\]*;?/g, '');    // 剥离 \A \H \W \C \F \f \Q \T \S 等控制序列
   t = t.replace(/\\~/g, ' ');                   // 不换行空格
-  t = t.replace(/\\\\/g, '\\');                 // 反斜杠还原
+  t = t.replace(/\u0002/g, '\\');               // 反斜杠还原
   return t;
 }
 
@@ -384,11 +385,13 @@ function parseLayerRecord(pairs, i, data) {
   const layer = { name, color: null, on: true, locked: false, ltype: 'CONTINUOUS', lw: null };
   const c420 = vnum(rec, 420);
   const c62 = vnum(rec, 62);
+  // 负 62 = 关闭图层，必须优先处理：写侧真彩色关闭图层时同时写 62=-256 与 420
+  if (c62 != null && c62 < 0) layer.on = false;
   if (c420 != null) layer.color = rgbHex(c420);
   else if (c62 != null) {
-    if (c62 < 0) { layer.on = false; const v = -c62; layer.color = (v === 0 || v === 256) ? null : v; }
-    else if (c62 === 0 || c62 === 256) layer.color = null;
-    else layer.color = c62;
+    const v = Math.abs(c62);
+    if (v === 0 || v === 256) layer.color = null;
+    else layer.color = v;
   }
   const lt = val(rec, 6);
   if (lt != null) { const t = String(lt).trim(); if (t) layer.ltype = t; }

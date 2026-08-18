@@ -137,7 +137,7 @@ HANDLERS.arc = {
     if (e.ccw ? angleInRange((3 * Math.PI) / 2, e.startAngle, e.endAngle) : angleInRange((3 * Math.PI) / 2, e.endAngle, e.startAngle)) pts.push({ x: e.cx, y: e.cy - e.r });
     return bboxOfPoints(pts);
   },
-  distance: (e, p) => distPointArc(p, e.cx, e.cy, e.r, e.startAngle, e.endAngle),
+  distance: (e, p) => distPointArc(p, e.cx, e.cy, e.r, e.startAngle, e.endAngle, e.ccw !== false),
   contains: () => false,
   snap(e, p, tol) {
     const out = [];
@@ -255,7 +255,7 @@ HANDLERS.polyline = {
     for (const s of plineSegs(e)) {
       if (Math.abs(s.bulge) > 1e-6) {
         const arc = arcFromBulge(s.p1, s.p2, s.bulge);
-        if (arc) d = Math.min(d, distPointArc(p, arc.cx, arc.cy, arc.r, arc.startAngle, arc.endAngle));
+        if (arc) d = Math.min(d, distPointArc(p, arc.cx, arc.cy, arc.r, arc.startAngle, arc.endAngle, arc.ccw !== false));
       } else d = Math.min(d, distPointSeg(p, s.p1, s.p2));
     }
     return d;
@@ -363,7 +363,7 @@ HANDLERS.text = {
   draw(dc, e, opts) {
     dc.text(e, opts, String(e.text ?? ''), e.x, e.y, e.height, e.rotation || 0, e.halign || 'left', e.valign || 'baseline');
   },
-  transform(e, m) {
+  transform(e, m, scene) {
     const p = applyM(m, { x: e.x, y: e.y });
     const mirrored = matrixMirrored(m);
     let halign = e.halign;
@@ -379,8 +379,8 @@ HANDLERS.text = {
 function clampToBox(v, a, b) { return v < a ? a : v > b ? b : v; }
 
 /* ---------- insert (块引用) ---------- */
-function insertMatrix(e) {
-  const b = { baseX: 0, baseY: 0 };
+function insertMatrix(e, scene) {
+  const b = scene?.blocks?.get(e.block) || { baseX: 0, baseY: 0 };
   return composeM(rotationM(e.rotation || 0, e.x, e.y), composeM(scaleM(e.scaleX ?? 1, e.scaleY ?? 1, e.x, e.y), translationM(e.x - b.baseX, e.y - b.baseY)));
 }
 HANDLERS.insert = {
@@ -389,7 +389,7 @@ HANDLERS.insert = {
     if (!blk) return [e.x, e.y, e.x, e.y];
     let bb = null;
     for (const be of blk.entities.values()) {
-      const t = transformEntity(be, insertMatrix(e));
+      const t = transformEntity(be, insertMatrix(e, scene), scene);
       if (t.__explode) continue;
       bb = bboxUnion(bb, HANDLERS[t.type]?.bbox?.(t));
     }
@@ -400,7 +400,7 @@ HANDLERS.insert = {
     if (!blk) return dist(p, { x: e.x, y: e.y });
     let d = Infinity;
     for (const be of blk.entities.values()) {
-      const t = transformEntity(be, insertMatrix(e));
+      const t = transformEntity(be, insertMatrix(e, scene), scene);
       if (t.__explode) continue;
       const dd = HANDLERS[t.type]?.distance?.(t, p);
       if (dd != null) d = Math.min(d, dd);
@@ -412,16 +412,16 @@ HANDLERS.insert = {
   draw(dc, e, opts) {
     const blk = dc.scene?.blocks?.get(e.block);
     if (!blk) return;
-    const m = insertMatrix(e);
+    const m = insertMatrix(e, dc.scene);
     for (const be of blk.entities.values()) {
-      const t = transformEntity(be, m);
+      const t = transformEntity(be, m, dc.scene);
       if (t.__explode) continue;
       if (t.layer === '0' || t.layer == null) t.layer = e.layer;
       if (t.color == null) t.color = e.color;
       dc.drawEntity(t, { ...opts, nested: true });
     }
   },
-  transform(e, m) {
+  transform(e, m, scene) {
     const p = applyM(m, { x: e.x, y: e.y });
     const { sx, sy } = matrixScaleXY(m);
     const rot = matrixRotation(m);
@@ -429,7 +429,7 @@ HANDLERS.insert = {
     if (Math.abs(sx - sy) < 1e-9 && !mirrored) {
       return { ...e, x: p.x, y: p.y, rotation: (e.rotation || 0) + rot, scaleX: (e.scaleX ?? 1) * sx, scaleY: (e.scaleY ?? 1) * sy };
     }
-    return { __explode: composeM(m, insertMatrix(e)) };
+    return { __explode: composeM(m, insertMatrix(e, scene)) };
   },
   props: (e, scene) => {
     const names = [...(scene?.blocks?.keys?.() || [])];
@@ -560,10 +560,10 @@ HANDLERS.hatch = {
 export const ENTITY_TYPES = Object.keys(HANDLERS);
 
 /* ---------------- 变换 ---------------- */
-export function transformEntity(e, m) {
+export function transformEntity(e, m, scene) {
   const h = HANDLERS[e.type];
   if (!h || !h.transform) return deepClone(e);
-  return h.transform(e, m);
+  return h.transform(e, m, scene);
 }
 export function entityBBox(e, scene) {
   const h = HANDLERS[e.type];
@@ -607,7 +607,7 @@ export function entityCurves(e, scene) {
   if (e.type === 'insert') {
     const blk = scene?.blocks?.get(e.block);
     if (!blk) return [];
-    const m = insertMatrix(e);
+    const m = insertMatrix(e, scene);
     const out = [];
     for (const be of blk.entities.values()) {
       const t = transformEntity(be, m);
@@ -645,8 +645,10 @@ export function pieceAngleRange(pc) {
 export function angleOnPiece(pc, a) {
   const r = pieceAngleRange(pc);
   if (!r) return false;
-  const x = normAngle(a);
-  return x >= r[0] - 1e-9 && x <= r[1] + 1e-9;
+  // 相对区间起点做归一化比较，正确处理区间跨越 0/2π 的情况
+  const span = r[1] - r[0];
+  const x = normAngle(a - r[0]);
+  return x <= span + 1e-9;
 }
 
 export function piecePieceIntersections(a, b) {

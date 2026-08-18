@@ -67,5 +67,22 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
   assert(data.layers.some((l) => l.name === '0'));
   ok('空数据库：返回默认 0 图层，不崩溃');
 }
+{
+  // 传统 POLYLINE2D/3D 多段线（旧版本 DWG 常见，此前被静默丢弃）
+  const data = mapDwgDatabase({
+    tables: { LAYER: { entries: [] } }, header: {},
+    entities: [
+      { type: 'POLYLINE2D', flag: 1, layer: '0', vertices: [{ x: 0, y: 0, bulge: 0 }, { x: 10, y: 0, bulge: 0.5 }, { x: 10, y: 10, bulge: 0 }] },
+      { type: 'POLYLINE3D', flag: 0, layer: '0', vertices: [{ x: 0, y: 0 }, { x: 5, y: 5 }] },
+    ],
+  });
+  const pls = data.entities.filter((e) => e.type === 'polyline');
+  assert.equal(pls.length, 2, `传统多段线应全部导入，实际 ${pls.length}`);
+  const closed = pls.find((e) => e.closed);
+  assert(closed && closed.points.length === 3 && Math.abs(closed.points[1].bulge - 0.5) < 1e-9, 'POLYLINE2D 应闭合且保留 bulge');
+  const open = pls.find((e) => !e.closed);
+  assert(open && open.points.length === 2, 'POLYLINE3D 应导入 2 个顶点');
+  ok('传统 POLYLINE2D/3D 多段线导入');
+}
 
 console.log(`\n全部通过：${n} 项`);

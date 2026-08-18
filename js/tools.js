@@ -84,7 +84,7 @@ function ghostPreview(app, ids, buildMatrix) {
     for (const id of ids) {
       const e = app.scene.get(id);
       if (!e) continue;
-      const t = transformEntity(e, m);
+      const t = transformEntity(e, m, app.scene);
       if (t.__explode) continue;
       dc.drawEntity(t, { color: '#9aa0ac', dashed: true });
     }
@@ -126,7 +126,7 @@ function pieceParam(pc, p) {
 function pieceDistance(pc, p) {
   if (pc.kind === 'line') return distPointSeg(p, P(pc.x1, pc.y1), P(pc.x2, pc.y2));
   if (pc.kind === 'circle') return Math.abs(dist(p, P(pc.cx, pc.cy)) - pc.r);
-  if (pc.kind === 'arc') return distPointArc(p, pc.cx, pc.cy, pc.r, pc.startAngle, pc.endAngle);
+  if (pc.kind === 'arc') return distPointArc(p, pc.cx, pc.cy, pc.r, pc.startAngle, pc.endAngle, pc.ccw !== false);
   if (pc.kind === 'poly') {
     let d = Infinity;
     for (let i = 0; i < pc.points.length - 1; i++) d = Math.min(d, distPointSeg(p, pc.points[i], pc.points[i + 1]));
@@ -271,9 +271,27 @@ function rebuildFromPieces(app, e, pieces) {
       if (pc.kind === 'arc') out.push({ ...base, type: 'arc', cx: pc.cx, cy: pc.cy, r: pc.r, startAngle: pc.startAngle, endAngle: pc.endAngle, ccw: pc.ccw });
     }
   } else if (e.type === 'polyline') {
-    const pts = piecesToPolyline(pieces, e.closed);
-    if (pts.length >= 2 || (e.closed && pts.length >= 3)) {
-      out.push({ ...base, type: 'polyline', points: pts, closed: e.closed });
+    // 按几何连续性分组：修剪会在片段的中间切断，断裂处必须拆成多条多段线（否则出现跨缺口假线段）
+    const groups = [];
+    let cur = [];
+    for (const pc of pieces) {
+      const [s] = pieceEndpoints(pc);
+      if (cur.length) {
+        const prevEnd = pieceEndpoints(cur[cur.length - 1])[1];
+        if (dist(s, prevEnd) > 1e-6) { groups.push(cur); cur = []; }
+      }
+      cur.push(pc);
+    }
+    if (cur.length) groups.push(cur);
+    let closed = e.closed;
+    if (closed && groups.length > 1) {
+      // 闭合环被切断：最后一组与第一组首尾相接，重新拼回一条开口多段线
+      groups.unshift(groups.pop());
+      closed = false;
+    }
+    for (const g of groups) {
+      const pts = piecesToPolyline(g, false);
+      if (pts.length >= 2) out.push({ ...base, type: 'polyline', points: pts, closed });
     }
   }
   return out;
@@ -546,13 +564,10 @@ function regDraw(app, c) {
     if (!cc) { app.notify('三点共线，无法构造圆弧', 'error'); return; }
     const a1 = Math.atan2(p1.y - cc.cy, p1.x - cc.cx);
     const a3 = Math.atan2(p3.y - cc.cy, p3.x - cc.cx);
-    // 保证第二点在弧上
+    // 保证第二点在弧上：p2 在 p1→p3 的 CCW 弧上则取 CCW 弧，否则取 CW 弧
     const a2 = Math.atan2(p2.y - cc.cy, p2.x - cc.cx);
     const onCCW = angleInRange(a2, a1, a3);
-    const startAngle = onCCW ? a1 : a3;
-    const endAngle = onCCW ? a3 : a1;
-    const ccw = !onCCW;
-    scene.singleOp('圆弧', () => scene.addEntity(make.arc(P(cc.cx, cc.cy), cc.r, startAngle, endAngle, { ccw })));
+    scene.singleOp('圆弧', () => scene.addEntity(make.arc(P(cc.cx, cc.cy), cc.r, a1, a3, { ccw: onCCW })));
   }, ['A']);
   const circleThrough3Local = (p1, p2, p3) => {
     const d = 2 * (p1.x * (p2.y - p3.y) + p2.x * (p3.y - p1.y) + p3.x * (p1.y - p2.y));
@@ -794,12 +809,10 @@ function regModify(app, c) {
   }, ['O']);
   const offsetSign = (e, pickP, sideP) => {
     if (e.type === 'line') {
-      const d1 = dist(pickP, P(e.x1, e.y1)), d2 = dist(pickP, P(e.x2, e.y2));
-      const baseP = d1 < d2 ? P(e.x1, e.y1) : P(e.x2, e.y2);
-      const other = d1 < d2 ? P(e.x2, e.y2) : P(e.x1, e.y1);
-      const ang = angleOf(baseP, other);
+      // 与 offsetEntity 保持同一方向（恒用 x1→x2），否则拾取靠近终点时偏移反侧
+      const ang = angleOf(P(e.x1, e.y1), P(e.x2, e.y2));
       const n = P(-Math.sin(ang), Math.cos(ang));
-      const s = (sideP.x - baseP.x) * n.x + (sideP.y - baseP.y) * n.y;
+      const s = (sideP.x - e.x1) * n.x + (sideP.y - e.y1) * n.y;
       return s > 0 ? 1 : -1;
     }
     if (e.type === 'circle' || e.type === 'arc') {
@@ -813,9 +826,17 @@ function regModify(app, c) {
       return dS > dP ? 1 : -1;
     }
     if (e.type === 'polyline') {
-      // 用边界内外判断：点在内部→内偏移
-      const inside = pointInPolygon(sideP, flattenPolyline(e.points.map((q) => P(q.x, q.y)), e.points.map((q) => q.bulge)));
-      return e.closed && inside ? -1 : 1;
+      const flat = flattenPolyline(e.points.map((q) => P(q.x, q.y)), e.points.map((q) => q.bulge));
+      const inside = pointInPolygon(sideP, flat);
+      if (!e.closed) return inside ? -1 : 1;
+      // 顶点法线 n=(-sin,cos) 是行进方向左侧法线：CCW 多边形左法线朝内，CW 朝外
+      let area = 0;
+      for (let i = 0; i < flat.length; i++) {
+        const a = flat[i], b = flat[(i + 1) % flat.length];
+        area += a.x * b.y - b.x * a.y;
+      }
+      const ccw = area > 0;
+      return inside ? (ccw ? 1 : -1) : (ccw ? -1 : 1);
     }
     return 0;
   };
@@ -996,9 +1017,10 @@ function regModify(app, c) {
     for (const [ent, pc, tp] of [[pk1.ent, pc1, t1], [pk2.ent, pc2, t2]]) {
       if (pc.kind === 'circle') continue;
       const pieces = entityCurves(ent, scene);
-      let ci = -1;
-      pieces.forEach((p2, i) => { if (p2 === pc) ci = i; });
-      if (ci < 0) continue;
+      // 用切点位置匹配片段：entityCurves 每次返回全新对象，对象同一性匹配恒失败（导致修剪被跳过）
+      let ci = -1, best = Infinity;
+      pieces.forEach((p2, i) => { const d = pieceDistance(p2, tp); if (d < best) { best = d; ci = i; } });
+      if (ci < 0 || best > 1e-6) continue;
       const t = pieceParam(pc, tp);
       if (t === null) continue;
       const kept = keepFarPart(pc, t);
@@ -1059,7 +1081,8 @@ function regModify(app, c) {
     if (d1 === CANCELLED) return;
     const d2 = await c.awaitNumber({ prompt: `第二个倒角距离 <${d1 === ENDED ? 0 : d1}>:`, enterValue: d1 === ENDED ? 0 : d1 });
     if (d2 === CANCELLED) return;
-    const v1 = d1 === ENDED ? 0 : d1, v2 = d2 === ENDED ? (d1 === ENDED ? 0 : d1) : d2;
+    const v1 = d1 === ENDED ? 0 : Math.abs(d1), v2 = d2 === ENDED ? (d1 === ENDED ? 0 : Math.abs(d1)) : Math.abs(d2);
+    if (v1 < 1e-9 && v2 < 1e-9) { app.notify('倒角距离不能全为 0', 'error'); return; }
     const l1 = pk1.ent, l2 = pk2.ent;
     const corner = lineLineIntersection(P(l1.x1, l1.y1), P(l1.x2, l1.y2), P(l2.x1, l2.y1), P(l2.x2, l2.y2));
     if (!corner) { app.notify('两直线平行，无法倒角', 'error'); return; }
@@ -1117,7 +1140,8 @@ function regModify(app, c) {
     if (fill === CANCELLED) return;
     const n = clamp(Math.round(count), 2, 360);
     const fillA = (fill === ENDED ? 360 : fill) * D2R;
-    const step = fillA / n;
+    // 部分填充：n 项均匀分布在 [0, fill]（含端点）；整圆 360°：末项与首项重合，用 fill/n
+    const step = fillA === TAU ? fillA / n : fillA / (n - 1);
     scene.beginUndoGroup('环形阵列');
     let total = 0;
     for (let k = 1; k < n; k++) {

@@ -197,3 +197,31 @@ if (failures) {
 } else {
   console.log('✓ 全部测试通过');
 }
+
+/* ---------------- 审查回归：真彩色图层关闭状态往返 + MTEXT 字面反斜杠 ---------------- */
+{
+  const scene = {
+    layers: new Map([
+      ['真彩关', { name: '真彩关', color: '#ff8800', on: false, locked: false, ltype: 'CONTINUOUS' }],
+    ]),
+    blocks: new Map(),
+    entities: new Map(),
+    dimstyle: {},
+    units: 'mm',
+  };
+  const txt = writeDXF(scene);
+  const back = parseDXF(txt);
+  const L = back.layers.find((l) => l.name === '真彩关');
+  assert(L && L.on === false, `真彩色关闭图层往返后应 on=false，实际 ${L?.on}`);
+  assert(L && L.color === '#ff8800', `真彩色应保留，实际 ${L?.color}`);
+  console.log('  ✓ 真彩色关闭图层往返保真');
+}
+{
+  // MTEXT 控制码中的字面反斜杠不得被控制码剥离吞掉
+  const txt = '0\nSECTION\n2\nENTITIES\n0\nMTEXT\n8\n0\n10\n0\n20\n0\n40\n2.5\n1\nC:\\\\temp\\\\dir;\n0\nENDSEC\n0\nEOF\n';
+  const data = parseDXF(txt);
+  const mt = data.entities.find((e) => e.type === 'text');
+  assert(mt && mt.text === 'C:\\temp\\dir;', `MTEXT 字面反斜杠应保留，实际 "${mt?.text}"`);
+  console.log('  ✓ MTEXT 字面反斜杠保留');
+}
+console.log('\n✓ 全部测试通过');

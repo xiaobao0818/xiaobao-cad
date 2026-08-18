@@ -91,6 +91,13 @@ export function mapDwgDatabase(db) {
           if (pts.length >= 2) entities.push({ ...base(e, 'polyline'), points: pts, closed: !!(e.flag & 1) });
           break;
         }
+        case 'POLYLINE2D':
+        case 'POLYLINE3D': {
+          // 传统多段线（R12/R14 及大量旧图纸）：顶点含 bulge，flag bit0 = 闭合
+          const pts = (e.vertices || []).map((v) => ({ x: v.x ?? 0, y: v.y ?? 0, bulge: v.bulge || 0 }));
+          if (pts.length >= 2) entities.push({ ...base(e, 'polyline'), points: pts, closed: !!(e.flag & 1) });
+          break;
+        }
         case 'ELLIPSE': {
           const mx = e.majorAxisEndPoint?.x ?? 0, my = e.majorAxisEndPoint?.y ?? 0;
           const rx = Math.hypot(mx, my) || 1;

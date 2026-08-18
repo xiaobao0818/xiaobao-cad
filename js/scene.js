@@ -38,12 +38,13 @@ export class Scene extends Emitter {
         locked: !!opts.locked,
         ltype: opts.ltype || 'CONTINUOUS',
       });
+      this._changed(); // 新建图层进历史（可撤销）
       this.emit('layers');
     }
     return this.layers.get(name);
   }
   layer(name) { return this.layers.get(name) || null; }
-  setCurrentLayer(name) { this.ensureLayer(name); this.currentLayer = name; this.emit('layers'); }
+  setCurrentLayer(name) { this.ensureLayer(name); this.currentLayer = name; this._changed(); this.emit('layers'); }
   addLayer(name, opts = {}) { this.ensureLayer(name, opts); this.setCurrentLayer(name); return this.layer(name); }
   removeLayer(name) {
     if (name === '0') throw new Error('不能删除 0 图层');
@@ -54,8 +55,8 @@ export class Scene extends Emitter {
     for (const b of this.blocks.values()) for (const e of b.entities.values()) if (e.layer === name) e.layer = '0';
     this.layers.delete(name);
     if (this.currentLayer === name) this.currentLayer = '0';
+    this._changed();
     this.emit('layers');
-    this.emit('change');
   }
 
   /* ---------- 实体 ---------- */
@@ -117,14 +118,20 @@ export class Scene extends Emitter {
     return {
       entities: deepClone([...this.entities.values()]),
       blocks: deepClone([...this.blocks.values()].map((b) => ({ name: b.name, baseX: b.baseX, baseY: b.baseY, entities: [...b.entities.values()] }))),
+      layers: deepClone([...this.layers.values()]),
+      currentLayer: this.currentLayer,
+      selection: [...this.selection],
     };
   }
   _restore(snap) {
     this.entities = new Map(snap.entities.map((e) => [e.id, e]));
     this.blocks = new Map(snap.blocks.map((b) => [b.name, { name: b.name, baseX: b.baseX, baseY: b.baseY, entities: new Map(b.entities.map((e) => [e.id, e])) }]));
-    this.selection.clear();
+    if (snap.layers) this.layers = new Map(snap.layers.map((l) => [l.name, l]));
+    if (snap.currentLayer != null) this.currentLayer = snap.currentLayer;
+    this.selection = new Set(snap.selection || []);
     this._changed();
     this.emit('selection');
+    this.emit('layers');
   }
   _pushHistory(label, before) {
     this.undoStack.push({ label, before, after: this._snapshot() });
@@ -140,12 +147,13 @@ export class Scene extends Emitter {
     if (this._changeCount !== c0) this._pushHistory(label, before);
   }
   beginUndoGroup(label) {
-    if (this._undoGroup) return;
-    this._undoGroup = { label, before: this._snapshot(), c0: this._changeCount };
+    if (this._undoGroup) { this._undoGroup.depth++; return; }
+    this._undoGroup = { label, before: this._snapshot(), c0: this._changeCount, depth: 1 };
   }
   endUndoGroup() {
     const g = this._undoGroup;
     if (!g) return;
+    if (--g.depth > 0) return; // 内层 end 不关闭外层
     this._undoGroup = null;
     if (this._changeCount !== g.c0) this._pushHistory(g.label, g.before);
   }
@@ -178,15 +186,16 @@ export class Scene extends Emitter {
       for (const id of [...ids]) {
         const e = this.entities.get(id);
         if (!e) continue;
-        const t = transformEntity(e, matrix);
+        const t = transformEntity(e, matrix, this);
         if (t.__explode) {
           const blk = this.blocks.get(e.block);
           if (blk) {
             for (const be of blk.entities.values()) {
-              const te = transformEntity(be, t.__explode);
+              const te = transformEntity(be, t.__explode, this);
               if (te.__explode) continue;
               if (te.layer === '0' || te.layer == null) te.layer = e.layer;
-              if (copy) { delete te.id; this.addEntity(te); newIds.push(te.id); }
+              delete te.id; // 块内实体 id 与场景 id 空间不同，必须去掉避免碰撞
+              if (copy) { this.addEntity(te); newIds.push(te.id); }
               else this.addEntity(te);
             }
           }
@@ -248,7 +257,7 @@ export class Scene extends Emitter {
         f: e.y - (s * sx) * blk.baseX - (c * sy) * blk.baseY,
       };
       for (const be of blk.entities.values()) {
-        const t = transformEntity(be, M);
+        const t = transformEntity(be, M, this);
         if (t.__explode) continue;
         if (t.layer === '0' || t.layer == null) t.layer = e.layer;
         delete t.id;

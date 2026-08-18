@@ -17,6 +17,8 @@ function mockKernel() {
     createCone(p) { calls.create.push(['cone', p]); return nextId++; },
     createTorus(p) { calls.create.push(['torus', p]); return nextId++; },
     boolean(op, a, bs) { calls.boolean.push([op, a, [...bs]]); return nextId++; },
+    fillet(id, r) { calls.boolean.push(['fillet', id, r]); return nextId++; },
+    chamfer(id, d) { calls.boolean.push(['chamfer', id, d]); return nextId++; },
     transform(id, t) { calls.transform.push([id, { ...t }]); },
     mesh(id) {
       calls.mesh.push(id);
@@ -158,6 +160,27 @@ console.log('== Model3D（模拟内核） ==');
   assert.equal(m.visibleCount(), 2);   // 失败时输入不被隐藏
   assert.equal(meshes.length, 2);      // 两个输入仍渲染
   ok('布尔求值失败：输入保持可见（用户看不到内容的 bug 修复）');
+}
+
+{
+  // 圆角/倒角特征树：源被消费、失败不消费、级联删除
+  const m = new Model3D();
+  const k = mockKernel();
+  m.setKernel(k);
+  const a = m.addPrimitive('box', { dx: 10, dy: 10, dz: 10 });
+  const f = m.filletChamfer('fillet', a.id, 2);
+  assert(m.consumedSet().has(a.id), '圆角应消费源实体');
+  assert.equal(m.visibleCount(), 1);
+  assert(m.summary().includes('圆角'), '摘要应包含圆角特征');
+  // 失败标记后源恢复可见
+  m._booleanFailed.add(f.id);
+  assert(!m.consumedSet().has(a.id), '失败的圆角不应消费源实体');
+  assert.equal(m.visibleCount(), 1, '失败的圆角自身不渲染，仅源实体可见');
+  m._booleanFailed.delete(f.id);
+  // 删除源 → 圆角级联删除
+  m.removeBody(a.id);
+  assert(!m.byId(f.id), '删除源实体应级联删除圆角特征');
+  ok('圆角/倒角特征树（消费/失败/级联）');
 }
 
 console.log(`\n全部通过：${n} 项`);

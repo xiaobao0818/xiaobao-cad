@@ -707,7 +707,7 @@ export default class AIChatPanel {
           await this._visionReview();
         } catch (e) {
           console.warn('[ai] 自动审阅失败', e);
-          if (e && e.aborted) return;
+          if (e && e.aborted) { this._addMessage('system', '⏹ 已停止审阅'); return; }
           this._addMessage('error', '👁 多模态审阅失败：' + (e && e.message ? e.message : e));
         }
       }
@@ -745,14 +745,16 @@ export default class AIChatPanel {
     this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
   }
 
-  /** 工作区可见内容指纹（用于判断工具是否真的画出了东西） */
+  /** 工作区可见内容指纹（用于判断工具是否真的画出了东西）：用变更计数，而非实体数——
+   *  移动/缩放/改色/撤销等不改变实体数量但确实是有效操作，用数量对比会误报"无可见变化" */
   _visibleContentKey() {
     try {
       if (this.CAD.workspace === '3d') {
         const m = this.CAD.app3d?.model;
-        return '3d:' + (m ? m.visibleCount() : -1);
+        return '3d:' + (m ? m._changeCount || 0 : -1) + ':' + (m ? m.visibleCount() : -1);
       }
-      return '2d:' + (this.CAD.scene ? this.CAD.scene.count() : -1);
+      const sc = this.CAD.scene;
+      return '2d:' + (sc ? sc._changeCount || 0 : -1) + ':' + (sc ? sc.count() : -1);
     } catch (e) { return 'unknown'; }
   }
   /** 诊断日志：记录每轮工具调用，供排查「突然停止/没画出来」类问题 */
@@ -791,6 +793,8 @@ export default class AIChatPanel {
         this._ctrl = null;
         this._updateStatus();
         this._setSendButton(false);
+        // 审阅期间用户回车发送的消息不能丢（与 _runConversation 的 finally 保持一致）
+        if (this._pendingSend) { this._pendingSend = false; this._runConversation(); }
       }
     })();
   }
@@ -806,6 +810,14 @@ export default class AIChatPanel {
       model: s.visionModel || 'MiniMax-M3',
       key: s.visionKey || s.key,
     };
+    try {
+      return await this._visionReviewLoop(captureFn, endpointCfg, s);
+    } finally {
+      this._stripReviewImages(); // 无论成功/失败/停止都清理审阅截图
+    }
+  }
+  async _visionReviewLoop(captureFn, endpointCfg, s) {
+    let image = captureFn();
     const roundLimit = Number(s.reviewRounds) > 0 ? Number(s.reviewRounds) : Infinity;
     this._addMessage('system', `👁 多模态审阅中（${endpointCfg.model}，正在查看图纸…）`);
     let rounds = 0;
@@ -852,6 +864,18 @@ export default class AIChatPanel {
     }
     return lastText;
   }
+  /** 审阅轮的大截图若留在对话历史，后续每次请求都会重发全部截图（token/带宽暴涨）——
+   *  审阅结束后把图片剥离，只保留文字结论 */
+  _stripReviewImages() {
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const m = this.messages[i];
+      if (m.role === 'user' && Array.isArray(m.content) && m.content.some((c) => c && c.type === 'image_url')) {
+        const txt = m.content.filter((c) => c && c.type === 'text').map((c) => c.text).join('\n');
+        if (txt) this.messages[i] = { role: 'user', content: txt };
+        else this.messages.splice(i, 1);
+      }
+    }
+  }
 
   async _runWithTools(endpointCfg = {}) {
     const s = this.settings;
@@ -860,6 +884,8 @@ export default class AIChatPanel {
     let toolCallCount = 0;
     let lastSig = null;
     let repeatCount = 0;
+    let noChange = 0;
+    let keyBefore = this._visibleContentKey();
     for (let round = 0; round < roundLimit; round++) {
       this._syncSystemMessage();
       const body = {
@@ -891,7 +917,7 @@ export default class AIChatPanel {
           repeatCount++;
           if (repeatCount >= REPEAT_LIMIT) {
             this._addMessage('system', '🛡 检测到模型连续重复相同操作，已自动停止（防死循环）。下方是它的总结，可回复「继续」或换个说法重试。');
-            return { fallback: false, text: await this._finalSummary(toolCallCount, '检测到模型在重复执行相同的操作，已自动停止以避免死循环') };
+            return { fallback: false, text: await this._finalSummary(toolCallCount, '检测到模型在重复执行相同的操作，已自动停止以避免死循环', endpointCfg) };
           }
         } else {
           lastSig = sig;
@@ -912,6 +938,16 @@ export default class AIChatPanel {
         toolCallCount += msg.tool_calls.length;
         this._aiLog('tools', names.join(','));
         this._addMessage('system', `🔧 已执行工具：${names.join('、')}`);
+        // 进展熔断：连续多轮执行工具但工作区毫无变化 → 停止（防参数漂移式空转烧额度）
+        const keyAfter = this._visibleContentKey();
+        if (keyAfter === keyBefore) {
+          noChange++;
+          if (noChange >= 3) {
+            this._addMessage('system', '🛡 连续多轮工具操作没有让工作区产生任何变化（可能参数无效或模型在空转），已自动停止。可回复「继续」或换个说法重试。');
+            return { fallback: false, text: await this._finalSummary(toolCallCount, '连续多轮工具操作没有产生任何可见变化，已自动停止', endpointCfg) };
+          }
+        } else noChange = 0;
+        keyBefore = keyAfter;
         if (toolCallCount >= callLimit) {
           return { fallback: false, text: await this._finalSummary(toolCallCount, '已达到设置的工具调用总次数上限') };
         }
@@ -928,7 +964,7 @@ export default class AIChatPanel {
     return `⚠️ ${reason}。\n本次共执行了 ${count} 次工具操作，已完成的图形都保留在图纸中（可按 Ctrl+Z 或输入命令 U 撤销）。\n💡 建议：把任务拆分成更小的步骤再让我继续，或直接回复「继续完成剩余部分」。`;
   }
   /** 达到上限时：请求模型做一次不带工具的最终总结，替代生硬的警告 */
-  async _finalSummary(count, reason) {
+  async _finalSummary(count, reason, endpointCfg = {}) {
     const s = this.settings;
     try {
       this.messages.push({
@@ -936,10 +972,10 @@ export default class AIChatPanel {
         content: `[系统提示] 工具调用已达到安全上限（${reason}，本轮共执行 ${count} 次操作）。请停止调用工具，直接总结：已完成哪些建模步骤、当前模型状态、以及用户可以让你继续完成什么。`,
       });
       const body = {
-        model: s.model, messages: this.messages, temperature: s.temperature,
+        model: endpointCfg.model || s.model, messages: this.messages, temperature: s.temperature,
         max_tokens: s.maxTokens, stream: false,
       };
-      const data = await this._post(body, this._ctrl.signal);
+      const data = await this._post(body, this._ctrl.signal, endpointCfg);
       const text = data.choices?.[0]?.message?.content || '';
       this.messages.push({ role: 'assistant', content: text });
       if (text) return text;
@@ -992,9 +1028,18 @@ export default class AIChatPanel {
         '```\n' +
         'create3d 每项支持 kind: box(dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，坐标 x,y,z；query 支持 "list3d"。'
       : FALLBACK_INSTRUCTION;
-    const last = [...this.messages].reverse().find((m) => m.role === 'user' && !String(m.content).startsWith('[参考文件]'));
-    if (last) last.content = String(last.content) + instr;
-    else this.messages.push({ role: 'user', content: instr.trim() });
+    const textOf = (m) => (typeof m.content === 'string' ? m.content : (m.content || []).map((c) => (c && c.type === 'text' ? c.text : '')).join(''));
+    const isRef = (t) => /^\[(参考文件|图片参考)/.test(t);
+    // 找到最后一条非参考文件的 user 消息（图片参考是数组 content，不能直接 String()，否则图片被毁）
+    const last = [...this.messages].reverse().find((m) => m.role === 'user' && !isRef(textOf(m)));
+    if (last) {
+      if (typeof last.content === 'string') last.content = last.content + instr;
+      else {
+        const txt = (last.content || []).find((c) => c && c.type === 'text');
+        if (txt) txt.text = (txt.text || '') + instr;
+        else last.content.push({ type: 'text', text: instr.trim() });
+      }
+    } else this.messages.push({ role: 'user', content: instr.trim() });
   }
 
   /* ---------------- 网络请求 ---------------- */
@@ -1365,8 +1410,23 @@ export default class AIChatPanel {
   async _attachFile(file) {
     const name = file.name || '未命名';
     const ext = (name.split('.').pop() || '').toLowerCase();
+    // 统一大小保护：超大附件会卡死主线程/撑爆上下文
+    const sizeMB = (file.size || 0) / 1024 / 1024;
+    const LIMITS = { dwg: 80, dxf: 30, json: 20, svg: 20, txt: 5 };
+    if (LIMITS[ext] && sizeMB > LIMITS[ext]) {
+      const msg = `📎 附件过大（${sizeMB.toFixed(1)}MB，${ext.toUpperCase()} 上限 ${LIMITS[ext]}MB），请精简后重试`;
+      try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
+      this._addMessage('error', msg);
+      return;
+    }
     // 图片参考：直接以多模态内容注入对话（原生多模态能力）
     if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) {
+      if (sizeMB > 8) {
+        const msg = `🖼 图片过大（${sizeMB.toFixed(1)}MB，上限 8MB）`;
+        try { this.CAD.notify(msg, 'error'); } catch (_) { /* ignore */ }
+        this._addMessage('error', msg);
+        return;
+      }
       try {
         const dataURL = await new Promise((resolve, reject) => {
           const r = new FileReader();
@@ -1512,29 +1572,40 @@ export default class AIChatPanel {
   }
 
   _applyCadJSON(obj) {
+    const is3d = this.CAD.workspace === '3d';
     const results = [];
     if (obj && Array.isArray(obj.commands)) {
-      for (const cmd of obj.commands) {
-        try {
-          this.CAD.commander.execAndEnd(String(cmd));
-          results.push('已执行命令: ' + cmd);
-        } catch (e) {
-          results.push('命令执行失败: ' + cmd + ' → ' + (e && e.message ? e.message : e));
+      if (is3d) {
+        results.push('当前为 3D 建模工作区，已忽略 2D 命令（commands）——请用 create3d 指令建模');
+      } else {
+        for (const cmd of obj.commands) {
+          try {
+            this.CAD.commander.execAndEnd(String(cmd));
+            results.push('已执行命令: ' + cmd);
+          } catch (e) {
+            results.push('命令执行失败: ' + cmd + ' → ' + (e && e.message ? e.message : e));
+          }
         }
       }
     }
     if (obj && Array.isArray(obj.draw)) {
-      try { results.push(this._toolDrawEntities({ items: obj.draw })); }
-      catch (e) { results.push('draw 执行失败: ' + (e && e.message ? e.message : e)); }
+      if (is3d) results.push('当前为 3D 建模工作区，已忽略 2D 绘图（draw）——请用 create3d 指令建模');
+      else {
+        try { results.push(this._toolDrawEntities({ items: obj.draw })); }
+        catch (e) { results.push('draw 执行失败: ' + (e && e.message ? e.message : e)); }
+      }
     }
     if (obj && Array.isArray(obj.create3d)) {
-      try {
-        const a3d = this.CAD.ai3d;
-        if (!a3d) throw new Error('三维内核未就绪');
-        const done = [];
-        for (const it of obj.create3d) done.push(a3d.create_primitive_3d(it));
-        results.push(done.join(' | '));
-      } catch (e) { results.push('create3d 执行失败: ' + (e && e.message ? e.message : e)); }
+      if (!is3d) results.push('当前为 2D 制图工作区，已忽略 3D 建模（create3d）——请用 draw/commands 指令绘图');
+      else {
+        try {
+          const a3d = this.CAD.ai3d;
+          if (!a3d) throw new Error('三维内核未就绪');
+          const done = [];
+          for (const it of obj.create3d) done.push(a3d.create_primitive_3d(it));
+          results.push(done.join(' | '));
+        } catch (e) { results.push('create3d 执行失败: ' + (e && e.message ? e.message : e)); }
+      }
     }
     if (obj && obj.query) {
       const q = String(obj.query);

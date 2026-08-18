@@ -4,7 +4,10 @@
 import { Viewport3D } from './viewport3d.js';
 import { Model3D } from './model3d.js';
 import { initKernel } from './occ-kernel.js';
-import { download, escapeHtml } from '../util.js';
+import { download, escapeHtml, uid } from '../util.js';
+
+/** 导出文件名安全化（去掉非法字符） */
+const safeName = (n) => (String(n || '模型').replace(/[\\/:*?"<>|]/g, '_') || '模型');
 
 const PRIM_DEFS = {
   box: { name: '长方体', fields: [
@@ -44,6 +47,9 @@ const TOOLS_3D = [
   { act: 'color', label: '颜色', icon: '🎨' },
   { act: 'delete', label: '删除', icon: '🗑' },
   null,
+  { act: 'fillet', label: '圆角', icon: '⧉' },
+  { act: 'chamfer', label: '倒角', icon: '⌐' },
+  null,
   { act: 'undo', label: '撤销', icon: '↶' },
   { act: 'redo', label: '重做', icon: '↷' },
   { act: 'fit', label: '适应视图', icon: '⛶' },
@@ -68,8 +74,15 @@ export class App3D {
       this._readyResolve = resolve;
       this._readyReject = reject;
     });
+    this.readyPromise.catch(() => {}); // 防止内核失败时无人 await 导致 unhandledrejection
     this._buildToolbar();
     this._wireModel();
+    // 开机自动恢复/打开含 3D 的图纸时 app3d 可能晚于 scene 就绪：此处回读已载入的 3D 数据
+    if (this.app.scene?._bodies3d) {
+      const wasDirty = !!this.app.scene.dirty;
+      this.model.load(this.app.scene._bodies3d);
+      if (!wasDirty) this.app.scene.dirty = false; // 载入文件不应伪造"未保存"状态
+    }
   }
 
   /** 懒加载：首次切换到 3D 工作区时才下载 63MB 内核 */
@@ -97,6 +110,13 @@ export class App3D {
     } catch (e) {
       console.error('[3d] 内核加载失败', e);
       this._readyReject(e);
+      // 允许重试（如网络恢复后再次切换工作区）
+      this._kernelStarted = false;
+      this.readyPromise = new Promise((resolve, reject) => {
+        this._readyResolve = resolve;
+        this._readyReject = reject;
+      });
+      this.readyPromise.catch(() => {});
       if (loadingEl) {
         loadingEl.querySelector('.kl-text').textContent = '三维内核加载失败：' + (e?.message || e) + '（刷新页面重试）';
       }
@@ -136,6 +156,7 @@ export class App3D {
     else if (t.act === 'transform') this._transformDialog();
     else if (t.act === 'color') this._colorDialog();
     else if (t.act === 'delete') this._delete();
+    else if (t.act === 'fillet' || t.act === 'chamfer') this._filletTool(t.act);
     else if (t.act === 'undo') this.model.undo();
     else if (t.act === 'redo') this.model.redo();
     else if (t.act === 'fit') { this.refresh(true); }
@@ -211,8 +232,8 @@ export class App3D {
       const body = this.model.boolean(op, aId, bIds);
       this.refresh(true);
       if (this.model._booleanFailed.has(body.id)) {
-        // 布尔结果为空（实体不相交等）：自动回滚并提示
-        this.model.removeBody(body.id);
+        // 布尔结果为空（实体不相交等）：自动回滚并提示（不留历史，避免 undo 复活失败节点）
+        this.model.purgeBody(body.id);
         this.refresh(true);
         const names = { fuse: '并集', cut: '差集', common: '交集' };
         this.app.notify(`布尔${names[op]}失败：实体可能不相交（交集为空）。已保留原始实体。`, 'error');
@@ -221,6 +242,61 @@ export class App3D {
       this.app.notify(`布尔${op}完成：${body.label}`);
     } catch (e) {
       this.app.notify(String(e?.message || e), 'error');
+      this.refresh(true);
+    }
+  }
+
+  /* ---------------- 圆角/倒角 ---------------- */
+  async _filletTool(kind) {
+    const name = kind === 'fillet' ? '圆角' : '倒角';
+    let id = [...this.model.selection][0] || null;
+    if (!id) {
+      this._hint(`请点击要${name}的实体（Esc 取消）`);
+      id = await this._pickBody();
+      this._hint('3D 建模工作区：左键旋转 · 滚轮缩放 · 右键平移 · 点击实体选择');
+      if (!id) return;
+    }
+    const box = document.createElement('div');
+    const row = document.createElement('div');
+    row.className = 'form-row';
+    const l = document.createElement('label');
+    l.textContent = kind === 'fillet' ? '圆角半径' : '倒角距离';
+    const inp = document.createElement('input');
+    inp.type = 'number';
+    inp.step = 'any';
+    inp.value = 2;
+    row.appendChild(l);
+    row.appendChild(inp);
+    box.appendChild(row);
+    this.app.openDialog({
+      title: `${name}（作用于全部棱边）`,
+      body: box,
+      buttons: [
+        { label: '取消' },
+        {
+          label: '确定', primary: true, onClick: () => {
+            const r = parseFloat(inp.value);
+            if (!(r > 0)) { this.app.notify('数值必须大于 0', 'error'); return; }
+            this._doFillet(kind, id, r);
+          },
+        },
+      ],
+    });
+  }
+  _doFillet(kind, id, r) {
+    const name = kind === 'fillet' ? '圆角' : '倒角';
+    try {
+      const body = this.model.filletChamfer(kind, id, r);
+      this.refresh(true);
+      if (this.model._booleanFailed.has(body.id)) {
+        this.model.purgeBody(body.id);
+        this.refresh(true);
+        this.app.notify(`${name}失败：尺寸可能过大（棱边无法构造）。已保留原实体。`, 'error');
+        return;
+      }
+      this.app.notify(`${name}完成：${body.label}`);
+    } catch (e) {
+      this.app.notify(`${name}失败：` + (e?.message || e), 'error');
       this.refresh(true);
     }
   }
@@ -255,6 +331,10 @@ export class App3D {
             const v = parseFloat(inputs[f.k].value);
             params[f.k] = Number.isFinite(v) ? v : f.def;
           }
+          const POSITIVE = { box: ['dx', 'dy', 'dz'], cylinder: ['r', 'h'], sphere: ['r'], cone: ['r1', 'h'], torus: ['r1', 'r2'] }[kind];
+          const bad = POSITIVE.find((k) => !(params[k] > 0));
+          if (bad) { this.app.notify(`尺寸「${def.fields.find((f) => f.k === bad).label}」必须大于 0`, 'error'); return; }
+          if (kind === 'cone' && params.r2 < 0) { this.app.notify('顶面半径不能为负', 'error'); return; }
           const body = this.model.addPrimitive(kind, params);
           this.refresh(true);
           this.app.notify(`已创建${body.label}`);
@@ -349,15 +429,16 @@ export class App3D {
       try {
         const bytes = new Uint8Array(await f.arrayBuffer());
         const kids = this.kernel.importSTEP(bytes);
-        // 作为"导入体"加入模型
+        // 作为"导入体"加入模型（走单步历史，可撤销）
         const body = {
-          id: 'imp' + Date.now().toString(36), label: `导入:${f.name}`, kind: 'imported',
-          params: { importId: 'imp' + Date.now().toString(36) }, color: '#c8c8c8', visible: true,
+          id: uid(), label: `导入:${f.name}`, kind: 'imported',
+          params: { importId: uid() }, color: '#c8c8c8', visible: true,
           _bytes: bytes, _kids: kids,
         };
-        this.model.bodies.push(body);
-        this.model._changed();
-        this.model.select([body.id], 'set');
+        this.model.singleOp('导入STEP', () => {
+          this.model.bodies.push(body);
+          this.model.select([body.id], 'set');
+        });
         this.refresh(true);
         this.app.notify(`已导入 STEP：${f.name}（${kids.length} 个实体）`);
       } catch (e) {
@@ -366,14 +447,24 @@ export class App3D {
     });
     inp.click();
   }
+  /** 导出用内核 id：跳过被布尔消费的输入体（否则导出含重复几何） */
+  _exportKids() {
+    const consumed = this.model.consumedSet();
+    const kids = [];
+    for (const [mid, kid] of this.model._kernelIds) {
+      if (consumed.has(mid)) continue;
+      for (const k of [].concat(kid)) if (k != null) kids.push(k);
+    }
+    return kids;
+  }
   async _exportStep() {
     if (!this.model.visibleCount()) { this.app.notify('模型为空', 'error'); return; }
     this.refresh();
     try {
-      const kids = [...this.model._kernelIds.values()].flat().filter((x) => x != null);
+      const kids = this._exportKids();
       if (!kids.length) throw new Error('没有可导出的实体');
       const bytes = this.kernel.exportSTEP(kids);
-      download('模型.step', bytes, 'application/step');
+      download(safeName(this.app.docName) + '.step', bytes, 'application/step');
       this.app.notify('已导出 STEP 文件');
     } catch (e) { this.app.notify('STEP 导出失败：' + (e?.message || e), 'error'); }
   }
@@ -381,10 +472,10 @@ export class App3D {
     if (!this.model.visibleCount()) { this.app.notify('模型为空', 'error'); return; }
     this.refresh();
     try {
-      const kids = [...this.model._kernelIds.values()].flat().filter((x) => x != null);
+      const kids = this._exportKids();
       if (!kids.length) throw new Error('没有可导出的实体');
       const bytes = this.kernel.exportSTL(kids.length === 1 ? kids[0] : kids);
-      download('模型.stl', bytes, 'model/stl');
+      download(safeName(this.app.docName) + '.stl', bytes, 'model/stl');
       this.app.notify('已导出 STL 文件（可直接用于 3D 打印）');
     } catch (e) { this.app.notify('STL 导出失败：' + (e?.message || e), 'error'); }
   }
@@ -414,7 +505,10 @@ export class App3D {
     return meshes;
   }
   _wireModel() {
-    this.model.on('change', () => { if (this.ready) this.refresh(); });
+    this.model.on('change', () => {
+      if (this.app.scene) this.app.scene.dirty = true; // 3D 修改传播到图纸脏标记（自动保存/未保存确认依赖）
+      if (this.ready) this.refresh();
+    });
     this.model.on('selection', () => { this.vp?.highlight([...this.model.selection][0] || null); });
   }
 
@@ -436,6 +530,12 @@ export class App3D {
         if (!PRIM_DEFS[kind]) throw new Error('未知基本体: ' + kind + '，可选: ' + Object.keys(PRIM_DEFS).join('/'));
         const p = {};
         for (const f of PRIM_DEFS[kind].fields) p[f.k] = num(args[f.k], f.def);
+        // 尺寸必须为正（位置/角度可为负）；r2=0 允许（圆锥体）
+        const POSITIVE = { box: ['dx', 'dy', 'dz'], cylinder: ['r', 'h'], sphere: ['r'], cone: ['r1', 'h'], torus: ['r1', 'r2'] }[kind];
+        for (const k of POSITIVE) {
+          if (!(p[k] > 0)) throw new Error(`参数 ${k} 必须大于 0（收到 ${p[k]}）`);
+        }
+        if (kind === 'cone' && p.r2 < 0) throw new Error('顶面半径 r2 不能为负');
         const b = m.addPrimitive(kind, p, args.color ? { color: args.color } : {});
         this.refresh(true);
         return `已创建${b.label}（id=${b.id}，${Object.entries(p).map(([k, v]) => `${k}=${v}`).join(', ')}）`;
@@ -450,7 +550,7 @@ export class App3D {
         const b = m.boolean(op, aId, bIds);
         this.refresh(true);
         if (m._booleanFailed.has(b.id)) {
-          m.removeBody(b.id);
+          m.purgeBody(b.id);
           this.refresh(true);
           const names = { fuse: '并集', cut: '差集', common: '交集' };
           throw new Error(`布尔${names[op]}失败：结果为空（实体可能不相交）。已保留原始实体，请检查实体坐标后重试。`);
@@ -458,6 +558,34 @@ export class App3D {
         return `布尔${op}完成：${b.label}（id=${b.id}）`;
       },
       list_3d: () => m.summary(),
+      fillet_3d: (args) => {
+        const id = findId(args.id);
+        if (!id) throw new Error('未找到实体: ' + args.id + '（请先用 list_3d 获取 id）');
+        const r = num(args.r);
+        if (!(r > 0)) throw new Error('圆角半径必须大于 0');
+        const b = m.filletChamfer('fillet', id, r);
+        this.refresh(true);
+        if (m._booleanFailed.has(b.id)) {
+          m.purgeBody(b.id);
+          this.refresh(true);
+          throw new Error(`圆角失败：半径 ${r} 可能过大（棱边无法构造）。已保留原实体，请减小半径重试。`);
+        }
+        return `圆角完成：${b.label}（id=${b.id}，半径=${r}）`;
+      },
+      chamfer_3d: (args) => {
+        const id = findId(args.id);
+        if (!id) throw new Error('未找到实体: ' + args.id + '（请先用 list_3d 获取 id）');
+        const d = num(args.d);
+        if (!(d > 0)) throw new Error('倒角距离必须大于 0');
+        const b = m.filletChamfer('chamfer', id, d);
+        this.refresh(true);
+        if (m._booleanFailed.has(b.id)) {
+          m.purgeBody(b.id);
+          this.refresh(true);
+          throw new Error(`倒角失败：距离 ${d} 可能过大（棱边无法构造）。已保留原实体，请减小距离重试。`);
+        }
+        return `倒角完成：${b.label}（id=${b.id}，距离=${d}）`;
+      },
       transform_3d: (args) => {
         const id = findId(args.id);
         if (!id) throw new Error('未找到实体: ' + args.id);
@@ -563,8 +691,20 @@ export class App3D {
       },
       { type: 'function', function: { name: 'undo_3d', description: '撤销上一次三维操作', parameters: { type: 'object', properties: {} } } },
       { type: 'function', function: { name: 'redo_3d', description: '重做三维操作', parameters: { type: 'object', properties: {} } } },
+      {
+        type: 'function', function: {
+          name: 'fillet_3d', description: '对实体全部棱边做圆角（id 用 list_3d 查询，r 为圆角半径）',
+          parameters: { type: 'object', properties: { id: { type: 'string' }, r: { type: 'number' } }, required: ['id', 'r'] },
+        },
+      },
+      {
+        type: 'function', function: {
+          name: 'chamfer_3d', description: '对实体全部棱边做倒角（id 用 list_3d 查询，d 为倒角距离）',
+          parameters: { type: 'object', properties: { id: { type: 'string' }, d: { type: 'number' } }, required: ['id', 'd'] },
+        },
+      },
     ];
-    const promptLine = '三维实体建模可用（工具 create_primitive_3d/boolean_3d/list_3d/transform_3d/remove_3d/undo_3d 等）：基本体 box(长宽高 dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，中心坐标 x,y,z；布尔 op: fuse 并集/cut 差集/common 交集，先 list_3d 查 id 再 boolean_3d。';
+    const promptLine = '三维实体建模可用（工具 create_primitive_3d/boolean_3d/list_3d/transform_3d/remove_3d/fillet_3d/chamfer_3d/undo_3d 等）：基本体 box(长宽高 dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，中心坐标 x,y,z；布尔 op: fuse 并集/cut 差集/common 交集，先 list_3d 查 id 再 boolean_3d。';
     if (CAD.aiRegisterTools) {
       CAD.aiRegisterTools(toolDefs, promptLine);
     }

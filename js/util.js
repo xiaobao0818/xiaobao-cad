@@ -180,14 +180,16 @@ export function nearestOnSeg(p, a, b) {
   t = clamp(t, 0, 1);
   return { x: a.x + t * dx, y: a.y + t * dy, t };
 }
-/** 点到圆弧距离 */
-export function distPointArc(p, cx, cy, r, start, end) {
+/** 点到圆弧距离（ccw=false 表示顺时针弧，角度区间按 [end,start] 解释） */
+export function distPointArc(p, cx, cy, r, start, end, ccw = true) {
   const a = Math.atan2(p.y - cy, p.x - cx);
   const radial = Math.abs(Math.hypot(p.x - cx, p.y - cy) - r);
-  if (angleInRange(a, start, end)) return radial;
+  const inArc = ccw ? angleInRange(a, start, end) : angleInRange(a, end, start);
+  if (inArc) return radial;
   const e1 = { x: cx + r * Math.cos(start), y: cy + r * Math.sin(start) };
   const e2 = { x: cx + r * Math.cos(end), y: cy + r * Math.sin(end) };
-  return Math.min(radial, dist(p, e1), dist(p, e2));
+  // 弧外只取两端点距离（径向距离会让贴近圆周的点误命中）
+  return Math.min(dist(p, e1), dist(p, e2));
 }
 /** 由弦两端点与凸度求圆弧（bulge = tan(θ/4)，正为逆时针） */
 export function arcFromBulge(p1, p2, bulge) {
@@ -206,10 +208,9 @@ export function arcFromBulge(p1, p2, bulge) {
   else { while (end >= start) end -= TAU; }
   return { cx, cy, r, startAngle: start, endAngle: end, ccw: alpha > 0 };
 }
-/** 圆弧 → 凸度 */
+/** 圆弧 → 凸度（保留优弧：sweep∈(-2π,2π)，与 arcFromBulge 对称往返） */
 export function bulgeFromArc(piece) {
-  let sweep = piece.ccw ? arcSweep(piece.startAngle, piece.endAngle) : arcSweep(piece.endAngle, piece.startAngle);
-  if (sweep > Math.PI) sweep -= TAU; // 半圆以上符号约定保持一致
+  const sweep = piece.ccw ? arcSweep(piece.startAngle, piece.endAngle) : arcSweep(piece.endAngle, piece.startAngle);
   return piece.ccw ? Math.tan(sweep / 4) : -Math.tan(sweep / 4);
 }
 /** 圆弧采样点 */

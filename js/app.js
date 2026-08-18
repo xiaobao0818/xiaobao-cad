@@ -141,8 +141,13 @@ class App {
     }
     this.viewport.zoomExtents();
     this._autosaveTimer = setInterval(() => {
-      if (this.scene.dirty) {
-        try { localStorage.setItem('xbcad:autosave', JSON.stringify(this.scene.serialize())); } catch (e) { /* 存储满 */ }
+      this._sync3dToScene();
+      if (this.scene.dirty || this.app3d?.model?._dirty) {
+        try {
+          localStorage.setItem('xbcad:autosave', JSON.stringify(this.scene.serialize()));
+          this.scene.dirty = false;
+          if (this.app3d?.model) this.app3d.model._dirty = false;
+        } catch (e) { this.notify('自动保存失败：浏览器存储空间不足', 'error'); }
       }
     }, 25000);
     this._loadModules();
@@ -193,11 +198,14 @@ class App {
     s.emit('change');
     s.emit('selection');
     this.viewport.requestRender();
-    // 3D 模型随图纸文件一起加载
+    // 3D 模型随图纸文件一起加载；app3d 未就绪时由其构造器回读 scene._bodies3d
     if (this.app3d) this.app3d.model.load(s._bodies3d || null);
   }
+  _sync3dToScene() {
+    if (this.app3d?.model) this.scene._bodies3d = this.app3d.model.serialize();
+  }
   saveNative() {
-    this.scene._bodies3d = this.app3d?.model?.serialize() || null;
+    this._sync3dToScene();
     io.saveNative(this.scene, this.docName);
   }
   newDrawing() {
@@ -249,7 +257,8 @@ class App {
     canvas.addEventListener('mouseleave', () => { this.viewport.cursor.visible = false; this.viewport.requestRender(); });
     window.addEventListener('keydown', (e) => this._onKeyDown(e));
     window.addEventListener('beforeunload', () => {
-      if (this.scene.dirty) {
+      this._sync3dToScene();
+      if (this.scene.dirty || this.app3d?.model?._dirty) {
         try { localStorage.setItem('xbcad:autosave', JSON.stringify(this.scene.serialize())); } catch (err) { /* ignore */ }
       }
     });
@@ -768,6 +777,8 @@ class App {
         this.app3d.ensureLoaded();
         this.app3d.refresh(true);
         setTimeout(() => this.app3d.refresh(true), 300); // 等 canvas 显示后再适配
+      } else {
+        this.app3d._cancelPick?.(); // 离开 3D 时清理布尔/变换拾取状态
       }
     } else if (is3d) {
       this.notify('3D 模块仍在加载中…', 'error');

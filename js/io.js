@@ -247,64 +247,254 @@ export function exportSVG(scene, name = '图纸') {
   download(`${name}.svg`, parts.join('\n'), 'image/svg+xml');
 }
 
-/* ---------------- SVG 导入（基础图元） ---------------- */
-export function svgToEntities(text) {
-  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+/* ---------------- SVG 导入（完整 path 命令 + transform + 样式） ---------------- */
+export function svgToEntities(text, doc) {
+  if (!doc) doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const out = [];
+  const TAU = Math.PI * 2;
   const num = (v, d = 0) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
-  const getM = (el) => {
-    const m = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-    const t = el.getAttribute('transform');
-    if (t) {
-      const tr = t.match(/translate\(([^)]+)\)/);
-      if (tr) { const [x, y] = tr[1].split(/[\s,]+/).map((v) => num(v)); m.e = x; m.f = y; }
+
+  /* 矩阵工具 */
+  const mulM = (m, n) => ({
+    a: m.a * n.a + m.c * n.b, b: m.b * n.a + m.d * n.b,
+    c: m.a * n.c + m.c * n.d, d: m.b * n.c + m.d * n.d,
+    e: m.a * n.e + m.c * n.f + m.e, f: m.b * n.e + m.d * n.f + m.f,
+  });
+  const X = (p, m) => ({ x: m.a * p.x + m.c * p.y + m.e, y: m.b * p.x + m.d * p.y + m.f });
+  /** 完整解析 SVG transform：matrix/translate/scale/rotate/skewX/skewY（可多个串联） */
+  const parseTransform = (t) => {
+    let m = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+    if (!t) return m;
+    const re = /([a-zA-Z]+)\s*\(([^)]*)\)/g;
+    let mt;
+    while ((mt = re.exec(t))) {
+      const args = mt[2].trim().split(/[\s,]+/).map(Number).filter((v) => Number.isFinite(v));
+      const name = mt[1].toLowerCase();
+      if (name === 'matrix' && args.length >= 6) {
+        m = mulM(m, { a: args[0], b: args[1], c: args[2], d: args[3], e: args[4], f: args[5] });
+      } else if (name === 'translate') {
+        m = mulM(m, { a: 1, b: 0, c: 0, d: 1, e: args[0] || 0, f: args[1] || 0 });
+      } else if (name === 'scale') {
+        const sx = args.length ? args[0] : 1, sy = args.length > 1 ? args[1] : sx;
+        m = mulM(m, { a: sx, b: 0, c: 0, d: sy, e: 0, f: 0 });
+      } else if (name === 'rotate') {
+        const ang = (args[0] || 0) * Math.PI / 180;
+        if (args.length >= 3) {
+          m = mulM(m, { a: 1, b: 0, c: 0, d: 1, e: args[1], f: args[2] });
+          m = mulM(m, { a: Math.cos(ang), b: Math.sin(ang), c: -Math.sin(ang), d: Math.cos(ang), e: 0, f: 0 });
+          m = mulM(m, { a: 1, b: 0, c: 0, d: 1, e: -args[1], f: -args[2] });
+        } else {
+          m = mulM(m, { a: Math.cos(ang), b: Math.sin(ang), c: -Math.sin(ang), d: Math.cos(ang), e: 0, f: 0 });
+        }
+      } else if (name === 'skewx') {
+        m = mulM(m, { a: 1, b: 0, c: Math.tan((args[0] || 0) * Math.PI / 180), d: 1, e: 0, f: 0 });
+      } else if (name === 'skewy') {
+        m = mulM(m, { a: 1, b: Math.tan((args[0] || 0) * Math.PI / 180), c: 0, d: 1, e: 0, f: 0 });
+      }
     }
     return m;
   };
-  const X = (p, m) => ({ x: m.a * p.x + m.c * p.y + m.e, y: m.b * p.x + m.d * p.y + m.f });
-  const walk = (el, mIn) => {
+
+  /** 样式：stroke/fill → 实体颜色，stroke-width → 线宽 */
+  const styleOf = (el, parent) => {
+    const o = { ...parent };
+    const stroke = el.getAttribute('stroke');
+    const fill = el.getAttribute('fill');
+    const col = stroke && stroke !== 'none' ? stroke : fill && fill !== 'none' ? fill : null;
+    if (col) o.color = col;
+    const w = num(el.getAttribute('stroke-width'));
+    if (w > 0) o.lw = w;
+    return o;
+  };
+
+  /** path d 解析：M/L/H/V/C/S/Q/T/A/Z（大小写、隐式重复），曲线采样为折线，圆弧保持为真圆弧 */
+  const parsePath = (d, m, style) => {
+    const ents = [];
+    const tokens = d.match(/[MLHVCSQTAZmlhvcsqtaz]|[-+]?(?:\d*\.\d+|\d+\.?)(?:[eE][-+]?\d+)?/g) || [];
+    let cx = 0, cy = 0, sx = 0, sy = 0;
+    let lineRun = [];
+    let pendingClose = false;
+    const flushLine = () => {
+      const pts = [...lineRun];
+      lineRun = [];
+      if (pendingClose && pts.length >= 3) { pendingClose = false; ents.push(make.polyline(pts, { closed: true, ...style })); return; }
+      pendingClose = false;
+      if (pts.length >= 2) ents.push(make.polyline(pts, { ...style }));
+    };
+    const lineTo = (x, y) => { if (!lineRun.length) lineRun.push({ x: cx, y: cy }); lineRun.push({ x, y }); cx = x; cy = y; };
+    const cubic = (x1, y1, x2, y2, x, y) => {
+      flushLine();
+      const n = 16, pts = [];
+      for (let k = 0; k <= n; k++) {
+        const t = k / n, u = 1 - t;
+        pts.push(X({
+          x: u * u * u * cx + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x,
+          y: u * u * u * cy + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y,
+        }, m));
+      }
+      ents.push(make.polyline(pts, { ...style }));
+      cx = x; cy = y;
+    };
+    const quad = (x1, y1, x, y) => {
+      flushLine();
+      const n = 16, pts = [];
+      for (let k = 0; k <= n; k++) {
+        const t = k / n, u = 1 - t;
+        pts.push(X({ x: u * u * cx + 2 * u * t * x1 + t * t * x, y: u * u * cy + 2 * u * t * y1 + t * t * y }, m));
+      }
+      ents.push(make.polyline(pts, { ...style }));
+      cx = x; cy = y;
+    };
+    const arcTo = (rx0, ry0, rotDeg, large, sweep, x2, y2) => {
+      const x1 = cx, y1 = cy;
+      let rx = Math.abs(rx0), ry = Math.abs(ry0);
+      if (rx < 1e-9 || ry < 1e-9) { lineTo(x2, y2); return; }
+      const phi = (rotDeg || 0) * Math.PI / 180;
+      const cosp = Math.cos(phi), sinp = Math.sin(phi);
+      const dx = (x1 - x2) / 2, dy = (y1 - y2) / 2;
+      const x1p = cosp * dx + sinp * dy, y1p = -sinp * dx + cosp * dy;
+      let L = (x1p * x1p) / (rx * rx) + (y1p * y1p) / (ry * ry);
+      if (L > 1) { const s = Math.sqrt(L); rx *= s; ry *= s; }
+      const nume = rx * rx * ry * ry - rx * rx * y1p * y1p - ry * ry * x1p * x1p;
+      const den = rx * rx * y1p * y1p + ry * ry * x1p * x1p;
+      const coef = (large !== sweep) ? 1 : -1;
+      const sq = coef * Math.sqrt(Math.max(0, nume / den));
+      const cxp = sq * ((rx * y1p) / ry), cyp = sq * (-(ry * x1p) / rx);
+      const cxl = cosp * cxp - sinp * cyp + (x1 + x2) / 2;
+      const cyl = sinp * cxp + cosp * cyp + (y1 + y2) / 2;
+      const th1 = Math.atan2((y1p - cyp) / ry, (x1p - cxp) / rx);
+      const th2 = Math.atan2((-y1p - cyp) / ry, (-x1p - cxp) / rx);
+      let dth = th2 - th1;
+      if (!sweep && dth > 0) dth -= TAU; else if (sweep && dth < 0) dth += TAU;
+      const det = m.a * m.d - m.b * m.c;
+      const similar = Math.abs(rx - ry) < 1e-6
+        && Math.abs(Math.hypot(m.a, m.b) - Math.hypot(m.c, m.d)) < 1e-6
+        && Math.abs(m.a * m.c + m.b * m.d) < 1e-6 * Math.hypot(m.a, m.b) * Math.hypot(m.c, m.d);
+      if (!similar) {
+        // 椭圆弧或非相似变换 → 采样为折线
+        flushLine();
+        const n = Math.max(12, Math.ceil(Math.abs(dth) / (Math.PI / 16)));
+        const pts = [];
+        for (let k = 0; k <= n; k++) {
+          const th = th1 + (dth * k) / n;
+          pts.push(X({ x: cxl + rx * Math.cos(th) * cosp - ry * Math.sin(th) * sinp, y: cyl + rx * Math.cos(th) * sinp + ry * Math.sin(th) * cosp }, m));
+        }
+        ents.push(make.polyline(pts, { ...style }));
+      } else {
+        flushLine();
+        const scale = Math.hypot(m.a, m.b);
+        const cM = X({ x: cxl, y: cyl }, m);
+        const p1M = X({ x: x1, y: y1 }, m), p2M = X({ x: x2, y: y2 }, m);
+        const a1 = Math.atan2(p1M.y - cM.y, p1M.x - cM.x);
+        const a2 = Math.atan2(p2M.y - cM.y, p2M.x - cM.x);
+        const ccw = (sweep === 1) === (det >= 0);
+        ents.push(make.arc(cM, rx * scale, a1, a2, { ccw, ...style }));
+      }
+      cx = x2; cy = y2;
+    };
+    let next = null, lastCubic = null, lastQuad = null;
+    for (let i = 0; i < tokens.length;) {
+      if (/^[a-zA-Z]$/.test(tokens[i])) {
+        if (tokens[i].toUpperCase() === 'Z') { // Z 无参数，必须在此处理（其后无数字时循环会直接结束）
+          pendingClose = true;
+          flushLine();
+          cx = sx; cy = sy;
+          next = null;
+        } else next = tokens[i];
+        i++; continue;
+      }
+      if (!next) { i++; continue; }
+      const U = next.toUpperCase();
+      const N = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 }[U];
+      if (i + N - 1 >= tokens.length) break; // 参数不足（容错）
+      const args = tokens.slice(i, i + N).map(Number);
+      i += N;
+      const rel = next === next.toLowerCase();
+      if (U === 'M' || U === 'L') {
+        const nx = rel ? cx + args[0] : args[0], ny = rel ? cy + args[1] : args[1];
+        if (U === 'M') { flushLine(); cx = nx; cy = ny; sx = nx; sy = ny; next = 'L'; }
+        else lineTo(nx, ny);
+      } else if (U === 'H') { const nx = rel ? cx + args[0] : args[0]; lineTo(nx, cy); cx = nx; }
+      else if (U === 'V') { const ny = rel ? cy + args[0] : args[0]; lineTo(cx, ny); cy = ny; }
+      else if (U === 'C') {
+        const x1 = rel ? cx + args[0] : args[0], y1 = rel ? cy + args[1] : args[1];
+        const x2 = rel ? cx + args[2] : args[2], y2 = rel ? cy + args[3] : args[3];
+        const x = rel ? cx + args[4] : args[4], y = rel ? cy + args[5] : args[5];
+        lastCubic = { x2, y2 };
+        cubic(x1, y1, x2, y2, x, y);
+      } else if (U === 'S') {
+        const x1 = lastCubic ? 2 * cx - lastCubic.x2 : cx, y1 = lastCubic ? 2 * cy - lastCubic.y2 : cy;
+        const x2 = rel ? cx + args[0] : args[0], y2 = rel ? cy + args[1] : args[1];
+        const x = rel ? cx + args[2] : args[2], y = rel ? cy + args[3] : args[3];
+        lastCubic = { x2, y2 };
+        cubic(x1, y1, x2, y2, x, y);
+      } else if (U === 'Q') {
+        const x1 = rel ? cx + args[0] : args[0], y1 = rel ? cy + args[1] : args[1];
+        const x = rel ? cx + args[2] : args[2], y = rel ? cy + args[3] : args[3];
+        lastQuad = { x1, y1 };
+        quad(x1, y1, x, y);
+      } else if (U === 'T') {
+        const x1 = lastQuad ? 2 * cx - lastQuad.x1 : cx, y1 = lastQuad ? 2 * cy - lastQuad.y1 : cy;
+        const x = rel ? cx + args[0] : args[0], y = rel ? cy + args[1] : args[1];
+        lastQuad = { x1, y1 };
+        quad(x1, y1, x, y);
+      } else if (U === 'A') {
+        const x = rel ? cx + args[5] : args[5], y = rel ? cy + args[6] : args[6];
+        arcTo(args[0], args[1], args[2], args[3], args[4], x, y);
+      } else if (U === 'Z') {
+        pendingClose = true;
+        flushLine();
+        cx = sx; cy = sy;
+        next = null;
+      }
+    }
+    flushLine();
+    return ents;
+  };
+
+  const walk = (el, mIn, styleIn) => {
+    const style = styleOf(el, styleIn);
     for (const child of el.children) {
-      const m = getM(child);
-      const mm = { a: mIn.a * m.a + mIn.c * m.b, b: mIn.b * m.a + mIn.d * m.b, c: mIn.a * m.c + mIn.c * m.d, d: mIn.b * m.c + mIn.d * m.d, e: mIn.a * m.e + mIn.c * m.f + mIn.e, f: mIn.b * m.e + mIn.d * m.f + mIn.f };
+      const mm = mulM(mIn, parseTransform(child.getAttribute('transform')));
       const tag = child.tagName.toLowerCase();
-      if (tag === 'g') walk(child, mm);
+      const st = styleOf(child, style);
+      if (tag === 'g' || tag === 'svg') walk(child, mm, st);
       else if (tag === 'line') {
-        out.push(make.line(X({ x: num(child.getAttribute('x1')), y: num(child.getAttribute('y1')) }, mm), X({ x: num(child.getAttribute('x2')), y: num(child.getAttribute('y2')) }, mm)));
+        out.push(make.line(X({ x: num(child.getAttribute('x1')), y: num(child.getAttribute('y1')) }, mm), X({ x: num(child.getAttribute('x2')), y: num(child.getAttribute('y2')) }, mm), st));
       } else if (tag === 'rect') {
         const x = num(child.getAttribute('x')), y = num(child.getAttribute('y'));
         const w = num(child.getAttribute('width')), h = num(child.getAttribute('height'));
         const c1 = X({ x, y }, mm), c2 = X({ x: x + w, y: y + h }, mm);
-        out.push(make.rectangle(c1, c2));
+        out.push(make.rectangle(c1, c2, st));
       } else if (tag === 'circle') {
-        out.push(make.circle(X({ x: num(child.getAttribute('cx')), y: num(child.getAttribute('cy')) }, mm), num(child.getAttribute('r'))));
+        const cx0 = num(child.getAttribute('cx')), cy0 = num(child.getAttribute('cy')), r = num(child.getAttribute('r'));
+        const c = X({ x: cx0, y: cy0 }, mm);
+        const ex = X({ x: cx0 + r, y: cy0 }, mm), ey = X({ x: cx0, y: cy0 + r }, mm);
+        const rxn = Math.hypot(ex.x - c.x, ex.y - c.y), ryn = Math.hypot(ey.x - c.x, ey.y - c.y);
+        if (Math.abs(rxn - ryn) < 1e-6) out.push(make.circle(c, rxn, st));
+        else out.push(make.ellipse(c, rxn, ryn, Math.atan2(ex.y - c.y, ex.x - c.x), st));
       } else if (tag === 'ellipse') {
-        const c = X({ x: num(child.getAttribute('cx')), y: num(child.getAttribute('cy')) }, mm);
-        out.push(make.ellipse(c, num(child.getAttribute('rx')), num(child.getAttribute('ry'))));
+        const cx0 = num(child.getAttribute('cx')), cy0 = num(child.getAttribute('cy'));
+        const c = X({ x: cx0, y: cy0 }, mm);
+        const ex = X({ x: cx0 + num(child.getAttribute('rx')), y: cy0 }, mm), ey = X({ x: cx0, y: cy0 + num(child.getAttribute('ry')) }, mm);
+        out.push(make.ellipse(c, Math.hypot(ex.x - c.x, ex.y - c.y), Math.hypot(ey.x - c.x, ey.y - c.y), Math.atan2(ex.y - c.y, ex.x - c.x), st));
       } else if (tag === 'polyline' || tag === 'polygon') {
         const pts = (child.getAttribute('points') || '').trim().split(/[\s,]+/).map(Number).filter((v) => Number.isFinite(v));
         const points = [];
         for (let i = 0; i + 1 < pts.length; i += 2) points.push(X({ x: pts[i], y: pts[i + 1] }, mm));
-        if (points.length >= 2) out.push(make.polyline(points, { closed: tag === 'polygon' }));
+        if (points.length >= 2) out.push(make.polyline(points, { closed: tag === 'polygon', ...st }));
       } else if (tag === 'path') {
         const d = (child.getAttribute('d') || '').trim();
-        const m = d.match(/^M\s*([\d.+-]+)[,\s]+([\d.+-]+)\s*(L[\d.,\s+-]*)?/i);
-        if (m) {
-          const points = [X({ x: num(m[1]), y: num(m[2]) }, mm)];
-          const rest = (m[3] || '').match(/[\d.+-]+[,\s]+[\d.+-]+/g) || [];
-          for (let i = 0; i + 1 < rest.length; i += 2) {
-            const [x, y] = rest[i].split(/[,\s]+/).map(Number);
-            points.push(X({ x, y }, mm));
-          }
-          if (points.length >= 2) out.push(make.polyline(points, { closed: /z/i.test(d) }));
-        }
+        if (d) out.push(...parsePath(d, mm, st));
       } else if (tag === 'text') {
         const p = X({ x: num(child.getAttribute('x')), y: num(child.getAttribute('y')) }, mm);
         const fs = num(child.getAttribute('font-size'), 16);
-        out.push(make.text(p, child.textContent || '', fs));
+        out.push(make.text(p, child.textContent || '', fs, 0, st));
       }
     }
   };
-  walk(doc.documentElement, { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 });
+  const rootM = parseTransform(doc.documentElement.getAttribute('transform'));
+  walk(doc.documentElement, rootM, {});
   return out;
 }
 

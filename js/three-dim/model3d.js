@@ -18,17 +18,17 @@ export class Model3D extends Emitter {
     this._kernelIds = new Map(); // modelId → kernel bodyId
     this._booleanFailed = new Set(); // 求值失败的布尔实体（其输入保持可见）
     this._dirty = true;
-    this._labelCounter = { box: 0, cylinder: 0, sphere: 0, cone: 0, torus: 0, boolean: 0 };
+    this._labelCounter = { box: 0, cylinder: 0, sphere: 0, cone: 0, torus: 0, boolean: 0, fillet: 0, chamfer: 0 };
   }
   setKernel(k) { this.kernel = k; this._dirty = true; }
   get kernelReady() { return !!this.kernel; }
 
   _nextLabel(kind) {
-    const names = { box: '长方体', cylinder: '圆柱', sphere: '球', cone: '圆锥', torus: '圆环', boolean: '布尔' };
+    const names = { box: '长方体', cylinder: '圆柱', sphere: '球', cone: '圆锥', torus: '圆环', boolean: '布尔', fillet: '圆角', chamfer: '倒角' };
     this._labelCounter[kind] = (this._labelCounter[kind] || 0) + 1;
-    return `${names[kind]}${this._labelCounter[kind]}`;
+    return `${names[kind] || kind}${this._labelCounter[kind]}`;
   }
-  _changed() { this._dirty = true; this.emit('change'); }
+  _changed() { this._changeCount = (this._changeCount || 0) + 1; this._dirty = true; this.emit('change'); }
 
   /* ---------- 快照 / 撤销 ---------- */
   _snapshot() {
@@ -86,6 +86,7 @@ export class Model3D extends Emitter {
   boolean(op, aId, bIds, opts = {}) {
     const a = this.byId(aId);
     if (!a) throw new Error('第一个实体不存在');
+    if (bIds.includes(aId)) throw new Error('布尔运算的输入实体不能相同');
     const bs = bIds.map((id) => this.byId(id)).filter(Boolean);
     if (!bs.length) throw new Error('第二个实体不存在');
     const names = { fuse: '并集', cut: '差集', common: '交集' };
@@ -101,13 +102,30 @@ export class Model3D extends Emitter {
     });
     return body;
   }
+  /** 圆角/倒角特征：对源实体所有棱边做圆角(fillet)/倒角(chamfer)，源被消费 */
+  filletChamfer(kind, aId, size) {
+    const a = this.byId(aId);
+    if (!a) throw new Error('目标实体不存在');
+    if (!(size > 0)) throw new Error('圆角/倒角尺寸必须大于 0');
+    const names = { fillet: '圆角', chamfer: '倒角' };
+    const body = {
+      id: uid(), label: this._nextLabel(kind), kind,
+      params: { a: aId, r: size },
+      color: a.color, visible: true,
+    };
+    this.singleOp(`${names[kind] || kind}`, () => {
+      this.bodies.push(body);
+      this.select([body.id]);
+    });
+    return body;
+  }
   /** 被布尔运算消费的实体集合（求值失败的布尔不消费其输入） */
   consumedSet() {
     const consumed = new Set();
     for (const b of this.bodies) {
-      if (b.kind === 'boolean' && !this._booleanFailed.has(b.id)) {
+      if ((b.kind === 'boolean' || b.kind === 'fillet' || b.kind === 'chamfer') && !this._booleanFailed.has(b.id)) {
         consumed.add(b.params.a);
-        for (const id of b.params.b) consumed.add(id);
+        for (const id of b.params.b || []) consumed.add(id);
       }
     }
     return consumed;
@@ -115,7 +133,7 @@ export class Model3D extends Emitter {
   /** 依赖某实体的布尔结果（删除时级联） */
   _dependents(id, acc = new Set()) {
     for (const b of this.bodies) {
-      if (b.kind === 'boolean' && (b.params.a === id || b.params.b.includes(id))) {
+      if ((b.kind === 'boolean' || b.kind === 'fillet' || b.kind === 'chamfer') && (b.params.a === id || (b.params.b || []).includes(id))) {
         if (!acc.has(b.id)) {
           acc.add(b.id);
           this._dependents(b.id, acc);
@@ -127,7 +145,7 @@ export class Model3D extends Emitter {
   /** 可见（未被消费、且求值未失败）实体数 */
   visibleCount() {
     const consumed = this.consumedSet();
-    return this.bodies.filter((b) => !consumed.has(b.id) && !(b.kind === 'boolean' && this._booleanFailed.has(b.id))).length;
+    return this.bodies.filter((b) => !consumed.has(b.id) && !((b.kind === 'boolean' || b.kind === 'fillet' || b.kind === 'chamfer') && this._booleanFailed.has(b.id))).length;
   }
   transformBody(id, t) {
     const b = this.byId(id);
@@ -150,6 +168,27 @@ export class Model3D extends Emitter {
     if (!b || b.kind === 'boolean') return;
     this.singleOp('改参数', () => { b.params[key] = value; });
   }
+  /** 失败回滚用：删除实体但不产生历史（避免 undo 复活失败节点） */
+  purgeBody(id) {
+    const toRemove = new Set([id, ...this._dependents(id)]);
+    this.bodies = this.bodies.filter((x) => !toRemove.has(x.id));
+    for (const rid of toRemove) this.selection.delete(rid);
+    for (const rid of toRemove) {
+      if (this._kernelIds.has(rid)) {
+        try { for (const k of [].concat(this._kernelIds.get(rid))) this.kernel?.deleteBody(k); } catch (e) { /* 忽略 */ }
+        this._kernelIds.delete(rid);
+      }
+    }
+    this._booleanFailed.delete(id);
+    // 清洗历史：去掉快照中的被清实体，丢弃变化为空的历史条目
+    const strip = (snap) => { snap.bodies = snap.bodies.filter((b) => !toRemove.has(b.id)); return snap; };
+    const eq = (a, b) => a.bodies.length === b.bodies.length && a.bodies.every((x, i) => x.id === b.bodies[i].id);
+    this.undoStack = this.undoStack
+      .map((e) => { strip(e.after); strip(e.before); return e; })
+      .filter((e) => !eq(e.before, e.after));
+    this._changed();
+    this.emit('selection');
+  }
   removeBody(id) {
     const b = this.byId(id);
     if (!b) return;
@@ -163,8 +202,10 @@ export class Model3D extends Emitter {
     const ids = [...this.selection];
     if (!ids.length) return 0;
     this.singleOp('删除实体', () => {
-      this.bodies = this.bodies.filter((x) => !this.selection.has(x.id));
-      this.selection.clear();
+      const toRemove = new Set(ids);
+      for (const id of ids) for (const d of this._dependents(id)) toRemove.add(d);
+      this.bodies = this.bodies.filter((x) => !toRemove.has(x.id));
+      for (const rid of toRemove) this.selection.delete(rid);
     });
     return ids.length;
   }
@@ -229,6 +270,21 @@ export class Model3D extends Emitter {
           }
         } else if (b.kind === 'imported') {
           // 已注册（第一步处理），无需操作
+        } else if (b.kind === 'fillet' || b.kind === 'chamfer') {
+          const aKid = this._kernelIds.get(b.params.a);
+          if (aKid == null) { this._booleanFailed.add(b.id); continue; }
+          const aList = [].concat(aKid);
+          const kid = this.kernel[b.kind](aList[0], b.params.r);
+          if (b.transform) this.kernel.transform(kid, b.transform);
+          try {
+            const m = this.kernel.mesh(kid, { linearDeflection: 0.4, angularDeflection: 0.4 });
+            if (!m.indices.length) throw new Error('圆角/倒角结果为空');
+            this._kernelIds.set(b.id, kid);
+            this._booleanFailed.delete(b.id);
+          } catch (err) {
+            try { this.kernel.deleteBody(kid); } catch (e2) { /* 忽略 */ }
+            throw err;
+          }
         } else {
           const kid = this.kernel['create' + b.kind[0].toUpperCase() + b.kind.slice(1)](b.params);
           if (b.transform) this.kernel.transform(kid, b.transform);
@@ -250,7 +306,7 @@ export class Model3D extends Emitter {
     const meshes = [];
     for (const b of this.bodies) {
       if (consumed.has(b.id)) continue;
-      if (b.kind === 'boolean' && this._booleanFailed.has(b.id)) continue;
+      if ((b.kind === 'boolean' || b.kind === 'fillet' || b.kind === 'chamfer') && this._booleanFailed.has(b.id)) continue;
       try {
         const kids = this._kernelIds.get(b.id);
         if (kids == null) continue;
@@ -294,6 +350,9 @@ export class Model3D extends Emitter {
         const a = this.byId(b.params.a);
         const bs = b.params.b.map((id) => this.byId(id)?.label || '?').join('、');
         lines.push(`  [${b.id}] boolean ${names[b.params.op]}  ${a?.label || '?'} ${b.params.op === 'cut' ? '-' : '+'} (${bs})`);
+      } else if (b.kind === 'fillet' || b.kind === 'chamfer') {
+        const a = this.byId(b.params.a);
+        lines.push(`  [${b.id}] ${b.kind === 'fillet' ? '圆角' : '倒角'} r=${Math.round(b.params.r * 100) / 100} ← ${a?.label || '?'}`);
       } else if (b.kind === 'imported') {
         lines.push(`  [${b.id}] imported ${b.label} ${b.color}`);
       } else {
@@ -310,12 +369,53 @@ export class Model3D extends Emitter {
   }
 
   /* ---------- 序列化 ---------- */
-  serialize() { return deepClone({ bodies: this.bodies, labelCounter: this._labelCounter }); }
+  serialize() {
+    const bodies = deepClone(this.bodies).map((b) => {
+      delete b._kids; // 运行时内核引用（跨会话失效）
+      if (b._bytes instanceof Uint8Array) {
+        b.stepBase64 = bytesToB64(b._bytes);
+        delete b._bytes;
+      }
+      return b;
+    });
+    return { bodies, labelCounter: deepClone(this._labelCounter) };
+  }
   load(json) {
-    this.bodies = deepClone(json?.bodies || []);
+    this.bodies = deepClone(json?.bodies || []).map((b) => {
+      delete b._kids;
+      if (b.stepBase64 && !(b._bytes instanceof Uint8Array)) b._bytes = b64ToBytes(b.stepBase64);
+      delete b.stepBase64;
+      return b;
+    });
     this._labelCounter = deepClone(json?.labelCounter || {});
+    // 换文档：历史与运行时内核映射全部作废
+    this.undoStack.length = 0;
+    this.redoStack.length = 0;
+    this._booleanFailed = new Set();
+    this._kernelIds.clear();
     this.selection.clear();
     this._changed();
     this.emit('selection');
   }
+}
+
+/* ---------- base64（浏览器/Node 通用，不依赖 btoa） ---------- */
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+function bytesToB64(bytes) {
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const a = bytes[i], b = bytes[i + 1], c = bytes[i + 2];
+    s += B64[a >> 2] + B64[((a & 3) << 4) | (b >> 4)] + (i + 1 < bytes.length ? B64[((b & 15) << 2) | (c >> 6)] : '=') + (i + 2 < bytes.length ? B64[c & 63] : '=');
+  }
+  return s;
+}
+function b64ToBytes(s) {
+  const out = [];
+  for (let i = 0; i < s.length; i += 4) {
+    const n = (B64.indexOf(s[i]) << 18) | (B64.indexOf(s[i + 1]) << 12) | ((s[i + 2] === '=' ? 0 : B64.indexOf(s[i + 2])) << 6) | (s[i + 3] === '=' ? 0 : B64.indexOf(s[i + 3]));
+    out.push((n >> 16) & 255, (n >> 8) & 255, n & 255);
+    if (s[i + 2] === '=') out.pop();
+    if (s[i + 3] === '=') out.pop();
+  }
+  return new Uint8Array(out);
 }
