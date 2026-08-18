@@ -40,7 +40,20 @@ export async function openFile(app, file) {
   if (ext === 'dxf') {
     const CAD = window.CAD;
     if (!CAD?.dxf) throw new Error('DXF 模块未就绪，请刷新页面重试');
-    const text = await fileToText(file);
+    const buf = await file.arrayBuffer();
+    let text;
+    try {
+      // 按 $DWGCODEPAGE 选择解码（ANSI_936=GBK 中文 / ANSI_932=Shift-JIS 日文等老图纸）
+      const head = new TextDecoder('latin1').decode(buf.slice(0, 16384));
+      const cp = head.match(/\$DWGCODEPAGE\s*\r?\n\s*3\s*\r?\n\s*([A-Za-z0-9_]+)/i);
+      const page = cp ? String(cp[1]).toUpperCase() : '';
+      if (page.includes('932')) text = new TextDecoder('shift_jis').decode(buf);
+      else if (page.includes('936')) text = new TextDecoder('gbk').decode(buf);
+      else if (page.includes('950')) text = new TextDecoder('big5').decode(buf);
+      else text = new TextDecoder('utf-8').decode(buf);
+    } catch (e) {
+      text = await fileToText(file);
+    }
     const data = CAD.dxf.parseDXF(text);
     applyDXFData(app.scene, data);
     return { type: 'dxf', count: app.scene.count() };
@@ -82,9 +95,11 @@ export function applyDXFData(scene, data) {
   scene.clearUndo();
   scene.dirty = false;
   scene._changeCount = 0;
+  scene.units = data.units || 'mm';
   scene.emit('layers');
   scene.emit('change');
   scene.emit('selection');
+  scene.emit('blocks');
 }
 
 /* ---------------- 摘要（供 AI / 日志） ---------------- */
@@ -96,9 +111,10 @@ function describeEntity(e) {
     case 'arc': return `圆心(${f(e.cx)},${f(e.cy)}) r=${f(e.r)} 起${f(normAngle(e.startAngle) * R2D)}°~终${f(normAngle(e.endAngle) * R2D)}°`;
     case 'ellipse': return `中心(${f(e.cx)},${f(e.cy)}) ${f(e.rx)}×${f(e.ry)}`;
     case 'polyline': {
-      const n = e.points.length;
+      const pts = e.points || [];
+      const n = pts.length;
       if (!n) return '空';
-      return `${n}点 (${f(e.points[0].x)},${f(e.points[0].y)})…(${f(e.points[n - 1].x)},${f(e.points[n - 1].y)})${e.closed ? ' 闭合' : ''}`;
+      return `${n}点 (${f(pts[0].x)},${f(pts[0].y)})…(${f(pts[n - 1].x)},${f(pts[n - 1].y)})${e.closed ? ' 闭合' : ''}`;
     }
     case 'text': return `"${String(e.text).slice(0, 24)}" @(${f(e.x)},${f(e.y)}) 高${f(e.height)}`;
     case 'point': return `(${f(e.x)},${f(e.y)})`;

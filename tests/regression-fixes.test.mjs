@@ -248,4 +248,14 @@ function script(app, points = []) {
   ok('undo 还原选择状态');
 }
 
+{
+  // 坏数据防御：layers 为字符串 / 无 points 多段线
+  const s = Scene.load({ app: 'xbcad', layers: 'bad-string', entities: [{ id: 'e1', type: 'polyline', layer: '0' }] });
+  assert.equal(s.entities.size, 1, '无 points 多段线仍可加载');
+  const { buildSceneSummary } = await import('../js/io.js');
+  const sum = buildSceneSummary(s);
+  assert(typeof sum === 'string' && sum.includes('1'), '摘要对无 points 多段线不崩溃');
+  ok('Scene.load 坏数据防御 + 摘要容错');
+}
+
 console.log(`全部通过：${n} 项`);

@@ -296,22 +296,25 @@ export class Scene extends Emitter {
   static load(json) {
     const s = new Scene();
     if (!json || typeof json !== 'object') return s;
+    if (json.app != null && json.app !== 'xbcad') console.warn('[scene] 未知文件标识:', json.app);
     if (json.units) s.units = json.units;
     s._bodies3d = json.bodies3d || null;
     if (json.dimstyle) s.dimstyle = { ...DEFAULT_DIMSTYLE, ...json.dimstyle };
     s.layers.clear();
     const defLayer = { name: '0', color: '#ffffff', on: true, locked: false, ltype: 'CONTINUOUS' };
-    for (const l of json.layers || [defLayer]) {
+    for (const l of Array.isArray(json.layers) ? json.layers : []) {
+      if (!l || typeof l !== 'object' || !l.name) continue; // 坏数据防御
       s.layers.set(l.name, { name: l.name, color: l.color || '#ffffff', on: l.on !== false, locked: !!l.locked, ltype: l.ltype || 'CONTINUOUS' });
     }
     if (!s.layers.has('0')) s.layers.set('0', { ...defLayer });
     s.currentLayer = json.currentLayer && s.layers.has(json.currentLayer) ? json.currentLayer : '0';
-    for (const b of json.blocks || []) {
-      s.blocks.set(b.name, { name: b.name, baseX: b.baseX || 0, baseY: b.baseY || 0, entities: new Map((b.entities || []).map((e) => [e.id, e])) });
+    for (const b of Array.isArray(json.blocks) ? json.blocks : []) {
+      if (!b || typeof b !== 'object' || !b.name) continue;
+      s.blocks.set(b.name, { name: b.name, baseX: b.baseX || 0, baseY: b.baseY || 0, entities: new Map((Array.isArray(b.entities) ? b.entities : []).map((e) => [e.id, e])) });
     }
     s._changeCount = 0;
-    for (const e of json.entities || []) {
-      if (!HANDLERS[e.type]) continue;
+    for (const e of Array.isArray(json.entities) ? json.entities : []) {
+      if (!e || typeof e !== 'object' || !HANDLERS[e.type]) continue;
       s.entities.set(e.id || uid(), e);
       if (e.layer == null) e.layer = '0';
       s.ensureLayer(e.layer);

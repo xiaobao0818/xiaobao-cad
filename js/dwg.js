@@ -71,10 +71,12 @@ const V = (p) => ({ x: p?.x ?? 0, y: p?.y ?? 0 });
 
 /* ---------------- 实体映射（纯函数，可单测） ---------------- */
 export function mapDwgDatabase(db) {
+  const EMPTY = { layers: [{ name: '0', color: '#ffffff', on: true, locked: false, ltype: 'CONTINUOUS' }], entities: [], currentLayer: '0', units: 'mm' };
+  if (!db || typeof db !== 'object') return EMPTY;
   const layers = (db.tables?.LAYER?.entries || []).map(mapLayer);
   if (!layers.some((l) => l.name === '0')) layers.unshift({ name: '0', color: '#ffffff', on: true, locked: false, ltype: 'CONTINUOUS' });
   const entities = [];
-  for (const e of db.entities || []) {
+  for (const e of Array.isArray(db.entities) ? db.entities : []) {
     try {
       switch (e.type) {
         case 'LINE':

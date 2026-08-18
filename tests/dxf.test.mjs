@@ -224,4 +224,21 @@ if (failures) {
   assert(mt && mt.text === 'C:\\temp\\dir;', `MTEXT 字面反斜杠应保留，实际 "${mt?.text}"`);
   console.log('  ✓ MTEXT 字面反斜杠保留');
 }
+{
+  // 极值坐标不得写成科学计数法（部分外部 CAD 不接受）
+  const scene = { layers: new Map([['0', { name: '0', color: '#ffffff', on: true, locked: false, ltype: 'CONTINUOUS' }]]), blocks: new Map(), entities: new Map([['e1', { id: 'e1', type: 'line', layer: '0', color: null, ltype: null, lw: null, x1: 1e-8, y1: 0, x2: 1e13, y2: 0 }]]), dimstyle: {}, units: 'mm' };
+  const txt = writeDXF(scene);
+  assert(!/\b\d+e[+-]?\d+\b/i.test(txt), 'DXF 输出不得含科学计数法: ' + txt.match(/[\d.]+e[+-]?\d+/i));
+  console.log('  ✓ fnum 极值输出固定十进制');
+}
+{
+  // INSUNITS 单位往返：feet/cm/km/unitless
+  const s1 = { layers: new Map(), blocks: new Map(), entities: new Map(), dimstyle: {}, units: 'feet' };
+  const b1 = parseDXF(writeDXF(s1));
+  assert(b1.units === 'feet', `feet 往返应保持，实际 ${b1.units}`);
+  const cm = parseDXF('0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n5\n0\nENDSEC\n0\nEOF\n');
+  assert(cm.units === 'cm', `INSUNITS=5 应解析为 cm，实际 ${cm.units}`);
+  console.log('  ✓ INSUNITS 单位映射与往返');
+}
+
 console.log('\n✓ 全部测试通过');

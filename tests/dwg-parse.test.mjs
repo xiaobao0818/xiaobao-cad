@@ -85,4 +85,15 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
   ok('传统 POLYLINE2D/3D 多段线导入');
 }
 
+{
+  // 空值防御：null / 非数组 entities 不得崩溃
+  const d1 = mapDwgDatabase(null);
+  assert.equal(d1.entities.length, 0);
+  assert(d1.layers.some((l) => l.name === '0'));
+  const d2 = mapDwgDatabase({ entities: { a: 1 } });
+  assert.equal(d2.entities.length, 0);
+  assert(d2.layers.some((l) => l.name === '0'));
+  ok('mapDwgDatabase 空值/坏 entities 防御');
+}
+
 console.log(`\n全部通过：${n} 项`);

@@ -230,7 +230,7 @@ HANDLERS.ellipse = {
 /* ---------- polyline ---------- */
 function plineSegs(e) {
   const segs = [];
-  const n = e.points.length;
+  const n = (e.points || []).length;
   if (n < 2) return segs;
   const count = e.closed ? n : n - 1;
   for (let i = 0; i < count; i++) {
@@ -241,7 +241,7 @@ function plineSegs(e) {
 }
 HANDLERS.polyline = {
   bbox(e) {
-    const pts = e.points.map((p) => ({ x: p.x, y: p.y }));
+    const pts = (e.points || []).map((p) => ({ x: p.x, y: p.y }));
     for (const s of plineSegs(e)) {
       if (Math.abs(s.bulge) > 1e-6) {
         const arc = arcFromBulge(s.p1, s.p2, s.bulge);

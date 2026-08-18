@@ -46,7 +46,10 @@ function fnum(v) {
     s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
     return s;
   }
-  return String(v);
+  // 极值也输出固定十进制（部分外部 CAD 不接受科学计数法）
+  let s = abs < 1e-6 ? v.toFixed(12) : v.toFixed(6);
+  s = s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  return s === '-0' ? '0' : s;
 }
 /** 遍历 Map / 数组 / 任意 values() 容器 */
 function valuesOf(coll) {
@@ -367,7 +370,8 @@ function parseHeader(pairs, i, data) {
       if (nv) {
         if (varName === '$INSUNITS') {
           const u = parseInt(String(nv[1]).trim(), 10);
-          data.units = u === 1 ? 'inch' : u === 6 ? 'm' : 'mm';
+          const UNIT_MAP = { 0: 'unitless', 1: 'inch', 2: 'feet', 3: 'mile', 4: 'mm', 5: 'cm', 6: 'm', 7: 'km' };
+          data.units = UNIT_MAP[u] || 'mm';
         } else if (varName === '$CLAYER') {
           data.currentLayer = String(nv[1]).trim();
         }
@@ -684,7 +688,8 @@ export function writeDXF(scene) {
   // HEADER
   L(0, 'SECTION'); L(2, 'HEADER');
   L(9, '$ACADVER'); L(1, 'AC1009');
-  L(9, '$INSUNITS'); L(70, '4');
+  const UNIT_CODES = { unitless: 0, inch: 1, feet: 2, mile: 3, mm: 4, cm: 5, m: 6, km: 7 };
+  L(9, '$INSUNITS'); L(70, String(UNIT_CODES[scene?.units] ?? 4));
   if (scene && scene.currentLayer) { L(9, '$CLAYER'); L(8, String(scene.currentLayer)); }
   L(0, 'ENDSEC');
 
