@@ -100,6 +100,9 @@ export class Viewport3D extends Emitter {
         this.bodyGroup.add(mesh);
       }
       const geo = mesh.geometry;
+      // 替换前释放旧 GPU 缓冲（每帧刷新否则持续泄漏 WebGLBuffer）
+      if (geo.attributes.position) geo.attributes.position.dispose?.();
+      if (geo.index) geo.index.dispose?.();
       geo.setAttribute('position', new THREE.BufferAttribute(m.positions, 3));
       geo.setIndex(new THREE.BufferAttribute(m.indices, 1));
       geo.computeVertexNormals();

@@ -183,4 +183,20 @@ console.log('== Model3D（模拟内核） ==');
   ok('圆角/倒角特征树（消费/失败/级联）');
 }
 
+{
+  // 导入体 undo/redo 强制重导时，旧内核实体必须先释放（WASM 堆泄漏修复）
+  const m = new Model3D();
+  const k = mockKernel();
+  m.setKernel(k);
+  const b = { id: 'imp1', label: '导入:test', kind: 'imported', params: {}, color: '#ccc', visible: true, _bytes: new Uint8Array([1, 2, 3]), _kids: [100] };
+  m.bodies.push(b);
+  m._kernelIds.set('imp1', [100]);
+  m.evaluate(); // 已有 _kids → 不重导
+  assert.equal(k.calls.deleted.length, 0);
+  b._kids = null; // 模拟 undo/redo 后失效
+  m.evaluate();
+  assert(k.calls.deleted.includes(100), '重导前应释放旧内核实体 id=100');
+  ok('导入体重导先释放旧内核实体');
+}
+
 console.log(`\n全部通过：${n} 项`);

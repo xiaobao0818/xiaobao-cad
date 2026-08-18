@@ -229,6 +229,12 @@ export class Model3D extends Emitter {
     for (const b of this.bodies) {
       if (b.kind !== 'imported') continue;
       if (!b._kids || !b._kids.length) {
+        // 重新导入前先释放旧内核实体（undo/redo 强制重导时否则泄漏 WASM 堆）
+        const old = this._kernelIds.get(b.id);
+        if (old) {
+          try { for (const k of [].concat(old)) this.kernel.deleteBody(k); } catch (e) { /* 忽略 */ }
+          this._kernelIds.delete(b.id);
+        }
         try {
           b._kids = this.kernel.importSTEP(b._bytes);
           this._kernelIds.set(b.id, b._kids);
