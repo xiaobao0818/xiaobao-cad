@@ -161,11 +161,11 @@ class App {
     try {
       const dxfMod = await import('./dxf.js');
       window.CAD.dxf = dxfMod;
-    } catch (e) { console.warn('DXF 模块加载失败:', e); }
+    } catch (e) { console.warn('DXF 模块加载失败:', e); this.notify('DXF 模块加载失败，打开/导出 DXF 将不可用', 'error'); }
     try {
       const dwgMod = await import('./dwg.js');
       window.CAD.dwg = { parseDWG: dwgMod.parseDWG };
-    } catch (e) { console.warn('DWG 模块加载失败:', e); }
+    } catch (e) { console.warn('DWG 模块加载失败:', e); this.notify('DWG 模块加载失败，打开 DWG 将不可用', 'error'); }
     try {
       const aiMod = await import('./ai.js');
       if (aiMod.default) window.__aiPanel = new aiMod.default(window.CAD);
@@ -356,6 +356,14 @@ class App {
 
   /* ---------------- 键盘 ---------------- */
   _onKeyDown(e) {
+    // 模态对话框打开时：屏蔽全部快捷键，ESC 关闭最上层对话框
+    if (this._modals && this._modals.length) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this._modals[this._modals.length - 1].close();
+      }
+      return;
+    }
     const tag = e.target?.tagName;
     const typing = tag === 'INPUT' || tag === 'TEXTAREA';
     const cmdInput = document.getElementById('cmdInput');
@@ -381,30 +389,40 @@ class App {
       }
       return;
     }
+    // 3D 工作区但内核未就绪：不回落 2D 逻辑（用户看不到 2D 画布，回落会偷改 2D 状态）
+    const is3d = this.workspace === '3d';
+    if (is3d && !this.app3d) {
+      const now = Date.now();
+      if (!this._last3dHint || now - this._last3dHint > 3000) {
+        this._last3dHint = now;
+        this.notify('3D 内核加载中，快捷键暂不可用', 'error');
+      }
+      return;
+    }
     const k = e.key.toLowerCase();
     if (e.ctrlKey || e.metaKey) {
       if (k === 'z') {
         e.preventDefault();
-        if (this.workspace === '3d' && this.app3d) this.app3d.model.undo();
+        if (is3d) this.app3d.model.undo();
         else this.scene.undo();
       }
       else if (k === 'y') {
         e.preventDefault();
-        if (this.workspace === '3d' && this.app3d) this.app3d.model.redo();
+        if (is3d) this.app3d.model.redo();
         else this.scene.redo();
       }
       else if (k === 's') { e.preventDefault(); this.saveNative(); this.notify('已保存 JSON'); }
       else if (k === 'o') { e.preventDefault(); this.openFileDialog(); }
       else if (k === 'a') {
         e.preventDefault();
-        if (this.workspace === '3d' && this.app3d) this.app3d.model.select(this.app3d.model.bodies.map((b) => b.id), 'set');
+        if (is3d) this.app3d.model.select(this.app3d.model.bodies.map((b) => b.id), 'set');
         else this.scene.selectAll();
       }
       return;
     }
     if (e.key === 'Enter') { this.commander.onText(''); return; }
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (this.workspace === '3d' && this.app3d) { this.app3d._delete(); return; }
+      if (is3d) { this.app3d._delete(); return; }
       if (this.scene.selection.size) {
         this.scene.singleOp('删除', () => this.scene.removeEntities([...this.scene.selection]));
       }
@@ -447,7 +465,7 @@ class App {
       {
         name: '文件', items: [
           { label: '新建图纸', kbd: '', fn: () => this.newDrawing() },
-          { label: '打开文件 (DXF/JSON/SVG)', kbd: 'Ctrl+O', fn: () => this.openFileDialog() },
+          { label: '打开文件 (DXF/DWG/JSON/SVG)', kbd: 'Ctrl+O', fn: () => this.openFileDialog() },
           { label: '恢复示例图纸', fn: () => { if (this.scene.dirty && !confirm('当前图纸有未保存修改，确定恢复示例？')) return; io.makeDemoScene(this.scene); this.viewport.zoomExtents(); this.notify('已恢复示例图纸'); } },
           { sep: true },
           { label: '保存 (小宝CAD JSON)', kbd: 'Ctrl+S', fn: () => { this.saveNative(); this.notify('已保存'); } },
@@ -833,11 +851,20 @@ class App {
     else bd.appendChild(body);
     const foot = document.createElement('div');
     foot.className = 'modal-foot';
+    if (!this._modals) this._modals = [];
+    const item = { overlay, close: () => {} };
+    const popModal = () => {
+      const i = this._modals.indexOf(item);
+      if (i >= 0) this._modals.splice(i, 1);
+    };
     const close = (fn) => {
       if (fn) { const r = fn(); if (r === false) return; }
+      popModal();
       overlay.remove();
       onClose?.();
     };
+    item.close = close;
+    this._modals.push(item);
     for (const b of buttons) {
       const btn = document.createElement('button');
       btn.className = 'mini-btn' + (b.primary ? ' primary' : '');
@@ -856,6 +883,9 @@ class App {
     overlay.appendChild(modal);
     overlay.addEventListener('mousedown', (e) => { if (e.target === overlay && buttons[0]?.label === '取消') close(); });
     document.getElementById('dialogs').appendChild(overlay);
+    // 焦点落到首个输入框（焦点陷阱的轻量替代）
+    const fi = modal.querySelector('input, select, textarea');
+    if (fi) fi.focus();
     return { close };
   }
   promptDialog(title, def = '') {
@@ -870,6 +900,7 @@ class App {
       const dlg = this.openDialog({
         title,
         body: wrap,
+        onClose: () => resolve(null), // ESC 关闭时也要落地 Promise，否则命令悬挂
         buttons: [
           { label: '取消', onClick: () => { resolve(null); } },
           { label: '确定', primary: true, onClick: () => { const v = inp.value.trim(); resolve(v); } },
@@ -899,6 +930,7 @@ class App {
       const dlg = this.openDialog({
         title: '插入块',
         body: list,
+        onClose: () => resolve(null), // ESC 关闭时也要落地 Promise，否则命令悬挂
         buttons: [{ label: '取消', onClick: () => { resolve(null); } }],
       });
     });
