@@ -88,8 +88,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 8, '任务库应含基础 4 + 水泵 4 个任务');
-  ok('训练任务库 8 个任务（含水泵组件 4 个）');
+  assert.equal(TRAIN_TASKS.length, 9, '任务库应含基础 4 + 水泵 5 个任务');
+  ok('训练任务库 9 个任务（含水泵组件 5 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -160,6 +160,39 @@ function goodFlange2d() {
   const r = evaluate(task, { bodies });
   assert.equal(r.score, 100, `泵壳好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
   ok('水泵泵壳好模型 = 100 分');
+}
+{
+  // 微型泵整机装配：轴孔间隙配合验收
+  const task = taskById('minipump3d');
+  const bodies = [
+    { id: 'outer', kind: 'cylinder', params: { x: 0, y: 0, r: 70, h: 50 } },
+    { id: 'cav', kind: 'cylinder', params: { x: 18, y: 0, r: 45, h: 50 } },
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'bore', kind: 'cylinder', params: { x: 0, y: 0, r: 30.5, h: 8 } },
+  ];
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } });
+  }
+  bodies.push({ id: 'shaft', kind: 'cylinder', params: { x: 0, y: 0, r: 30, h: 120 } });
+  bodies.push({ id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } });
+  bodies.push({ id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['bore'] } });
+  bodies.push({ id: 'b3', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: bodies.slice(4, 10).map((b) => b.id) } });
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `整机装配应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  // 缺泵轴 → 配合验收失败
+  const noShaft = bodies.filter((b) => b.id !== 'shaft');
+  const rNoShaft = evaluate(task, { bodies: noShaft });
+  assert(rNoShaft.score < 95, `缺泵轴应扣分（实际 ${rNoShaft.score}）`);
+  const fit = rNoShaft.checks.find((c) => c.detail && c.detail.includes('轴 Φ60'));
+  assert(fit && !fit.pass, '配合检查应报缺轴');
+  // 干涉：孔 29 < 轴 30 → 配合失败
+  const inter = bodies.map((b) => (b.id === 'bore' ? { ...b, params: { ...b.params, r: 29 } } : b));
+  const rInter = evaluate(task, { bodies: inter });
+  assert(rInter.score < 95, `轴孔干涉应扣分（实际 ${rInter.score}）`);
+  const fitI = rInter.checks.find((c) => c.detail && c.detail.includes('轴 Φ60'));
+  assert(fitI && !fitI.pass, '配合检查应报干涉');
+  ok(`微型泵整机装配验收（完整 100 分 / 缺轴 ${rNoShaft.score} / 干涉 ${rInter.score}）`);
 }
 {
   // 水泵剖视图 2D

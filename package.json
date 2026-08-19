@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "serve": "python3 -m http.server 8899",
-    "test": "node tests/core.test.mjs && node tests/dxf.test.mjs && node tests/model3d.test.mjs && node tests/kernel.test.mjs && node tests/dwg-ref.test.mjs && node tests/ai-workspace.test.mjs && node tests/dwg-parse.test.mjs && node tests/regression-fixes.test.mjs && node tests/svg-import.test.mjs && node tests/training-acceptance.test.mjs",
+    "test": "node tests/core.test.mjs && node tests/dxf.test.mjs && node tests/model3d.test.mjs && node tests/kernel.test.mjs && node tests/dwg-ref.test.mjs && node tests/ai-workspace.test.mjs && node tests/dwg-parse.test.mjs && node tests/regression-fixes.test.mjs && node tests/svg-import.test.mjs && node tests/training-acceptance.test.mjs && node tests/training-stats.test.mjs",
     "check": "for f in js/*.js js/three-dim/*.js tests/*.mjs; do echo \"== $f\"; node --check \"$f\" || exit 1; done"
   },
   "dependencies": {

@@ -121,6 +121,23 @@ export const TRAIN_TASKS = [
       { type: 'linesThrough', cx: 0, cy: 0, min: 1, tol: 2, weight: 2 },
     ],
   },
+  {
+    id: 'minipump3d',
+    ws: '3d',
+    name: '微型泵整机装配（3D）',
+    prompt: '请装配一台微型离心泵：①泵壳：外圆柱半径 70 高 50（原点），偏心内腔半径 45（x=18）用差集挖流道；②叶轮：轮盘半径 60 厚 8，轮毂孔半径 30.5 用差集挖出，6 片叶片（盒体）均布在半径 35 圆周上并与轮盘并集；③泵轴：半径 30 长 120，与叶轮中心孔保持间隙配合（轴 Φ60 / 孔 Φ61）。',
+    checks: [
+      { type: 'featureCount', min: 12, weight: 2 },
+      { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
+      { type: 'kindCount', kind: 'box', min: 6, weight: 2 },
+      { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
+      { type: 'primDim', kind: 'cylinder', field: 'r', approx: 70, tol: 2, weight: 2 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 45, tol: 2, minCount: 1, weight: 2 },
+      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, minCount: 6, weight: 3 },
+      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
+      { type: 'fitClearance', outerR: 30, boreR: 30.5, outerTol: 0.4, boreTol: 0.4, minGap: 0.1, maxGap: 1.5, weight: 4 },
+    ],
+  },
 ];
 
 export const taskById = (id) => TRAIN_TASKS.find((t) => t.id === id) || null;

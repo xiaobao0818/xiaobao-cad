@@ -159,6 +159,26 @@ function check3d(check, bodies) {
       const pass = approx(total, check.approx, check.tol);
       return { pass, detail: `${check.kind}.${check.field} 求和=${Math.round(total * 10) / 10}（期望≈${check.approx}）` };
     }
+    case 'fitClearance': {
+      // 装配配合：轴径 outerR 与孔径 boreR 的间隙配合（工业装配验收：不得干涉、间隙在容差内）
+      const cyls = kinds('cylinder').filter((c) => c.params?.r != null);
+      const shafts = cyls.filter((c) => approx(c.params.r, check.outerR, check.outerTol ?? 1));
+      const bores = cyls.filter((c) => approx(c.params.r, check.boreR, check.boreTol ?? 1));
+      // 干涉：接近孔公差带、但半径小于轴径的圆柱（孔径偏小 → 轴装不进）
+      const interference = cyls.some((c) => Math.abs(c.params.r - check.boreR) <= (check.boreTol ?? 1) + 1 && c.params.r < check.outerR);
+      const gap = bores.length && shafts.length ? check.boreR - check.outerR : null;
+      const pass = shafts.length >= 1 && bores.length >= 1 && !interference &&
+        gap >= (check.minGap ?? 0) && gap <= (check.maxGap ?? Infinity);
+      const why = [];
+      if (!shafts.length) why.push('缺轴');
+      if (!bores.length) why.push('缺孔');
+      if (interference) why.push('干涉');
+      if (gap != null && (gap < (check.minGap ?? 0) || gap > (check.maxGap ?? Infinity))) why.push('间隙超差');
+      return {
+        pass,
+        detail: `轴 Φ${check.outerR * 2}/孔 Φ${check.boreR * 2}：${shafts.length ? '轴✓' : '缺轴'}·${bores.length ? '孔✓' : '缺孔'}${interference ? '·干涉!' : ''}·间隙=${gap == null ? '—' : gap.toFixed(2)}（${pass ? '配合合格' : '配合不合格：' + why.join('、')}）`,
+      };
+    }
     default:
       return { pass: false, detail: `未知检查类型 ${check.type}` };
   }

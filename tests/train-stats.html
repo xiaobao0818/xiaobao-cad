@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 训练日志分析 · 质量曲线</title>
+<style>
+  body { margin:0; padding:24px; background:#141821; color:#e8e8e8; font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h1 b { color:#ff8c42; }
+  .sub { color:#8a93a5; font-size:13px; margin-bottom:16px; }
+  .cards { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .card { background:#1d2330; border:1px solid #2c3547; border-radius:10px; padding:14px 18px; min-width:140px; }
+  .card .k { font-size:12px; color:#8a93a5; } .card .v { font-size:24px; font-weight:700; margin-top:2px; }
+  .good { color:#7ee08a; } .bad { color:#e88b8b; }
+  table { border-collapse:collapse; width:100%; max-width:900px; margin-bottom:18px; }
+  th,td { border:1px solid #2c3547; padding:7px 10px; font-size:13px; text-align:left; }
+  th { background:#1d2330; color:#9fb3d1; }
+  .bar-row { display:flex; align-items:center; gap:10px; margin:4px 0; font-size:13px; }
+  .bar-track { flex:1; height:16px; background:#1d2330; border-radius:8px; overflow:hidden; position:relative; }
+  .bar-before { position:absolute; left:0; top:0; bottom:0; background:#e8a07f; opacity:.85; border-radius:8px 0 0 8px; }
+  .bar-after { position:absolute; left:0; top:0; bottom:0; background:#7ee08a; border-radius:8px 0 0 8px; }
+  textarea { width:100%; max-width:880px; height:90px; background:#1d2330; color:#e8e8e8; border:1px solid #2c3547; border-radius:8px; padding:10px; font-size:12px; font-family:monospace; }
+  button { background:#ff8c42; border:none; color:#141821; font-weight:700; padding:8px 16px; border-radius:8px; cursor:pointer; margin:8px 8px 0 0; }
+  button.ghost { background:transparent; color:#9fb3d1; border:1px solid #2c3547; }
+</style>
+</head>
+<body>
+<h1>🎓 小宝CAD <b>画图训练</b> 质量分析</h1>
+<div class="sub">训练闭环：AI 画图 → 确定性验收打分 → MiniMax M3 多模态审阅 → 修复 → 再打分。分数越高，AI 画出的图纸/模型越接近工业级水泵设计要求。</div>
+
+<div id="cards" class="cards"></div>
+<div id="bars"></div>
+<h3 style="font-size:15px">按任务明细</h3>
+<table id="taskTable"><thead><tr><th>任务</th><th>工作区</th><th>轮数</th><th>验收前均分</th><th>验收后均分</th><th>平均提升</th><th>审阅有效率</th><th>满意度</th></tr></thead><tbody></tbody></table>
+<h3 style="font-size:15px">导入训练日志 JSON（或从当前浏览器 localStorage 读取）</h3>
+<textarea id="jsonIn" placeholder='[{"ts":...,"taskId":"flange2d",...}, ...]'></textarea><br>
+<button id="btnLocal">📥 读取浏览器训练日志</button>
+<button id="btnLoad" class="ghost">📄 解析粘贴的 JSON</button>
+<button id="btnDemo" class="ghost">🧪 载入演示数据</button>
+
+<script type="module">
+import { summarize, qualityTrend, recentScore } from '/training/stats.mjs';
+
+let entries = [];
+function render() {
+  const s = summarize(entries);
+  const recent = recentScore(entries, 10);
+  document.getElementById('cards').innerHTML = `
+    <div class="card"><div class="k">总轮数</div><div class="v">${s.rounds}</div></div>
+    <div class="card"><div class="k">验收前均分</div><div class="v ${s.avgBefore >= 80 ? 'good' : 'bad'}">${s.avgBefore}</div></div>
+    <div class="card"><div class="k">验收后均分</div><div class="v ${s.avgAfter >= 90 ? 'good' : 'bad'}">${s.avgAfter}</div></div>
+    <div class="card"><div class="k">平均提升 Δ</div><div class="v ${s.avgDelta > 0 ? 'good' : ''}">${s.avgDelta > 0 ? '+' : ''}${s.avgDelta}</div></div>
+    <div class="card"><div class="k">审阅有效率</div><div class="v">${s.reviewEffectiveness}%</div></div>
+    <div class="card"><div class="k">近期达成度(近${recent.rounds}轮)</div><div class="v ${recent.mastered ? 'good' : 'bad'}">${recent.score}${recent.mastered ? ' ✓已掌握' : ''}</div></div>`;
+  document.getElementById('bars').innerHTML = s.tasks.map((t) => `
+    <div class="bar-row">
+      <span style="width:180px">${t.ws.toUpperCase()} ${t.taskName}</span>
+      <span style="width:44px;color:#e8a07f">${t.avgBefore}</span>
+      <div class="bar-track"><div class="bar-before" style="width:${t.avgBefore}%"></div><div class="bar-after" style="width:${t.avgAfter}%"></div></div>
+      <span style="width:44px;color:#7ee08a">${t.avgAfter}</span>
+      <span style="width:90px;color:#8a93a5">Δ${t.avgDelta >= 0 ? '+' : ''}${t.avgDelta} · 有效${t.reviewEffectiveness}%</span>
+    </div>`).join('');
+  document.querySelector('#taskTable tbody').innerHTML = s.tasks.map((t) => `
+    <tr><td>${t.taskName}</td><td>${t.ws.toUpperCase()}</td><td>${t.rounds}</td><td>${t.avgBefore}</td><td>${t.avgAfter}</td><td>${t.avgDelta >= 0 ? '+' : ''}${t.avgDelta}</td><td>${t.reviewEffectiveness}%</td><td>${t.satisfactionRate}%</td></tr>`).join('');
+}
+document.getElementById('btnLocal').addEventListener('click', () => {
+  try { entries = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'); } catch (e) { entries = []; }
+  render();
+});
+document.getElementById('btnLoad').addEventListener('click', () => {
+  try { entries = JSON.parse(document.getElementById('jsonIn').value || '[]'); } catch (e) { alert('JSON 解析失败: ' + e.message); return; }
+  render();
+});
+document.getElementById('btnDemo').addEventListener('click', () => {
+  entries = [
+    { ts: 1000, taskId: 'flange2d', taskName: '法兰盘', round: 1, ws: '2d', scoreBefore: 54, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
+    { ts: 2000, taskId: 'impeller3d', taskName: '叶轮', round: 1, ws: '3d', scoreBefore: 33, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 2 },
+    { ts: 3000, taskId: 'shaft3d', taskName: '台阶轴', round: 1, ws: '3d', scoreBefore: 75, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
+    { ts: 4000, taskId: 'minipump3d', taskName: '微型泵整机', round: 1, ws: '3d', scoreBefore: 74, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
+    { ts: 5000, taskId: 'minipump3d', taskName: '微型泵整机', round: 2, ws: '3d', scoreBefore: 83, scoreAfter: 91, reviewOutcome: '审阅完成', reviewRounds: 1 },
+  ];
+  render();
+});
+document.getElementById('btnLocal').click();
+</script>
+</body>
+</html>
