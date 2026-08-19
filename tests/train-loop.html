@@ -109,7 +109,7 @@
 
 <script type="module">
 import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
-import { evaluate, logEntry } from '/training/acceptance.mjs';
+import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
@@ -123,6 +123,8 @@ document.getElementById('modeTag').textContent = location.search.includes('mock'
 
 const entries = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
 let stopFlag = false;
+const NO_REVIEW = location.search.includes('noreview');
+const CONTINUOUS = location.search.includes('continuous');
 
 function renderStats() {
   const done = entries.filter((e) => e.reviewOutcome);
@@ -175,9 +177,9 @@ async function runTask(task, round) {
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
 
-  // MiniMax M3 多模态审阅
+  // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
   let reviewOutcome = '未执行', reviewRounds = 0, scoreAfter = scoreBefore;
-  if (okDraw && drawn && !stopFlag) {
+  if (okDraw && drawn && !stopFlag && !NO_REVIEW) {
     panel._manualReview();
     const okReview = await waitSettled(panel, 240000);
     if (stopFlag) return null;
@@ -191,27 +193,57 @@ async function runTask(task, round) {
     scoreAfter = evaluate(task, inputOf()).score;
     log(`👁 多模态审阅（${reviewRounds} 轮）：${reviewOutcome}，复审验收 ${scoreAfter} 分${scoreAfter > scoreBefore ? ' ↑ 质量提升' : scoreAfter === scoreBefore ? '' : ' ↓ 需继续训练'}`);
   }
+  // 验收反馈闭环：分数未满 → 把失败明细发给模型修复 → 再验收（最多 3 轮）
+  let fbRounds = 0;
+  while (scoreAfter < 100 && fbRounds < 3 && !stopFlag) {
+    const prompt = feedbackPrompt(task, evaluate(task, inputOf()));
+    if (!prompt) break;
+    fbRounds++;
+    panel.ask(prompt);
+    await waitSettled(panel, 150000);
+    if (stopFlag) return null;
+    scoreAfter = evaluate(task, inputOf()).score;
+    log(`🔄 验收反馈第 ${fbRounds} 轮：修复后 ${scoreAfter} 分`);
+  }
   return logEntry({
     taskId: task.id, taskName: task.name, round, ws: task.ws,
-    scoreBefore, scoreAfter, reviewOutcome, reviewRounds,
+    scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds,
     note: drawn ? '' : '绘制未完成',
   });
 }
 
+const chooseWeakest = () => {
+  // 弱项优先：按历史任务均分加权随机（未练过/低分任务权重更高）
+  const stats = new Map();
+  for (const e of entries) {
+    if (!stats.has(e.taskId)) stats.set(e.taskId, []);
+    stats.get(e.taskId).push(e.scoreAfter ?? e.scoreBefore ?? 0);
+  }
+  const pool = TRAIN_TASKS.map((t) => {
+    const scores = stats.get(t.id) || [];
+    const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    return { t, w: (100 - avg) + 10 };
+  });
+  const total = pool.reduce((s, p) => s + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of pool) { r -= p.w; if (r <= 0) return p.t; }
+  return pool[0].t;
+};
 document.getElementById('btnStart').addEventListener('click', async () => {
   if (stopFlag === false && document.getElementById('btnStart').dataset.run) return;
   stopFlag = false;
   document.getElementById('btnStart').dataset.run = '1';
   const taskSelVal = sel.value;
   const tasks = taskSelVal === 'all' ? TRAIN_TASKS : [taskById(taskSelVal)];
-  const rounds = Math.max(1, Math.min(20, parseInt(document.getElementById('rounds').value, 10) || 2));
+  const rounds = CONTINUOUS ? Infinity : Math.max(1, Math.min(20, parseInt(document.getElementById('rounds').value, 10) || 2));
   const prog = document.getElementById('tProg');
-  log(`▶ 开始训练：${tasks.map((t) => t.name).join(' / ')}，每任务 ${rounds} 轮`);
+  log(`▶ 开始训练${CONTINUOUS ? '（持续模式·弱项优先，点「停止」结束）' : ''}：${tasks.map((t) => t.name).join(' / ')}，每任务 ${CONTINUOUS ? '∞' : rounds} 轮`);
   for (let r = 1; r <= rounds && !stopFlag; r++) {
     for (const task of tasks) {
       if (stopFlag) break;
-      prog.textContent = `第 ${r}/${rounds} 轮 · ${task.name}`;
-      const e = await runTask(task, r);
+      const pick = CONTINUOUS ? chooseWeakest() : task;
+      prog.textContent = `第 ${r} 轮 · ${pick.name}`;
+      const e = await runTask(pick, r);
       if (e) { entries.push(e); localStorage.setItem('xbcad:training-log', JSON.stringify(entries)); renderStats(); }
       window.__aiPanel?.clear(); // 每轮任务独立上下文：避免历史里的旧实体 id 污染下一任务的工具调用
       if (!stopFlag) await wait(800);

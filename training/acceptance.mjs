@@ -260,6 +260,14 @@ export function evaluate(task, input) {
 }
 
 /** 训练日志条目序列化（页面与 Node 共用） */
-export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, ts = Date.now(), note = '' }) {
-  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, note };
+export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, ts = Date.now(), note = '' }) {
+  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, note };
+}
+
+/** 验收反馈提示：把未通过的检查明细转成给模型的修复指令（训练闭环的"梯度"） */
+export function feedbackPrompt(task, result) {
+  const fails = (result?.checks || []).filter((c) => !c.pass);
+  if (!fails.length) return '';
+  const lines = fails.map((c) => `- ${c.detail}`);
+  return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}`;
 }

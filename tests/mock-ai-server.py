@@ -24,7 +24,8 @@ def extract_ids(messages):
     cut = 0
     for i, m in enumerate(messages):
         c = m.get("content")
-        if m.get("role") == "user" and isinstance(c, str) and "[训练任务:" in c:
+        # 任务段起点 = 最近一条「绘图指令」（验收反馈消息虽带任务标识，但不能作为实体 id 起点）
+        if m.get("role") == "user" and isinstance(c, str) and "[训练任务:" in c and "[验收反馈]" not in c:
             cut = i
     ids = []
     for m in messages[cut:]:
@@ -46,6 +47,10 @@ def review_messages(messages):
     return out
 
 def last_user_is_review(messages):
+    # 多模态审阅 或 验收反馈 都走同一套修复剧本
+    last = last_plain_ask(messages)
+    if last and "[验收反馈]" in last:
+        return True
     for m in reversed(messages):
         if m.get("role") == "user":
             if isinstance(m.get("content"), list):

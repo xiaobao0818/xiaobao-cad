@@ -9,6 +9,7 @@ const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE = 'http://localhost:8899';
 const TASK = process.env.TASK || 'flange2d';
 const ALL = process.env.ALL === '1';
+const FB = process.env.FB === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
@@ -25,7 +26,7 @@ try {
   // 清空训练日志，只跑 2D 法兰盘 1 轮（skip3d 加速）
   const page = await browser.newPage();
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
-  await page.goto(`${BASE}/tests/train-loop.html?mock=1${SKIP3D ? '&skip3d=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(`${BASE}/tests/train-loop.html?mock=1${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
   await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
@@ -50,6 +51,15 @@ try {
     const improved = entries.filter((e) => e.delta > 0).length;
     assert(improved === 11, `全部 11 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
     ok(`全任务训练回归：11/11 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
+  } else if (FB) {
+    const e = entries[entries.length - 1];
+    console.log(`  训练条目: ${JSON.stringify(e)}`);
+    assert.equal(e.taskId, TASK);
+    assert(e.scoreBefore < 100, `初始应带缺陷（实际 ${e.scoreBefore}）`);
+    assert.equal(e.scoreAfter, 100, `验收反馈闭环应修复到 100 分（实际 ${e.scoreAfter}）`);
+    assert(e.fbRounds >= 1, `应至少 1 轮验收反馈（实际 ${e.fbRounds}）`);
+    assert(e.reviewRounds === 0, 'noreview 模式不应有多模态审阅轮');
+    ok(`验收反馈闭环：${e.scoreBefore} → ${e.scoreAfter}（${e.fbRounds} 轮反馈修复，无多模态审阅）`);
   } else {
     const e = entries[entries.length - 1];
     console.log(`  训练条目: ${JSON.stringify(e)}`);

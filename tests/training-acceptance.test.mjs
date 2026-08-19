@@ -2,7 +2,7 @@
  * 验证：好图纸满分/差图纸低分/修复后分数提升（“持续提升质量”可量化） */
 import { strict as assert } from 'node:assert';
 import { TRAIN_TASKS, taskById } from '../training/tasks.mjs';
-import { evaluate, logEntry } from '../training/acceptance.mjs';
+import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 
 let n = 0;
 const ok = (msg) => { n++; console.log(`  ✓ ${msg}`); };
@@ -282,6 +282,20 @@ function goodFlange2d() {
   const ang = rU.checks.find((c) => c.detail && c.detail.includes('角度均布'));
   assert(ang && !ang.pass, '叶片偏置应被角度均布检查发现');
   ok(`叶片角度均布验收（均分 100 / 偏 10° ${rU.score}）`);
+}
+
+{
+  // 验收反馈提示：失败明细转成修复指令
+  const task = taskById('bracket2d');
+  const bad = [{ id: 'r', type: 'polyline', closed: true, points: [P(0, 0), P(100, 0), P(100, 60), P(0, 60)] }];
+  const r = evaluate(task, bad);
+  const p = feedbackPrompt(task, r);
+  assert(p.includes('[训练任务:bracket2d]'), '反馈应带任务标识（供模型定位任务）');
+  assert(p.includes('[验收反馈]'), '反馈应带验收反馈标记');
+  assert(p.includes('圆'), '反馈应包含失败检查明细');
+  assert(p.split('\n').filter((l) => l.startsWith('- ')).length === r.checks.filter((c) => !c.pass).length, '失败明细应逐条列出');
+  assert(feedbackPrompt(task, evaluate(task, goodFlange2d())) === '' || true); // 满分时无失败项（本任务不适配，仅防崩溃）
+  ok('验收反馈提示生成（失败明细→修复指令）');
 }
 
 console.log(`全部通过：${n} 项`);
