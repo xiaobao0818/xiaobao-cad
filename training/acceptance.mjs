@@ -1,0 +1,175 @@
+/* ============================================================
+ * 小宝CAD 画图训练 · 确定性验收器（纯函数，Node/浏览器通用）
+ * 输入：
+ *   2D：实体数组（scene.all() / serialize().entities）
+ *   3D：{ bodies: [...] }（Model3D.serialize()）
+ * 输出：{ score: 0-100, total, passed, checks: [{name, pass, detail, weight}] }
+ * ============================================================ */
+
+const approx = (a, b, tol) => Math.abs(a - b) <= tol;
+const dist = (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1);
+
+/* 2D 辅助 */
+function bboxOf(ents) {
+  let bb = null;
+  for (const e of ents) {
+    let pts = [];
+    if (e.type === 'line') pts = [[e.x1, e.y1], [e.x2, e.y2]];
+    else if (e.type === 'circle') pts = [[e.cx - e.r, e.cy - e.r], [e.cx + e.r, e.cy + e.r]];
+    else if (e.type === 'arc') {
+      const a = e.startAngle ?? 0, b = e.endAngle ?? Math.PI * 2;
+      pts = [];
+      for (let k = 0; k <= 32; k++) {
+        const t = a + ((b - a) * k) / 32;
+        pts.push([e.cx + e.r * Math.cos(t), e.cy + e.r * Math.sin(t)]);
+      }
+    } else if (e.type === 'ellipse') {
+      const rot = e.rot || 0;
+      for (let k = 0; k <= 32; k++) {
+        const t = (k / 32) * Math.PI * 2;
+        const x = e.cx + e.rx * Math.cos(t) * Math.cos(rot) - e.ry * Math.sin(t) * Math.sin(rot);
+        const y = e.cy + e.rx * Math.cos(t) * Math.sin(rot) + e.ry * Math.sin(t) * Math.cos(rot);
+        pts.push([x, y]);
+      }
+    } else if (e.type === 'polyline') {
+      for (const p of e.points || []) pts.push([p.x, p.y]);
+    } else if (e.type === 'point') pts = [[e.x, e.y]];
+    else if (e.type === 'insert') pts = [[e.x, e.y]];
+    else if (e.type === 'text') pts = [[e.x, e.y]];
+    for (const [x, y] of pts) {
+      bb = bb ? [Math.min(bb[0], x), Math.min(bb[1], y), Math.max(bb[2], x), Math.max(bb[3], y)] : [x, y, x, y];
+    }
+  }
+  return bb;
+}
+/** 点到（无限）直线的距离 */
+function distToLine(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.hypot(dx, dy);
+  if (len < 1e-9) return dist(px, py, x1, y1);
+  return Math.abs(dy * px - dx * py + x2 * y1 - y2 * x1) / len;
+}
+
+/* 3D 辅助：镜像 Model3D.consumedSet 语义（serialize 里没有 _booleanFailed，失败布尔按求值态处理） */
+function consumed3d(bodies) {
+  const consumed = new Set();
+  for (const b of bodies) {
+    if ((b.kind === 'boolean' || b.kind === 'fillet' || b.kind === 'chamfer')) {
+      consumed.add(b.params?.a);
+      for (const id of b.params?.b || []) consumed.add(id);
+    }
+  }
+  return consumed;
+}
+
+/* ---------------- 检查执行 ---------------- */
+function check2d(check, ents) {
+  const pick = (t) => ents.filter((e) => e.type === t);
+  switch (check.type) {
+    case 'count': {
+      const n = pick(check.kind).length;
+      const pass = n >= (check.min ?? 0) && n <= (check.max ?? Infinity);
+      return { pass, detail: `${check.kind} 数量=${n}（期望≥${check.min}${check.max != null ? ` 且≤${check.max}` : ''}）` };
+    }
+    case 'circleAt': {
+      const found = pick('circle').find((e) => approx(e.r, check.r, check.tol) && dist(e.cx, e.cy, check.cx, check.cy) <= check.tol);
+      return { pass: !!found, detail: found ? `圆 @(${found.cx.toFixed(1)},${found.cy.toFixed(1)}) r=${found.r.toFixed(1)}` : `未找到 r≈${check.r} @(${check.cx},${check.cy}) 的圆` };
+    }
+    case 'holesOnRing': {
+      const holes = pick('circle').filter((e) => approx(e.r, check.holeR, check.holeRTol) && approx(dist(e.cx, e.cy, check.cx, check.cy), check.radius, check.rTol));
+      const pass = holes.length >= check.count;
+      return { pass, detail: `圆周孔 ${holes.length}/${check.count}` };
+    }
+    case 'linesThrough': {
+      const n = pick('line').filter((e) => distToLine(check.cx, check.cy, e.x1, e.y1, e.x2, e.y2) <= check.tol).length;
+      return { pass: n >= check.min, detail: `过圆心的直线 ${n}（期望≥${check.min}）` };
+    }
+    case 'bbox': {
+      const bb = bboxOf(ents);
+      if (!bb) return { pass: false, detail: '无实体' };
+      const w = bb[2] - bb[0], h = bb[3] - bb[1];
+      const pass = approx(w, check.w, check.tol) && approx(h, check.h, check.tol);
+      return { pass, detail: `范围 ${w.toFixed(1)}×${h.toFixed(1)}（期望 ${check.w}×${check.h} ±${check.tol}）` };
+    }
+    case 'closedPolylineBbox': {
+      const pl = pick('polyline').find((e) => e.closed);
+      if (!pl) return { pass: false, detail: '无闭合多段线' };
+      const bb = bboxOf([pl]);
+      const w = bb[2] - bb[0], h = bb[3] - bb[1];
+      const pass = approx(w, check.w, check.tol) && approx(h, check.h, check.tol);
+      return { pass, detail: `闭合轮廓 ${w.toFixed(1)}×${h.toFixed(1)}（期望 ${check.w}×${check.h} ±${check.tol}）` };
+    }
+    default:
+      return { pass: false, detail: `未知检查类型 ${check.type}` };
+  }
+}
+
+function check3d(check, bodies) {
+  const kinds = (k) => bodies.filter((b) => b.kind === k);
+  switch (check.type) {
+    case 'featureCount': {
+      const n = bodies.length;
+      const pass = n >= check.min;
+      return { pass, detail: `特征数=${n}（期望≥${check.min}）` };
+    }
+    case 'kindCount': {
+      const n = kinds(check.kind).length;
+      const pass = n >= check.min;
+      return { pass, detail: `${check.kind} 数量=${n}（期望≥${check.min}）` };
+    }
+    case 'primDim': {
+      const found = kinds(check.kind).find((b) => approx(b.params?.[check.field], check.approx, check.tol));
+      return { pass: !!found, detail: found ? `${check.kind}.${check.field}=${found.params[check.field]}` : `${check.kind}.${check.field}≈${check.approx} 未找到` };
+    }
+    case 'primParam': {
+      const hits = kinds(check.kind).filter((b) => approx(b.params?.[check.field], check.approx, check.tol));
+      const pass = hits.length >= (check.minCount ?? 1);
+      return { pass, detail: `${check.kind}.${check.field}≈${check.approx} 命中 ${hits.length}/${check.minCount ?? 1}` };
+    }
+    case 'primPos': {
+      const hits = kinds(check.kind).filter((b) => approx(b.params?.x, check.x, check.tol) && approx(b.params?.y, check.y, check.tol));
+      const pass = hits.length >= (check.minCount ?? 1);
+      return { pass, detail: `${check.kind} @(±${check.x},±${check.y}) 命中 ${hits.length}/${check.minCount ?? 1}` };
+    }
+    default:
+      return { pass: false, detail: `未知检查类型 ${check.type}` };
+  }
+}
+
+/* ---------------- 主入口 ---------------- */
+/**
+ * 验收打分
+ * @param task  TRAIN_TASKS 中的任务
+ * @param input 2D: 实体数组；3D: { bodies: [...] }
+ */
+export function evaluate(task, input) {
+  const checks = task.checks || [];
+  const total = checks.reduce((s, c) => s + (c.weight ?? 1), 0);
+  let passed = 0;
+  const results = [];
+  if (task.ws === '2d') {
+    const ents = Array.isArray(input) ? input : (input?.entities || []);
+    for (const c of checks) {
+      const r = check2d(c, ents);
+      results.push({ name: `${c.type}:${JSON.stringify(c)}`, ...r, weight: c.weight ?? 1 });
+      if (r.pass) passed += c.weight ?? 1;
+    }
+  } else {
+    const bodies = Array.isArray(input?.bodies) ? input.bodies : [];
+    for (const c of checks) {
+      const r = check3d(c, bodies);
+      results.push({ name: `${c.type}:${JSON.stringify(c)}`, ...r, weight: c.weight ?? 1 });
+      if (r.pass) passed += c.weight ?? 1;
+    }
+  }
+  return {
+    score: total ? Math.round((passed / total) * 100) : 0,
+    total, passed,
+    checks: results,
+  };
+}
+
+/** 训练日志条目序列化（页面与 Node 共用） */
+export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, ts = Date.now(), note = '' }) {
+  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, note };
+}

@@ -3,7 +3,7 @@
 按"助手已发出的工具调用轮数"推进剧本，从历史 tool 消息中提取实体 id，
 与真实大模型的行为一致（先创建→查询→布尔→总结）。
 """
-import json, re
+import json, re, math
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT = 8898
@@ -99,6 +99,10 @@ def extra_rounds(messages):
     return sum(1 for m in messages if m.get("role") == "assistant" and m.get("tool_calls")
                and any(tc["id"] == "c10" for tc in m["tool_calls"]))
 
+def training_task(messages):
+    m = re.search(r"\[训练任务:(\w+)\]", last_plain_ask(messages) or "")
+    return m.group(1) if m else None
+
 def build_stage(stage, messages, has_tools):
     if not has_tools:
         msg = {"role": "assistant",
@@ -108,6 +112,40 @@ def build_stage(stage, messages, has_tools):
         return resp(msg, "stop")
     # 多模态审阅剧本：第一轮发现问题并修改，第二轮表示满意
     if last_user_is_review(messages):
+        task = training_task(messages)
+        # 训练任务审阅：按任务补上故意漏掉的部分
+        if task == "flange2d" and not history_has(messages, "补上 6 个孔"):
+            holes = []
+            for k in range(6):
+                a = k * 3.141592653589793 / 3
+                holes.append({"type": "circle", "cx": 35 * math.cos(a), "cy": 35 * math.sin(a), "r": 5})
+            msg = {"role": "assistant", "content": "截图里发现法兰盘缺少 6 个均布小孔，我补上 6 个孔。",
+                   "tool_calls": [tool_call("r-f1", "draw_entities", {"items": holes})]}
+            return resp(msg, "tool_calls")
+        if task == "bracket2d" and not history_has(messages, "补上 2 个孔"):
+            msg = {"role": "assistant", "content": "截图里发现支架轮廓缺少 2 个圆孔，我补上 2 个孔。",
+                   "tool_calls": [tool_call("r-b1", "draw_entities", {"items": [
+                       {"type": "circle", "cx": 20, "cy": 30, "r": 10},
+                       {"type": "circle", "cx": 80, "cy": 30, "r": 10},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        if task == "plate3d" and not history_has(messages, "补上差集"):
+            ids = extract_ids(messages)
+            if len(ids) >= 5:
+                msg = {"role": "assistant", "content": "截图里发现四孔板还没有挖孔，我用差集把 4 个孔挖出来（补上差集）。",
+                       "tool_calls": [tool_call("r-p1", "boolean_3d", {"op": "cut", "a": ids[0], "b": ids[1:5]})]}
+                return resp(msg, "tool_calls")
+        if task == "sleeve3d" and not history_has(messages, "补上差集"):
+            ids = extract_ids(messages)
+            if len(ids) >= 2:
+                msg = {"role": "assistant", "content": "截图里发现轴套还没挖内孔，我用差集挖出同心通孔（补上差集）。",
+                       "tool_calls": [tool_call("r-s1", "boolean_3d", {"op": "cut", "a": ids[0], "b": [ids[1]]})]}
+                return resp(msg, "tool_calls")
+        if task:
+            msg = {"role": "assistant",
+                   "content": "已满意 ✅ 重新检查截图：图纸符合任务要求，无需进一步修改。",
+                   "tool_calls": None}
+            return resp(msg, "stop")
         if not history_has(messages, "垫圈"):
             msg = {"role": "assistant",
                    "content": "截图里发现泵壳与底座衔接处不够平滑，我加一个过渡垫圈。",
@@ -117,6 +155,54 @@ def build_stage(stage, messages, has_tools):
         msg = {"role": "assistant",
                "content": "已满意 ✅ 重新检查截图：模型比例协调、零件位置正确，无需进一步修改。",
                "tool_calls": None}
+        return resp(msg, "stop")
+    # 训练任务绘制剧本（故意留缺陷：2D 漏孔、3D 漏布尔，由多模态审阅补上）
+    task = training_task(messages)
+    if task == "flange2d":
+        if not history_has(messages, "外圆和中心线"):
+            msg = {"role": "assistant", "content": "我先画外圆和中心线（训练剧本：故意漏画 6 个孔，等审阅补上）。",
+                   "tool_calls": [tool_call("t-f1", "draw_entities", {"items": [
+                       {"type": "circle", "cx": 0, "cy": 0, "r": 50},
+                       {"type": "line", "x1": -60, "y1": 0, "x2": 60, "y2": 0, "layer": "中心线"},
+                       {"type": "line", "x1": 0, "y1": -60, "x2": 0, "y2": 60, "layer": "中心线"},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 法兰盘已绘制完成（外圆 + 中心线）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "bracket2d":
+        if not history_has(messages, "矩形外框"):
+            msg = {"role": "assistant", "content": "我先画矩形外框（训练剧本：故意漏画 2 个孔，等审阅补上）。",
+                   "tool_calls": [tool_call("t-b1", "draw_entities", {"items": [
+                       {"type": "rectangle", "x1": 0, "y1": 0, "x2": 100, "y2": 60},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 支架轮廓已绘制完成（矩形外框）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "plate3d":
+        if not history_has(messages, "四孔板主体"):
+            msg = {"role": "assistant", "content": "我先建底板和 4 个孔柱（四孔板主体，训练剧本：故意漏挖孔，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-p1", "create_primitive_3d", {"kind": "box", "x": 0, "y": 0, "z": 0, "dx": 100, "dy": 80, "dz": 10, "color": "#7fb2e8"}),
+                       tool_call("t-p2", "create_primitive_3d", {"kind": "cylinder", "x": 35, "y": 25, "z": 0, "r": 8, "h": 20, "color": "#e8a07f"}),
+                       tool_call("t-p3", "create_primitive_3d", {"kind": "cylinder", "x": -35, "y": 25, "z": 0, "r": 8, "h": 20, "color": "#e8a07f"}),
+                       tool_call("t-p4", "create_primitive_3d", {"kind": "cylinder", "x": 35, "y": -25, "z": 0, "r": 8, "h": 20, "color": "#e8a07f"}),
+                       tool_call("t-p5", "create_primitive_3d", {"kind": "cylinder", "x": -35, "y": -25, "z": 0, "r": 8, "h": 20, "color": "#e8a07f"}),
+                   ]}
+            return resp(msg, "tool_calls")
+        if not history_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-p6", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 四孔板已创建（底板 + 4 孔柱）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "sleeve3d":
+        if not history_has(messages, "轴套主体"):
+            msg = {"role": "assistant", "content": "我先建外圆柱和内孔柱（轴套主体，训练剧本：故意漏差集，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-s1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 40, "h": 60, "color": "#8fd3a8"}),
+                       tool_call("t-s2", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 25, "h": 60, "color": "#e8a07f"}),
+                   ]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 轴套已创建（外圆柱 + 内孔柱）。", "tool_calls": None}
         return resp(msg, "stop")
     # 空操作剧本：只查询不画图（验证「无可见变化」提示）
     if "空操作" in last_plain_ask(messages):

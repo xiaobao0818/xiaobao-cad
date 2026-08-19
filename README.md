@@ -171,3 +171,15 @@ npm run check           # 全部文件语法检查
 
 ---
 小宝CAD · 纯浏览器 CAD + AI 创作 · MIT License
+
+## 🎓 画图训练循环（AI 训练 + MiniMax 多模态验收）
+
+`tests/train-loop.html` 提供可持续运行的「画图训练 → 多模态验收 → 质量打分」闭环：
+
+- **任务库**（`training/tasks.mjs`）：2D 法兰盘/支架轮廓、3D 四孔板/轴套，每个任务带确定性验收标准（实体类型/数量/几何尺寸/布尔结构）
+- **验收器**（`training/acceptance.mjs`）：对 AI 画出的图纸/模型打 0-100 分（纯函数，node 可测，`node tests/training-acceptance.test.mjs`）
+- **训练循环页**：逐任务多轮循环——AI 画图 → 验收打分 → MiniMax M3 截图审阅 → 修复 → 再打分，记录每轮 Δ 分并支持导出训练日志 JSON
+- **两种模式**：
+  - `?mock=1`：本地 mock 服务器（先 `python3 tests/mock-ai-server.py`），剧本故意留缺陷（漏孔/漏布尔）由审阅补上，验证闭环
+  - 默认：使用你在「AI 设置」里配置的真实 MiniMax M3 Key，进行真实多模态验收
+- 质量提升可量化：验收分数曲线、审阅前后 Δ 分、审阅轮数全部落盘（`localStorage: xbcad:training-log`）
