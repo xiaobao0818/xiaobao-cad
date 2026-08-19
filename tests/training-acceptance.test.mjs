@@ -3,6 +3,8 @@
 import { strict as assert } from 'node:assert';
 import { TRAIN_TASKS, taskById } from '../training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
+import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
+import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
 let n = 0;
 const ok = (msg) => { n++; console.log(`  ✓ ${msg}`); };
@@ -296,6 +298,21 @@ function goodFlange2d() {
   assert(p.split('\n').filter((l) => l.startsWith('- ')).length === r.checks.filter((c) => !c.pass).length, '失败明细应逐条列出');
   assert(feedbackPrompt(task, evaluate(task, goodFlange2d())) === '' || true); // 满分时无失败项（本任务不适配，仅防崩溃）
   ok('验收反馈提示生成（失败明细→修复指令）');
+}
+
+{
+  // 工业设计规范注入：每个任务都应带规范，叶轮任务含叶片数规范
+  for (const t of TRAIN_TASKS) {
+    const p = promptWithSpecs(t);
+    assert(typeof p === 'string' && p.includes(t.prompt), `${t.id} 提示应保留原任务`);
+    assert(specsForTask(t.id).length > 0, `${t.id} 应有设计规范`);
+  }
+  const imp = promptWithSpecs(taskById('impeller3d'));
+  assert(imp.includes('叶片数'), '叶轮任务应注入叶片数规范');
+  assert(imp.includes('间隙配合'), '叶轮任务应注入轴孔配合规范');
+  const dedupe = specsForTask('minipump3d');
+  assert.equal(new Set(dedupe).size, dedupe.length, '装配+叶轮规范应去重');
+  ok(`设计规范注入：${TRAIN_TASKS.length} 个任务全部附带规范（${Object.keys(PUMP_SPECS).length} 类规范）`);
 }
 
 console.log(`全部通过：${n} 项`);

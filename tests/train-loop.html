@@ -110,6 +110,7 @@
 <script type="module">
 import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
+import { promptWithSpecs } from '/training/specs.mjs';
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
@@ -168,7 +169,7 @@ async function runTask(task, round) {
   const panel = window.__aiPanel;
   if (!panel) { log('AI 面板未就绪'); return null; }
   const beforeLen = panel.messages.length;
-  panel.ask(`[训练任务:${task.id}] ${task.prompt}`);
+  panel.ask(`[训练任务:${task.id}] ${promptWithSpecs(task)}`);
   const okDraw = await waitSettled(panel, 150000);
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
@@ -213,13 +214,17 @@ async function runTask(task, round) {
 }
 
 const chooseWeakest = () => {
-  // 弱项优先：按历史任务均分加权随机（未练过/低分任务权重更高）
+  // 弱项优先：先保证每个任务都练过（按训练次数最少优先），同层级内按均分弱项加权随机
+  const roundsCount = new Map();
   const stats = new Map();
   for (const e of entries) {
+    roundsCount.set(e.taskId, (roundsCount.get(e.taskId) || 0) + 1);
     if (!stats.has(e.taskId)) stats.set(e.taskId, []);
     stats.get(e.taskId).push(e.scoreAfter ?? e.scoreBefore ?? 0);
   }
-  const pool = TRAIN_TASKS.map((t) => {
+  const min = Math.min(...TRAIN_TASKS.map((t) => roundsCount.get(t.id) || 0));
+  const candidates = TRAIN_TASKS.filter((t) => (roundsCount.get(t.id) || 0) === min);
+  const pool = candidates.map((t) => {
     const scores = stats.get(t.id) || [];
     const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     return { t, w: (100 - avg) + 10 };

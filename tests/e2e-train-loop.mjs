@@ -10,6 +10,7 @@ const BASE = 'http://localhost:8899';
 const TASK = process.env.TASK || 'flange2d';
 const ALL = process.env.ALL === '1';
 const FB = process.env.FB === '1';
+const CONT = process.env.CONT === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
@@ -26,7 +27,7 @@ try {
   // 清空训练日志，只跑 2D 法兰盘 1 轮（skip3d 加速）
   const page = await browser.newPage();
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
-  await page.goto(`${BASE}/tests/train-loop.html?mock=1${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(`${BASE}/tests/train-loop.html?mock=1${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${CONT ? '&continuous=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
   await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
@@ -36,13 +37,27 @@ try {
   await page.click('#btnStart');
 
   // 等待训练日志出现（画图 → 审阅 → 再打分 完成）
-  await page.waitForFunction(() => {
-    const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
-    return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
-  }, { timeout: 1500000 });
+  if (!CONT) {
+    await page.waitForFunction(() => {
+      const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
+      return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
+    }, { timeout: 1500000 });
+  } else {
+    // 持续模式永不“完成”：达到轮数后手动停止
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, { timeout: 1500000 });
+    await page.click('#btnStop');
+    await page.waitForFunction(() => document.getElementById('tProg').textContent === '已停止', { timeout: 60000 });
+  }
 
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'));
-  if (ALL) {
+  if (CONT) {
+    console.log(`  持续训练：${entries.length} 轮`);
+    // 弱项优先特性：前 11 轮应覆盖全部 11 个任务（未练过优先）
+    const first11 = entries.slice(0, 11).map((e) => e.taskId);
+    assert.equal(new Set(first11).size, 11, `前 11 轮应覆盖 11 个不同任务（弱项优先），实际 ${new Set(first11).size}: ${first11.join(',')}`);
+    assert(entries.every((e) => e.scoreAfter === 100), '持续训练每轮都应收敛到 100 分');
+    ok(`持续训练模式：${entries.length} 轮全部收敛 100 分，前 11 轮覆盖全部任务（弱项优先）`);
+  } else if (ALL) {
     console.log(`  全任务回归：${entries.length} 轮`);
     const tasks = new Set(entries.map((e) => e.taskId));
     assert.equal(tasks.size, 11, `应覆盖全部 11 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
