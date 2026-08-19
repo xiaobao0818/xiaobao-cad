@@ -8,6 +8,7 @@ import { strict as assert } from 'node:assert';
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE = 'http://localhost:8899';
 const TASK = process.env.TASK || 'flange2d';
+const ALL = process.env.ALL === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
@@ -29,7 +30,7 @@ try {
 
   // 选单任务：法兰盘，1 轮
   await page.waitForFunction(() => !!window.__aiPanel, { timeout: 30000 });
-  await page.select('#taskSel', TASK);
+  if (!ALL) await page.select('#taskSel', TASK);
   await page.$eval('#rounds', (el) => { el.value = '1'; });
   await page.click('#btnStart');
 
@@ -37,18 +38,29 @@ try {
   await page.waitForFunction(() => {
     const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
     return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
-  }, { timeout: 600000 });
+  }, { timeout: 1500000 });
 
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'));
-  const e = entries[entries.length - 1];
-  console.log(`  训练条目: ${JSON.stringify(e)}`);
-  assert.equal(e.taskId, TASK, `应训练 ${TASK} 任务`);
-  assert(e.scoreBefore < 100, `mock 剧本初始应带缺陷（实际 ${e.scoreBefore}）`);
-  assert(e.scoreAfter > e.scoreBefore, `审阅后分数应提升（${e.scoreBefore}→${e.scoreAfter}）`);
-  assert(e.delta > 0, '审阅后分数应提升');
-  assert(e.reviewOutcome === '已满意', `审阅结论应已满意（实际 ${e.reviewOutcome}）`);
-  assert(e.reviewRounds >= 1, `应至少 1 轮带截图审阅（实际 ${e.reviewRounds}）`);
-  ok(`浏览器端到端训练闭环：验收 ${e.scoreBefore} → ${e.scoreAfter}（Δ+${e.delta}，${e.reviewOutcome}，${e.reviewRounds} 轮审阅）`);
+  if (ALL) {
+    console.log(`  全任务回归：${entries.length} 轮`);
+    const tasks = new Set(entries.map((e) => e.taskId));
+    assert.equal(tasks.size, 11, `应覆盖全部 11 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
+    assert(entries.every((e) => e.scoreAfter === 100), `mock 剧本审阅修复后每个任务都应到 100 分：${entries.filter((e) => e.scoreAfter !== 100).map((e) => e.taskId).join(',')}`);
+    assert(entries.every((e) => e.delta >= 0), '审阅不应降低分数');
+    const improved = entries.filter((e) => e.delta > 0).length;
+    assert(improved === 11, `全部 11 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
+    ok(`全任务训练回归：11/11 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
+  } else {
+    const e = entries[entries.length - 1];
+    console.log(`  训练条目: ${JSON.stringify(e)}`);
+    assert.equal(e.taskId, TASK, `应训练 ${TASK} 任务`);
+    assert(e.scoreBefore < 100, `mock 剧本初始应带缺陷（实际 ${e.scoreBefore}）`);
+    assert(e.scoreAfter > e.scoreBefore, `审阅后分数应提升（${e.scoreBefore}→${e.scoreAfter}）`);
+    assert(e.delta > 0, '审阅后分数应提升');
+    assert(e.reviewOutcome === '已满意', `审阅结论应已满意（实际 ${e.reviewOutcome}）`);
+    assert(e.reviewRounds >= 1, `应至少 1 轮带截图审阅（实际 ${e.reviewRounds}）`);
+    ok(`浏览器端到端训练闭环：验收 ${e.scoreBefore} → ${e.scoreAfter}（Δ+${e.delta}，${e.reviewOutcome}，${e.reviewRounds} 轮审阅）`);
+  }
 
   // 验证统计页能读取同一日志并渲染
   const page2 = await browser.newPage();

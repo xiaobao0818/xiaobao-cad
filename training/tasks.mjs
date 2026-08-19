@@ -75,6 +75,19 @@ export const TRAIN_TASKS = [
       { type: 'primDim', kind: 'cylinder', field: 'r', approx: 60, tol: 2, weight: 2 },
       { type: 'primParam', kind: 'cylinder', field: 'r', approx: 10, tol: 1, minCount: 1, weight: 2 },
       { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, minCount: 6, weight: 4 },
+      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, maxDevDeg: 5, weight: 3 },
+    ],
+  },
+  {
+    id: 'volute2d',
+    ws: '2d',
+    name: '蜗壳型线（2D）',
+    prompt: '请画蜗壳型线剖视图：基圆半径 40（圆心原点）；沿螺旋线每 45° 放置一个切圆（共 8 个），圆心半径从 50 开始每步增加 5（即 50/55/60/65/70/75/80/85，角度 0°~315°）；画竖直中心线穿过原点。',
+    checks: [
+      { type: 'count', kind: 'circle', min: 9, weight: 2 },
+      { type: 'circleAt', cx: 0, cy: 0, r: 40, tol: 1, weight: 3 },
+      { type: 'spiralGrowth', cx: 0, cy: 0, minCount: 8, weight: 5 },
+      { type: 'linesThrough', cx: 0, cy: 0, min: 1, tol: 2, weight: 2 },
     ],
   },
   {

@@ -88,8 +88,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 10, '任务库应含基础 4 + 水泵 6 个任务');
-  ok('训练任务库 10 个任务（含水泵组件 6 个）');
+  assert.equal(TRAIN_TASKS.length, 11, '任务库应含基础 4 + 水泵 7 个任务');
+  ok('训练任务库 11 个任务（含水泵组件 7 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -244,6 +244,44 @@ function goodFlange2d() {
   const r = evaluate(task, missing);
   assert(r.score < 90, `漏叶轮圆应扣分（实际 ${r.score}）`);
   ok(`水泵剖视图验收（漏叶轮圆 ${r.score} 分）`);
+}
+
+{
+  // 蜗壳型线：螺旋圆渐进放大
+  const task = taskById('volute2d');
+  const ents = [{ id: 'base', type: 'circle', cx: 0, cy: 0, r: 40 }];
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4;
+    const d = 50 + i * 5;
+    ents.push({ id: `s${i}`, type: 'circle', cx: d * Math.cos(a), cy: d * Math.sin(a), r: 8 });
+  }
+  ents.push({ id: 'l1', type: 'line', x1: 0, y1: -100, x2: 0, y2: 100 });
+  assert.equal(evaluate(task, ents).score, 100, '蜗壳型线应 100 分');
+  const half = ents.filter((e) => !(e.id.startsWith('s') && Number(e.id.slice(1)) >= 4));
+  const rHalf = evaluate(task, half);
+  assert(rHalf.score < 80, `蜗壳漏后半螺旋应扣分（实际 ${rHalf.score}）`);
+  ok(`蜗壳型线验收（完整 100 / 漏螺旋 ${rHalf.score}）`);
+}
+{
+  // 叶轮叶片角度均布：6 片均分 60° ✓；一片偏 10° → 扣分
+  const task = taskById('impeller3d');
+  const mk = (angles) => {
+    const bodies = [
+      { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+      { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+    ];
+    angles.forEach((a, i) => bodies.push({ id: `bl${i}`, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } }));
+    bodies.push({ id: 'cut', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['hole'] } });
+    bodies.push({ id: 'fuse', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: angles.map((_, i) => `bl${i}`) } });
+    return bodies;
+  };
+  const even = [0, 1, 2, 3, 4, 5].map((k) => (k * Math.PI) / 3);
+  assert.equal(evaluate(task, { bodies: mk(even) }).score, 100, '均布叶片应 100 分');
+  const uneven = [0, 50 * Math.PI / 180, 2 * Math.PI / 3, Math.PI, 4 * Math.PI / 3, 5 * Math.PI / 3];
+  const rU = evaluate(task, { bodies: mk(uneven) });
+  const ang = rU.checks.find((c) => c.detail && c.detail.includes('角度均布'));
+  assert(ang && !ang.pass, '叶片偏置应被角度均布检查发现');
+  ok(`叶片角度均布验收（均分 100 / 偏 10° ${rU.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

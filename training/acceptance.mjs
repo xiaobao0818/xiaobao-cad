@@ -99,6 +99,17 @@ function check2d(check, ents) {
       const pass = approx(w, check.w, check.tol) && approx(h, check.h, check.tol);
       return { pass, detail: `闭合轮廓 ${w.toFixed(1)}×${h.toFixed(1)}（期望 ${check.w}×${check.h} ±${check.tol}）` };
     }
+    case 'spiralGrowth': {
+      // 蜗壳型线验收：系列圆圆心沿螺旋线渐进放大（半径随角度单调不减）
+      const TAU = Math.PI * 2;
+      const circs = pick('circle').filter((e) => dist(e.cx, e.cy, check.cx, check.cy) > 1e-6);
+      const items = circs
+        .map((e) => ({ d: dist(e.cx, e.cy, check.cx, check.cy), a: ((Math.atan2(e.cy - check.cy, e.cx - check.cx) % TAU) + TAU) % TAU }))
+        .sort((x, y) => x.a - y.a);
+      const N = items.length;
+      const pass = N >= (check.minCount ?? 4) && items.every((it, i) => i === 0 || it.d >= items[i - 1].d - 1e-9);
+      return { pass, detail: `螺旋圆 ${N} 个，半径序列 [${items.map((i) => i.d.toFixed(1)).join(', ')}]（${pass ? '渐进放大✓' : `需≥${check.minCount ?? 4} 且单调不减✗`}）` };
+    }
     default:
       return { pass: false, detail: `未知检查类型 ${check.type}` };
   }
@@ -152,6 +163,20 @@ function check3d(check, bodies) {
       const onRing = kinds(check.kind).filter((b) => approx(dist(b.params?.x, b.params?.y, check.cx, check.cy), check.radius, check.tol));
       const pass = onRing.length >= (check.minCount ?? 3);
       return { pass, detail: `${check.kind} 均布于 R=${check.radius} 圆上：${onRing.length}/${check.minCount ?? 3}` };
+    }
+    case 'angularEven': {
+      // 叶片/孔的角度均匀性：按角排序后相邻角差接近 360/N（叶轮叶片均布验收）
+      const items = kinds(check.kind).filter((b) => dist(b.params?.x, b.params?.y, check.cx, check.cy) > 1e-6);
+      const TAU = Math.PI * 2;
+      const angles = items.map((b) => Math.atan2(b.params.y - check.cy, b.params.x - check.cx)).sort((a, b) => a - b);
+      const N = angles.length;
+      if (N < 2) return { pass: false, detail: `${check.kind} 角度均布：实体不足 2 个` };
+      const gaps = angles.map((a, i) => ((angles[(i + 1) % N] - a) % TAU + TAU) % TAU);
+      const expected = TAU / N;
+      const maxDev = Math.max(...gaps.map((g) => Math.abs(g - expected)));
+      const devDeg = (maxDev * 180) / Math.PI;
+      const pass = devDeg <= (check.maxDevDeg ?? 5);
+      return { pass, detail: `${check.kind} 角度均布：N=${N}，最大角差偏差 ${devDeg.toFixed(1)}°（≤${check.maxDevDeg ?? 5}°${pass ? '✓' : '✗'}）` };
     }
     case 'dimSum': {
       // 尺寸求和：台阶轴总长 = 各段 h 之和

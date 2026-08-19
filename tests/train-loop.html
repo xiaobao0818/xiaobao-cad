@@ -213,6 +213,7 @@ document.getElementById('btnStart').addEventListener('click', async () => {
       prog.textContent = `第 ${r}/${rounds} 轮 · ${task.name}`;
       const e = await runTask(task, r);
       if (e) { entries.push(e); localStorage.setItem('xbcad:training-log', JSON.stringify(entries)); renderStats(); }
+      window.__aiPanel?.clear(); // 每轮任务独立上下文：避免历史里的旧实体 id 污染下一任务的工具调用
       if (!stopFlag) await wait(800);
     }
   }
