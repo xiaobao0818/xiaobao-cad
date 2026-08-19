@@ -131,6 +131,34 @@ function check3d(check, bodies) {
       const pass = hits.length >= (check.minCount ?? 1);
       return { pass, detail: `${check.kind} @(±${check.x},±${check.y}) 命中 ${hits.length}/${check.minCount ?? 1}` };
     }
+    /* —— 水泵组件专用验收 —— */
+    case 'coaxial': {
+      // 同轴度：多个圆柱(或指定 kind)轴线均过 (cx,cy)（台阶轴/轴套/泵壳内腔）
+      const hits = kinds(check.kind).filter((b) => approx(b.params?.x, check.cx, check.tol) && approx(b.params?.y, check.cy, check.tol));
+      const pass = hits.length >= (check.minCount ?? 2);
+      return { pass, detail: `${check.kind} 同轴于(${check.cx},${check.cy})：${hits.length}/${check.minCount ?? 2}` };
+    }
+    case 'primSeq': {
+      // 台阶轴验收：不同直径段数（台阶数）达到要求，并按直径降序排列
+      const eps = (check.eps ?? 0.5);
+      const rs = kinds(check.kind).map((b) => b.params?.[check.field]).filter((v) => Number.isFinite(v)).sort((a, b) => b - a);
+      const distinct = rs.filter((v, i) => i === 0 || rs[i - 1] - v > eps);
+      const dec = rs.every((v, i) => i === 0 || rs[i - 1] >= v - eps);
+      const pass = distinct.length >= (check.minCount ?? 2) && (check.dir === 'inc' ? rs.every((v, i) => i === 0 || rs[i - 1] <= v + eps) : dec);
+      return { pass, detail: `${check.kind} 直径段 [${distinct.map((v) => Math.round(v * 10) / 10).join(', ')}]（${distinct.length}/${check.minCount ?? 2} 级台阶）` };
+    }
+    case 'ringDist': {
+      // 环形均布：kind 实体中心落在半径 radius 的圆上（叶轮叶片/法兰孔）
+      const onRing = kinds(check.kind).filter((b) => approx(dist(b.params?.x, b.params?.y, check.cx, check.cy), check.radius, check.tol));
+      const pass = onRing.length >= (check.minCount ?? 3);
+      return { pass, detail: `${check.kind} 均布于 R=${check.radius} 圆上：${onRing.length}/${check.minCount ?? 3}` };
+    }
+    case 'dimSum': {
+      // 尺寸求和：台阶轴总长 = 各段 h 之和
+      const total = kinds(check.kind).reduce((s, b) => s + (Number(b.params?.[check.field]) || 0), 0);
+      const pass = approx(total, check.approx, check.tol);
+      return { pass, detail: `${check.kind}.${check.field} 求和=${Math.round(total * 10) / 10}（期望≈${check.approx}）` };
+    }
     default:
       return { pass: false, detail: `未知检查类型 ${check.type}` };
   }

@@ -88,8 +88,94 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 4, '任务库应含 2D/3D 各 2 个任务');
-  ok('训练任务库 4 个任务');
+  assert.equal(TRAIN_TASKS.length, 8, '任务库应含基础 4 + 水泵 4 个任务');
+  ok('训练任务库 8 个任务（含水泵组件 4 个）');
+}
+/* ============ 水泵组件验收 ============ */
+{
+  // 叶轮：好模型满分（同轴轮盘+中心孔+6 叶片均布+布尔）
+  const task = taskById('impeller3d');
+  const bodies = [
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+  ];
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } });
+  }
+  bodies.push({ id: 'cut', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['hole'] } });
+  bodies.push({ id: 'fuse', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: bodies.slice(2, 8).map((b) => b.id) } });
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `叶轮好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  ok('水泵叶轮好模型 = 100 分');
+}
+{
+  // 叶轮缺叶片：均布与数量验收应扣分
+  const task = taskById('impeller3d');
+  const bodies = [
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+  ];
+  for (let k = 0; k < 3; k++) {
+    const a = (k * Math.PI) / 3;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } });
+  }
+  const r = evaluate(task, { bodies });
+  assert(r.score < 70, `叶轮缺 3 叶片应扣分（实际 ${r.score}）`);
+  ok(`叶轮缺叶片 = ${r.score} 分`);
+}
+{
+  // 台阶轴：同轴度 + 直径递减序列 + 总长求和
+  const task = taskById('shaft3d');
+  const good = [
+    { id: 's1', kind: 'cylinder', params: { x: 0, y: 0, r: 30, h: 40 } },
+    { id: 's2', kind: 'cylinder', params: { x: 0, y: 0, r: 25, h: 60 } },
+    { id: 's3', kind: 'cylinder', params: { x: 0, y: 0, r: 20, h: 80 } },
+    { id: 's4', kind: 'cylinder', params: { x: 0, y: 0, r: 15, h: 50 } },
+    { id: 's5', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 30 } },
+  ];
+  assert.equal(evaluate(task, { bodies: good }).score, 100, '五段同轴台阶轴应 100 分');
+  // 偏心一段 → 同轴度扣分
+  const off = good.map((b, i) => (i === 2 ? { ...b, params: { ...b.params, x: 30 } } : b));
+  const rOff = evaluate(task, { bodies: off });
+  assert(rOff.score < 100, `偏心轴应扣分（实际 ${rOff.score}）`);
+  // 直径不分段（5 段同一半径）→ 台阶数验收扣分
+  const flat = good.map((b) => ({ ...b, params: { ...b.params, r: 20 } }));
+  const rFlat = evaluate(task, { bodies: flat });
+  assert(rFlat.score < 100, `无台阶光轴应扣分（实际 ${rFlat.score}）`);
+  ok(`台阶轴验收：同轴/台阶数/总长（偏心 ${rOff.score} 分、光轴 ${rFlat.score} 分）`);
+}
+{
+  // 泵壳：偏心内腔 + 同轴外壳 + 双法兰
+  const task = taskById('casing3d');
+  const bodies = [
+    { id: 'outer', kind: 'cylinder', params: { x: 0, y: 0, r: 70, h: 50 } },
+    { id: 'base', kind: 'box', params: { x: 0, y: 0, z: -32, dx: 160, dy: 100, dz: 15 } },
+    { id: 'f1', kind: 'cylinder', params: { x: 0, y: -90, r: 25, h: 12 } },
+    { id: 'f2', kind: 'cylinder', params: { x: 95, y: 0, r: 25, h: 12 } },
+    { id: 'cav', kind: 'cylinder', params: { x: 18, y: 0, r: 45, h: 50 } },
+    { id: 'fuse', kind: 'boolean', params: { op: 'fuse', a: 'outer', b: ['base', 'f1', 'f2'] } },
+    { id: 'cut', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+  ];
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `泵壳好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  ok('水泵泵壳好模型 = 100 分');
+}
+{
+  // 水泵剖视图 2D
+  const task = taskById('pump2d');
+  const ents = [
+    { id: 'c1', type: 'circle', cx: 0, cy: 0, r: 70 },
+    { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
+    { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
+    { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+  ];
+  assert.equal(evaluate(task, ents).score, 100, '水泵剖视图应 100 分');
+  const missing = ents.filter((e) => e.id !== 'c3');
+  const r = evaluate(task, missing);
+  assert(r.score < 90, `漏叶轮圆应扣分（实际 ${r.score}）`);
+  ok(`水泵剖视图验收（漏叶轮圆 ${r.score} 分）`);
 }
 
 console.log(`全部通过：${n} 项`);
