@@ -179,6 +179,23 @@ function check3d(check, bodies) {
         detail: `轴 Φ${check.outerR * 2}/孔 Φ${check.boreR * 2}：${shafts.length ? '轴✓' : '缺轴'}·${bores.length ? '孔✓' : '缺孔'}${interference ? '·干涉!' : ''}·间隙=${gap == null ? '—' : gap.toFixed(2)}（${pass ? '配合合格' : '配合不合格：' + why.join('、')}）`,
       };
     }
+    case 'fitChain': {
+      // 多级配合链：轴→叶轮孔→轴承孔 逐级同轴、半径逐级增大（间隙配合链）
+      const levels = check.chain || [];
+      const cyls = kinds('cylinder');
+      const axisTol = check.axisTol ?? 2;
+      const found = levels.map((lv) => cyls.filter((c) =>
+        approx(c.params.r, lv.r, lv.tol ?? 0.5) &&
+        approx(c.params.x, check.cx, axisTol) && approx(c.params.y, check.cy, axisTol)));
+      const gaps = [];
+      for (let i = 1; i < levels.length; i++) gaps.push(levels[i].r - levels[i - 1].r);
+      const allPresent = found.every((f) => f.length >= 1);
+      const positiveGaps = gaps.every((g) => g > 0);
+      const pass = levels.length >= 2 && allPresent && positiveGaps;
+      const chain = levels.map((lv, i) => `${lv.name || 'L' + i} Φ${lv.r * 2}${found[i].length ? '✓' : '✗'}`).join(' → ');
+      const gapTxt = gaps.length ? `，间隙[${gaps.map((g) => g.toFixed(2)).join(' / ')}]` : '';
+      return { pass, detail: `${chain}${gapTxt}（配合链${pass ? '合格' : '不合格'}）` };
+    }
     default:
       return { pass: false, detail: `未知检查类型 ${check.type}` };
   }

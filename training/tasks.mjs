@@ -138,6 +138,27 @@ export const TRAIN_TASKS = [
       { type: 'fitClearance', outerR: 30, boreR: 30.5, outerTol: 0.4, boreTol: 0.4, minGap: 0.1, maxGap: 1.5, weight: 4 },
     ],
   },
+  {
+    id: 'multistage3d',
+    ws: '3d',
+    name: '两级离心泵（3D）',
+    prompt: '请建一台两级离心泵：①第一级泵壳段：外圆柱半径 70 高 50（z=0），偏心内腔半径 45（x=18）差集挖流道；②第二级泵壳段：同样的外圆柱与内腔放在 z=50；③每级一个叶轮：轮盘半径 60 厚 8、中心孔半径 30.5 差集、6 片叶片（盒体）均布半径 35 并集；④一根长轴半径 30 长 200 贯穿两级；⑤两端各一个轴承座：内径面半径 32 高 20（z=-20 与 z=200）。轴、叶轮孔、轴承孔必须同轴且间隙逐级为正。',
+    checks: [
+      { type: 'featureCount', min: 25, weight: 2 },
+      { type: 'kindCount', kind: 'cylinder', min: 11, weight: 2 },
+      { type: 'kindCount', kind: 'box', min: 12, weight: 2 },
+      { type: 'kindCount', kind: 'boolean', min: 6, weight: 3 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 70, tol: 2, minCount: 2, weight: 3 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 60, tol: 2, minCount: 2, weight: 2 },
+      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, minCount: 12, weight: 3 },
+      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 6, weight: 3 },
+      { type: 'fitChain', cx: 0, cy: 0, axisTol: 2, weight: 4, chain: [
+        { name: '轴', r: 30, tol: 0.4 },
+        { name: '叶轮孔', r: 30.5, tol: 0.4 },
+        { name: '轴承孔', r: 32, tol: 0.5 },
+      ] },
+    ],
+  },
 ];
 
 export const taskById = (id) => TRAIN_TASKS.find((t) => t.id === id) || null;

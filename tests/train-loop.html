@@ -170,7 +170,7 @@ async function runTask(task, round) {
   const okDraw = await waitSettled(panel, 150000);
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
-  const drawn = newMsgs().some((m) => m.role === 'assistant' && /(已绘制完成|已创建|已完成)/.test(m.content || ''));
+  const drawn = newMsgs().some((m) => m.role === 'assistant' && /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || ''));
   const inputOf = () => (task.ws === '2d' ? CAD.scene.all() : { bodies: CAD.app3d.model.serialize().bodies });
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
@@ -182,7 +182,11 @@ async function runTask(task, round) {
     const okReview = await waitSettled(panel, 240000);
     if (stopFlag) return null;
     const msgs = newMsgs();
-    reviewRounds = msgs.filter((m) => m.role === 'user' && Array.isArray(m.content) && m.content.some((c) => c.type === 'image_url')).length;
+    reviewRounds = msgs.filter((m) => m.role === 'user' && (
+      typeof m.content === 'string'
+        ? m.content.includes('[多模态审阅]')
+        : Array.isArray(m.content) && m.content.some((c) => c.type === 'image_url' || (c.type === 'text' && String(c.text || '').includes('[多模态审阅]')))
+    )).length;
     reviewOutcome = msgs.some((m) => /已满意/.test(m.content || '')) ? '已满意' : (okReview ? '审阅完成' : '审阅超时');
     scoreAfter = evaluate(task, inputOf()).score;
     log(`👁 多模态审阅（${reviewRounds} 轮）：${reviewOutcome}，复审验收 ${scoreAfter} 分${scoreAfter > scoreBefore ? ' ↑ 质量提升' : scoreAfter === scoreBefore ? '' : ' ↓ 需继续训练'}`);
@@ -233,11 +237,13 @@ document.getElementById('btnExport').addEventListener('click', () => {
   log('app: OK · AI 面板: ' + (window.__aiPanel ? 'OK' : '等待…'));
   for (let i = 0; i < 200 && !window.__aiPanel; i++) await wait(50);
   if (CAD.app._autosaveTimer) clearInterval(CAD.app._autosaveTimer);
-  // 预热 3D 内核（懒加载一次，避免训练中途等待）
-  CAD.app.showWorkspace('3d');
-  for (let i = 0; i < 200 && !CAD.app3d; i++) await wait(50);
-  CAD.app3d?.ensureLoaded();
-  CAD.app.showWorkspace('2d');
+  // 预热 3D 内核（懒加载一次，避免训练中途等待）；?skip3d=1 跳过（纯 2D 训练/无头测试加速）
+  if (!location.search.includes('skip3d')) {
+    CAD.app.showWorkspace('3d');
+    for (let i = 0; i < 200 && !CAD.app3d; i++) await wait(50);
+    CAD.app3d?.ensureLoaded();
+    CAD.app.showWorkspace('2d');
+  }
   log('就绪。历史训练日志: ' + entries.length + ' 轮');
   renderStats();
 })();

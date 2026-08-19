@@ -165,6 +165,14 @@ def build_stage(stage, messages, has_tools):
             msg = {"role": "assistant", "content": "截图里发现台阶轴只有 4 段，我补上第 5 段（r10×30）。",
                    "tool_calls": [tool_call("r-sh1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 10, "h": 30, "color": "#8fd3a8"})]}
             return resp(msg, "tool_calls")
+        if task == "multistage3d" and not history_has(messages, "补上轴系"):
+            msg = {"role": "assistant", "content": "截图里发现两级泵缺长轴和两端轴承座，我补上轴系（补上轴系）。",
+                   "tool_calls": [
+                       tool_call("r-ms1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 30, "h": 200, "color": "#b9a3f0"}),
+                       tool_call("r-ms2", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": -20, "r": 32, "h": 20, "color": "#c8c8c8"}),
+                       tool_call("r-ms3", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 200, "r": 32, "h": 20, "color": "#c8c8c8"}),
+                   ]}
+            return resp(msg, "tool_calls")
         if task == "minipump3d" and not history_has(messages, "补上泵轴"):
             msg = {"role": "assistant", "content": "截图里发现整机缺泵轴，我补上泵轴（Φ60×120，与叶轮孔 Φ61 间隙配合）。",
                    "tool_calls": [tool_call("r-mp1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 30, "h": 120, "color": "#b9a3f0"})]}
@@ -325,6 +333,44 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 微型泵已装配完成（泵壳 + 叶轮 + 叶片，泵轴待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "multistage3d":
+        if not history_has(messages, "两级主体"):
+            blades = []
+            for k in range(12):
+                a = (k % 6) * 3.141592653589793 / 3
+                blades.append(tool_call(f"t-ms{k+9}", "create_primitive_3d", {"kind": "box", "x": 35 * math.cos(a), "y": 35 * math.sin(a), "z": 0 if k < 6 else 50, "dx": 30, "dy": 6, "dz": 10, "color": "#f2c76e"}))
+            msg = {"role": "assistant", "content": "我先建两级泵壳、两级叶轮和 12 片叶片（两级主体，训练剧本：故意漏长轴与轴承座，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-ms1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 70, "h": 50, "color": "#7fb2e8"}),
+                       tool_call("t-ms2", "create_primitive_3d", {"kind": "cylinder", "x": 18, "y": 0, "z": 0, "r": 45, "h": 50, "color": "#e88b8b"}),
+                       tool_call("t-ms3", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 60, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-ms4", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 30.5, "h": 8, "color": "#e8a07f"}),
+                       *blades[:6],
+                       tool_call("t-ms5", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 50, "r": 70, "h": 50, "color": "#7fb2e8"}),
+                       tool_call("t-ms6", "create_primitive_3d", {"kind": "cylinder", "x": 18, "y": 0, "z": 50, "r": 45, "h": 50, "color": "#e88b8b"}),
+                       tool_call("t-ms7", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 50, "r": 60, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-ms8", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 50, "r": 30.5, "h": 8, "color": "#e8a07f"}),
+                       *blades[6:],
+                   ]}
+            return resp(msg, "tool_calls")
+        if not history_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-ms21", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        if not history_has(messages, "两级布尔"):
+            ids = extract_ids(messages)
+            if len(ids) >= 16:  # 创建顺序：壳1、腔1、盘1、孔1、叶1×6、壳2、腔2、盘2、孔2、叶2×6
+                msg = {"role": "assistant", "content": "我把两级泵壳内腔、叶轮中心孔、叶片合并的布尔都补上（两级布尔）。",
+                       "tool_calls": [
+                           tool_call("t-ms22", "boolean_3d", {"op": "cut", "a": ids[0], "b": [ids[1]]}),
+                           tool_call("t-ms23", "boolean_3d", {"op": "cut", "a": ids[2], "b": [ids[3]]}),
+                           tool_call("t-ms24", "boolean_3d", {"op": "fuse", "a": ids[2], "b": ids[4:10]}),
+                           tool_call("t-ms25", "boolean_3d", {"op": "cut", "a": ids[10], "b": [ids[11]]}),
+                           tool_call("t-ms26", "boolean_3d", {"op": "cut", "a": ids[12], "b": [ids[13]]}),
+                           tool_call("t-ms27", "boolean_3d", {"op": "fuse", "a": ids[12], "b": ids[14:20]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 两级泵已装配完成（两级泵壳 + 叶轮 + 叶片，长轴与轴承座待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     # 空操作剧本：只查询不画图（验证「无可见变化」提示）
     if "空操作" in last_plain_ask(messages):

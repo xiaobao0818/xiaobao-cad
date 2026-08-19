@@ -6,11 +6,15 @@
   "scripts": {
     "serve": "python3 -m http.server 8899",
     "test": "node tests/core.test.mjs && node tests/dxf.test.mjs && node tests/model3d.test.mjs && node tests/kernel.test.mjs && node tests/dwg-ref.test.mjs && node tests/ai-workspace.test.mjs && node tests/dwg-parse.test.mjs && node tests/regression-fixes.test.mjs && node tests/svg-import.test.mjs && node tests/training-acceptance.test.mjs && node tests/training-stats.test.mjs",
-    "check": "for f in js/*.js js/three-dim/*.js tests/*.mjs; do echo \"== $f\"; node --check \"$f\" || exit 1; done"
+    "check": "for f in js/*.js js/three-dim/*.js tests/*.mjs; do echo \"== $f\"; node --check \"$f\" || exit 1; done",
+    "test:e2e": "node tests/e2e-train-loop.mjs"
   },
   "dependencies": {
     "@mlightcad/libredwg-web": "0.7.9",
     "opencascade.js": "1.1.1",
     "three": "0.185.1"
+  },
+  "devDependencies": {
+    "puppeteer-core": "25.8.0"
   }
 }

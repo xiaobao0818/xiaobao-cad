@@ -88,8 +88,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 9, '任务库应含基础 4 + 水泵 5 个任务');
-  ok('训练任务库 9 个任务（含水泵组件 5 个）');
+  assert.equal(TRAIN_TASKS.length, 10, '任务库应含基础 4 + 水泵 6 个任务');
+  ok('训练任务库 10 个任务（含水泵组件 6 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -193,6 +193,41 @@ function goodFlange2d() {
   const fitI = rInter.checks.find((c) => c.detail && c.detail.includes('轴 Φ60'));
   assert(fitI && !fitI.pass, '配合检查应报干涉');
   ok(`微型泵整机装配验收（完整 100 分 / 缺轴 ${rNoShaft.score} / 干涉 ${rInter.score}）`);
+}
+{
+  // 两级离心泵：多级配合链验收（轴→叶轮孔→轴承孔）
+  const task = taskById('multistage3d');
+  const cy = (id, r, h, x = 0, y = 0) => ({ id, kind: 'cylinder', params: { x, y, r, h } });
+  const bx = (id, a) => ({ id, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } });
+  const bodies = [
+    cy('out1', 70, 50), cy('cav1', 45, 50, 18), cy('disk1', 60, 8), cy('bore1', 30.5, 8),
+    cy('out2', 70, 50), cy('cav2', 45, 50, 18), cy('disk2', 60, 8), cy('bore2', 30.5, 8),
+    cy('shaft', 30, 200), cy('bear1', 32, 20), cy('bear2', 32, 20),
+  ];
+  for (let k = 0; k < 12; k++) bodies.push(bx(`bl${k}`, (k % 6) * Math.PI / 3));
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'out1', b: ['cav1'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk1', b: ['bore1'] } },
+    { id: 'b3', kind: 'boolean', params: { op: 'fuse', a: 'disk1', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4', 'bl5'] } },
+    { id: 'b4', kind: 'boolean', params: { op: 'cut', a: 'out2', b: ['cav2'] } },
+    { id: 'b5', kind: 'boolean', params: { op: 'cut', a: 'disk2', b: ['bore2'] } },
+    { id: 'b6', kind: 'boolean', params: { op: 'fuse', a: 'disk2', b: ['bl6', 'bl7', 'bl8', 'bl9', 'bl10', 'bl11'] } },
+  );
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `两级泵好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  // 缺轴 → 配合链失败
+  const noShaft = bodies.filter((b) => b.id !== 'shaft');
+  const rNoShaft = evaluate(task, { bodies: noShaft });
+  const chain = rNoShaft.checks.find((c) => c.detail && c.detail.includes('配合链'));
+  assert(chain && !chain.pass, '缺轴时配合链应不合格');
+  assert(chain.detail.includes('轴 Φ60✗'), '配合链应标注缺轴');
+  assert(rNoShaft.score < 95, `缺轴应扣分（实际 ${rNoShaft.score}）`);
+  // 轴承孔偏小 31.5 → 间隙超差（轴承孔与轴间隙 1.5 仍为正，但半径不匹配 32±0.5 之外 → 缺件）
+  const badBore = bodies.map((b) => (b.id === 'bear1' || b.id === 'bear2' ? { ...b, params: { ...b.params, r: 31 } } : b));
+  const rBadBore = evaluate(task, { bodies: badBore });
+  const chain2 = rBadBore.checks.find((c) => c.detail && c.detail.includes('配合链'));
+  assert(chain2 && !chain2.pass, '轴承孔超差时配合链应不合格');
+  ok(`两级泵配合链验收（完整 100 / 缺轴 ${rNoShaft.score} / 轴承孔超差 ${rBadBore.score}）`);
 }
 {
   // 水泵剖视图 2D
