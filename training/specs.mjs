@@ -57,6 +57,7 @@ const TASK_SPECS = {
   bom2d: ['assembly', '标准'],
   drawingchain2d: ['assembly', '标准', '材料'],
   axialflow3d: ['assembly', 'impeller'],
+  pumpboth: ['impeller', 'casing', 'assembly'],
 };
 
 /** 任务对应的规范条目（去重） */

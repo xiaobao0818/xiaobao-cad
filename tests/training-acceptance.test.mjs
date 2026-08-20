@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 21, '任务库应含基础 4 + 水泵 17 个任务');
-  ok('训练任务库 21 个任务（含水泵组件 17 个）');
+  assert.equal(TRAIN_TASKS.length, 22, '任务库应含基础 4 + 水泵 18 个任务');
+  ok('训练任务库 22 个任务（含水泵组件 18 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -679,6 +679,45 @@ function goodFlange2d() {
   const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
   assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
   ok(`轴流泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
+}
+
+{
+  // 联合任务：3D 模型 + 2D 图纸双侧验收
+  const task = taskById('pumpboth');
+  const bodies = [
+    { id: 'outer', kind: 'cylinder', params: { x: 0, y: 0, r: 98, h: 50 } },
+    { id: 'cav', kind: 'cylinder', params: { x: 18, y: 0, r: 60, h: 50 } },
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 92.5, h: 8 } },
+    { id: 'bore', kind: 'cylinder', params: { x: 0, y: 0, r: 16, h: 8 } },
+    { id: 'shaft', kind: 'cylinder', params: { x: 0, y: 0, r: 15.5, h: 120 } },
+  ];
+  for (let k = 0; k < 5; k++) {
+    const a = (k * 2 * Math.PI) / 5;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 65 * Math.cos(a), y: 65 * Math.sin(a), dx: 40, dy: 6, dz: 12 } });
+  }
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['bore'] } },
+    { id: 'b3', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4'] } },
+  );
+  const ents = [
+    { id: 'c1', type: 'circle', cx: 50, cy: 175, r: 45 },
+    { id: 'c2', type: 'circle', cx: 50, cy: 175, r: 10 },
+    { id: 'c3', type: 'circle', cx: 50, cy: 175, r: 8 },
+    { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 50, cy: 175, px: 95, py: 175 },
+    { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 50, cy: 175, px: 60, py: 175 },
+    { id: 'd3', type: 'dimension', subtype: 'linear', x1: 0, y1: 260, x2: 100, y2: 260 },
+    { id: 'f1', type: 'polyline', closed: true, points: [P(0, 0), P(420, 0), P(420, 297), P(0, 297)] },
+    { id: 'f2', type: 'polyline', closed: true, points: [P(240, 0), P(420, 0), P(420, 56), P(240, 56)] },
+  ];
+  for (let k = 0; k < 8; k++) ents.push({ id: `t${k}`, type: 'text', x: 6 + k, y: -6 - k, text: '明细项', height: 5 });
+  const r = evaluate(task, { bodies, entities: ents });
+  assert.equal(r.score, 100, `联合任务应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const no3d = evaluate(task, { bodies: [], entities: ents });
+  assert(no3d.score < 80, `缺 3D 应扣分（实际 ${no3d.score}）`);
+  const no2d = evaluate(task, { bodies, entities: [] });
+  assert(no2d.score < 80, `缺 2D 应扣分（实际 ${no2d.score}）`);
+  ok(`联合任务双侧验收（完整 100 / 缺3D ${no3d.score} / 缺2D ${no2d.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

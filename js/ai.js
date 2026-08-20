@@ -310,6 +310,14 @@ const TOOLS = [
   {
     type: 'function',
     function: {
+      name: 'switch_workspace',
+      description: '切换工作区（2d=二维制图 / 3d=三维建模）。联合任务（先建模再出图纸）时在两个工作区之间切换用。',
+      parameters: { type: 'object', properties: { ws: { type: 'string', enum: ['2d', '3d'] } }, required: ['ws'] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'query_knowledge',
       description: '检索本平台知识库（工业级水泵设计知识：材料/公差配合/比转速选型/设计公式/国家标准/设计文档）。不确定设计参数或标准时先查知识库。',
       parameters: {
@@ -1177,6 +1185,12 @@ export default class AIChatPanel {
       get_file_context: () => this._toolGetFileContext(),
       pump_sizing: (a) => this._toolPumpSizing(a),
       query_knowledge: (a) => kbSearchText(String(a?.topic || ''), { limit: 5 }),
+      switch_workspace: (a) => {
+        const ws = String(a?.ws || '').toLowerCase();
+        if (ws !== '2d' && ws !== '3d') throw new Error('ws 必须是 2d 或 3d');
+        this.CAD.app?.showWorkspace?.(ws);
+        return '已切换到 ' + (ws === '3d' ? '3D 建模' : '2D 制图') + ' 工作区';
+      },
     };
   }
   _parseArgs(str) {

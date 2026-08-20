@@ -285,20 +285,18 @@ export function evaluate(task, input) {
   const total = checks.reduce((s, c) => s + (c.weight ?? 1), 0);
   let passed = 0;
   const results = [];
-  if (task.ws === '2d') {
-    const ents = Array.isArray(input) ? input : (input?.entities || []);
-    for (const c of checks) {
-      const r = check2d(c, ents);
-      results.push({ name: `${c.type}:${JSON.stringify(c)}`, ...r, weight: c.weight ?? 1 });
-      if (r.pass) passed += c.weight ?? 1;
+  const sideOf = (c) => (c.side || task.ws || '2d');
+  for (const c of checks) {
+    let r;
+    if (sideOf(c) === '3d') {
+      const bodies = Array.isArray(input?.bodies) ? input.bodies : [];
+      r = check3d(c, bodies);
+    } else {
+      const ents = Array.isArray(input) ? input : (input?.entities || []);
+      r = check2d(c, ents);
     }
-  } else {
-    const bodies = Array.isArray(input?.bodies) ? input.bodies : [];
-    for (const c of checks) {
-      const r = check3d(c, bodies);
-      results.push({ name: `${c.type}:${JSON.stringify(c)}`, ...r, weight: c.weight ?? 1 });
-      if (r.pass) passed += c.weight ?? 1;
-    }
+    results.push({ name: `${sideOf(c)}:${c.type}:${JSON.stringify(c)}`, ...r, weight: c.weight ?? 1 });
+    if (r.pass) passed += c.weight ?? 1;
   }
   return {
     score: total ? Math.round((passed / total) * 100) : 0,

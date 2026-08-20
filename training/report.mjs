@@ -2,7 +2,7 @@
  * 小宝CAD 画图训练 · 报告生成器（纯函数，Node/浏览器通用）
  * 训练日志 JSON → Markdown 报告（整体趋势/按任务/最近明细/薄弱点）
  * ============================================================ */
-import { summarize } from './stats.mjs';
+import { summarize, convergence } from './stats.mjs';
 import { memoryNotes } from './memory.mjs';
 import { knowledgeHintForFails } from './knowledge.mjs';
 
@@ -49,6 +49,15 @@ export function entriesToMarkdown(entries) {
     L.push('## 薄弱点（供持续训练定向改进）');
     L.push('');
     L.push(weak.join('\n\n'));
+  }
+  const conv = convergence(list);
+  if (conv.curve.length) {
+    L.push('');
+    L.push('## 收敛趋势（按轮次）');
+    L.push('');
+    L.push('| 轮次 | 首绘均分 | 收敛均分 |');
+    L.push('|---|---|---|');
+    for (const p of conv.curve) L.push(`| ${p.round} | ${p.firstAttempt} | ${p.converged} |`);
   }
   return L.join('\n');
 }

@@ -706,6 +706,13 @@ export class App3D {
       { type: 'function', function: { name: 'undo_3d', description: '撤销上一次三维操作', parameters: { type: 'object', properties: {} } } },
       {
         type: 'function', function: {
+          name: 'switch_workspace',
+          description: '切换工作区（2d/3d）。联合任务（先建模再出图纸）时用。',
+          parameters: { type: 'object', properties: { ws: { type: 'string', enum: ['2d', '3d'] } }, required: ['ws'] },
+        },
+      },
+      {
+        type: 'function', function: {
           name: 'query_knowledge',
           description: '检索本平台知识库（水泵设计知识：材料/公差/比转速/公式/标准）。不确定设计参数时先查。',
           parameters: { type: 'object', properties: { topic: { type: 'string' } }, required: ['topic'] },

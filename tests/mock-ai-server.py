@@ -217,6 +217,23 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "pumpboth" and not assistant_has(messages, "补上图纸"):
+            msg = {"role": "assistant", "content": "截图里发现图纸侧缺标注与文字，我补上图纸。",
+                   "tool_calls": [tool_call("r-pb1", "draw_entities", {"items": [
+                       {"type": "dimension", "subtype": "diametric", "cx": 50, "cy": 175, "px": 95, "py": 175, "tx": 30, "ty": 140},
+                       {"type": "dimension", "subtype": "diametric", "cx": 50, "cy": 175, "px": 60, "py": 175, "tx": 70, "ty": 220},
+                       {"type": "dimension", "subtype": "linear", "x1": 0, "y1": 260, "x2": 100, "y2": 260, "x3": 50, "y3": 275},
+                       {"type": "text", "x": 250, "y": 40, "text": "离心泵总装图", "height": 10},
+                       {"type": "text", "x": 250, "y": 28, "text": "比例 1:2", "height": 7},
+                       {"type": "text", "x": 330, "y": 8, "text": "图号 XBC-001", "height": 7},
+                       {"type": "text", "x": 6, "y": -6, "text": "序号 名称 数量 材料 备注", "height": 6},
+                       {"type": "text", "x": 6, "y": -20, "text": "1 泵壳 1 HT200", "height": 5},
+                       {"type": "text", "x": 6, "y": -34, "text": "2 叶轮 1 ZG1Cr18Ni9Ti", "height": 5},
+                       {"type": "text", "x": 6, "y": -48, "text": "3 泵轴 1 2Cr13", "height": 5},
+                       {"type": "text", "x": 6, "y": -62, "text": "4 轴承 2 6206", "height": 5},
+                       {"type": "text", "x": 6, "y": -76, "text": "5 机械密封 1 SiC-石墨", "height": 5},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "axialflow3d" and not assistant_has(messages, "补上泵轴"):
             msg = {"role": "assistant", "content": "截图里发现轴流泵缺泵轴，我补上泵轴（r20×160）。",
                    "tool_calls": [tool_call("r-ax1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 20, "h": 160, "color": "#b9a3f0"})]}
@@ -436,6 +453,60 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "pumpboth":
+        if not assistant_has(messages, "联合参数"):
+            msg = {"role": "assistant", "content": "先算设计参数（联合参数）。",
+                   "tool_calls": [tool_call("t-pb0", "pump_sizing", {"Q": 100, "H": 32, "n": 2900})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "联合模型主体"):
+            blades = []
+            for k in range(5):
+                a = k * 2 * 3.141592653589793 / 5
+                blades.append(tool_call(f"t-pb{k+6}", "create_primitive_3d", {"kind": "box", "x": 65 * math.cos(a), "y": 65 * math.sin(a), "z": 0, "dx": 40, "dy": 6, "dz": 12, "color": "#f2c76e"}))
+            msg = {"role": "assistant", "content": "按参数建模（联合模型主体）。",
+                   "tool_calls": [
+                       tool_call("t-pb1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 98, "h": 50, "color": "#7fb2e8"}),
+                       tool_call("t-pb2", "create_primitive_3d", {"kind": "cylinder", "x": 18, "y": 0, "z": 0, "r": 60, "h": 50, "color": "#e88b8b"}),
+                       tool_call("t-pb3", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 92.5, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-pb4", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 16, "h": 8, "color": "#e8a07f"}),
+                       tool_call("t-pb5", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 15.5, "h": 120, "color": "#b9a3f0"}),
+                       *blades,
+                   ]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-pb11", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "联合布尔"):
+            ids = extract_ids(messages)
+            if len(ids) >= 9:
+                msg = {"role": "assistant", "content": "补上布尔（联合布尔）。",
+                       "tool_calls": [
+                           tool_call("t-pb12", "boolean_3d", {"op": "cut", "a": ids[0], "b": [ids[1]]}),
+                           tool_call("t-pb13", "boolean_3d", {"op": "cut", "a": ids[2], "b": [ids[3]]}),
+                           tool_call("t-pb14", "boolean_3d", {"op": "fuse", "a": ids[2], "b": ids[4:9]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        if not assistant_has(messages, "切换工作区"):
+            msg = {"role": "assistant", "content": "切到 2D 工作区出图纸（切换工作区）。",
+                   "tool_calls": [tool_call("t-pb15", "switch_workspace", {"ws": "2d"})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "联合图纸主体"):
+            msg = {"role": "assistant", "content": "画主视图、图框、标题栏和明细栏表格（联合图纸主体）。",
+                   "tool_calls": [tool_call("t-pb16", "draw_entities", {"items": [
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 45},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 10},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 8},
+                       {"type": "rectangle", "x1": 0, "y1": 0, "x2": 420, "y2": 297},
+                       {"type": "rectangle", "x1": 240, "y1": 0, "x2": 420, "y2": 56},
+                       {"type": "rectangle", "x1": 0, "y1": -90, "x2": 180, "y2": -78},
+                       {"type": "rectangle", "x1": 0, "y1": -102, "x2": 180, "y2": -90},
+                       {"type": "rectangle", "x1": 0, "y1": -114, "x2": 180, "y2": -102},
+                       {"type": "rectangle", "x1": 0, "y1": -126, "x2": 180, "y2": -114},
+                       {"type": "rectangle", "x1": 0, "y1": -138, "x2": 180, "y2": -126},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 模型与图纸已完成（标注与文字待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "axialflow3d":
         if not assistant_has(messages, "轴流主体"):

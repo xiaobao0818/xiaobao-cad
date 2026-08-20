@@ -157,18 +157,19 @@ async function runTask(task, round) {
   const CAD = window.CAD;
   CAD.app.showWorkspace(task.ws);
   await wait(200);
-  // 重置图纸/模型
-  if (task.ws === '2d') {
-    CAD.scene.singleOp('清空', () => CAD.scene.removeEntities([...CAD.scene.entities.keys()]));
-    CAD.scene.clearUndo();
-    CAD.scene.dirty = false;
-  } else {
+  // 重置图纸/模型（both=双侧任务全清）
+  const is3d = task.ws !== '2d';
+  CAD.scene.singleOp('清空', () => CAD.scene.removeEntities([...CAD.scene.entities.keys()]));
+  CAD.scene.clearUndo();
+  CAD.scene.dirty = false;
+  if (is3d) {
     if (!CAD.app3d?.ready) {
       CAD.app3d?.ensureLoaded();
       try { await CAD.app3d?.readyPromise; } catch (e) { log('3D 内核加载失败: ' + (e?.message || e)); return null; }
     }
     CAD.app3d.model.clear();
   }
+  if (task.ws === 'both') CAD.app.showWorkspace('3d');
   await wait(200);
   const panel = window.__aiPanel;
   if (!panel) { log('AI 面板未就绪'); return null; }
@@ -186,7 +187,9 @@ async function runTask(task, round) {
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
   const drawn = newMsgs().some((m) => m.role === 'assistant' && (REAL ? (m.content || '').length > 0 : /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || '')));
-  const inputOf = () => (task.ws === '2d' ? CAD.scene.all() : { bodies: CAD.app3d.model.serialize().bodies });
+  const inputOf = () => (task.ws === '2d' ? CAD.scene.all()
+    : task.ws === 'both' ? { bodies: CAD.app3d.model.serialize().bodies, entities: CAD.scene.all() }
+    : { bodies: CAD.app3d.model.serialize().bodies });
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
 
