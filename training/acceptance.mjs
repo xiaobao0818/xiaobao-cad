@@ -286,5 +286,20 @@ export function feedbackPrompt(task, result) {
   const fails = (result?.checks || []).filter((c) => !c.pass);
   if (!fails.length) return '';
   const lines = fails.map((c) => `- ${c.detail}`);
-  return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}`;
+  // 分布圆失败 → 附上期望的精确坐标（模型按坐标放置远比"均布"抽象描述可靠）
+  const ringFails = fails.some((c) => String(c.detail).includes('圆心距'));
+  let ringHint = '';
+  if (ringFails) {
+    const ring = (task.checks || []).find((c) => c.type === 'ringDist');
+    if (ring) {
+      const n = ring.minCount ?? 6;
+      const coords = [];
+      for (let k = 0; k < n; k++) {
+        const a = (k * 2 * Math.PI) / n;
+        coords.push(`(${(ring.radius * Math.cos(a)).toFixed(1)}, ${(ring.radius * Math.sin(a)).toFixed(1)})`);
+      }
+      ringHint = `\n【修复指引】沿圆周均布的 ${n} 个实体（${ring.kind}）中心坐标应精确为：${coords.join('、')}（圆心 (${ring.cx},${ring.cy})，半径 ${ring.radius}）。请把不在该圆上的实体删除或移动到这些坐标。`;
+    }
+  }
+  return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${ringHint}`;
 }

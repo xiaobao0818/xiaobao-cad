@@ -448,4 +448,23 @@ function goodFlange2d() {
   ok('薄弱点自动关联知识库条目');
 }
 
+{
+  // 反馈修复指引：分布圆失败时给出精确坐标
+  const task = taskById('impeller3d');
+  const bad = [
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+    { id: 'b0', kind: 'box', params: { x: 35, y: 0, dx: 30, dy: 6, dz: 10 } },
+  ];
+  const r = evaluate(task, { bodies: bad });
+  const p = feedbackPrompt(task, r);
+  assert(p.includes('【修复指引】'), '分布圆失败应附修复指引');
+  assert(p.includes('(35.0, 0.0)'), '指引应含第 1 片精确坐标');
+  assert(p.includes('(-35.0, 0.0)'), '指引应含第 4 片精确坐标');
+  const okTask = evaluate(task, { bodies: bad });
+  const p2 = feedbackPrompt(task, okTask);
+  assert(p2.includes('修复指引'), '缺叶片时也应给坐标指引');
+  ok('反馈修复指引：分布圆失败 → 精确坐标列表');
+}
+
 console.log(`全部通过：${n} 项`);
