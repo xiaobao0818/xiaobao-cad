@@ -31,6 +31,32 @@ function makePanel(workspace, ai3d) {
 
 console.log('== 工作区工具隔离 ==');
 {
+  // pump_sizing 工具：工况 → 设计尺寸（商用泵对话式设计入口）
+  const p2 = makePanel('2d', null);
+  const out = p2._callTool('pump_sizing', { Q: 100, H: 32, n: 2900 });
+  assert(out.includes('叶轮外径 D2=185mm'), `应返回设计尺寸，实际 ${out.slice(0, 80)}`);
+  assert(out.includes('轴径 d=31mm'));
+  assert.throws(() => p2._callTool('pump_sizing', { Q: -5, H: 10 }), /正数/);
+  ok('pump_sizing 工具：Q/H/n → 叶轮外径/轴径等设计尺寸');
+}
+{
+  // AI 尺寸标注：draw_entities 支持 dimension（商用图纸）
+  const scene = { currentLayer: '0', entities: new Map(), addEntities(list) { for (const e of list) this.entities.set(e.id, e); }, beginUndoGroup() {}, endUndoGroup() {} };
+  const p2 = makePanel('2d', null);
+  p2.scene = scene;
+  p2.viewport = { requestRender() {} };
+  p2._toolDrawEntities({ items: [
+    { type: 'circle', cx: 0, cy: 0, r: 98 },
+    { type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 98, py: 0, tx: 60, ty: 60 },
+    { type: 'dimension', subtype: 'linear', x1: -98, y1: -120, x2: 98, y2: -120, x3: 0, y3: -140 },
+  ] });
+  assert.equal(scene.entities.size, 3, '圆 + 2 个标注');
+  const dims = [...scene.entities.values()].filter((e) => e.type === 'dimension');
+  assert.equal(dims.length, 2);
+  assert(dims.some((d) => d.subtype === 'diametric') && dims.some((d) => d.subtype === 'linear'));
+  ok('AI 尺寸标注：直径 + 线性标注随图纸一起生成');
+}
+{
   // 工具调用缺失的兜底：模型只输出文字时解析其 CAD JSON 代码块（MiniMax M3 偶发不调用工具）
   const scene = { currentLayer: '0', entities: new Map(), addEntities(list) { for (const e of list) this.entities.set(e.id, e); }, beginUndoGroup() {}, endUndoGroup() {} };
   const p2 = makePanel('2d', null);

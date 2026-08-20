@@ -2,9 +2,10 @@
  * 小宝CAD AI 助手 —— 对话式 CAD 创作（MiniMax M3 原生多模态，OpenAI 兼容接口）
  * ============================================================ */
 import { escapeHtml, D2R, dist, translationM, rotationM, scaleM, mirrorM } from './util.js';
-import { make } from './entities.js';
+import { make, newEntity } from './entities.js';
 import { Scene } from './scene.js';
 import { fileToText, buildDataSummary, buildSceneSummary, svgToEntities } from './io.js';
+import { sizingFromDuty, sizingText } from '../training/pumpdesign.mjs';
 
 /* ---------------- 常量 ---------------- */
 const SETTINGS_KEY = 'xbcad:ai-settings';
@@ -295,6 +296,22 @@ const TOOLS = [
       name: 'get_file_context',
       description: '获取已附加参考文件（DXF/JSON/SVG/TXT）的摘要内容。',
       parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'pump_sizing',
+      description: '工业级离心泵设计计算：输入工况（流量 Q m³/h、扬程 H m、转速 n rpm），返回叶轮外径/进口直径/叶片数/蜗壳基圆/轴径等关键设计尺寸（商用选型经验公式）。做泵类任务时应先调用本工具确定尺寸，再按尺寸建模。',
+      parameters: {
+        type: 'object',
+        properties: {
+          Q: { type: 'number', description: '流量 m³/h' },
+          H: { type: 'number', description: '扬程 m' },
+          n: { type: 'number', description: '转速 rpm（默认 2900）' },
+        },
+        required: ['Q', 'H'],
+      },
     },
   },
 ];
@@ -1135,6 +1152,7 @@ export default class AIChatPanel {
       redo: () => this._toolRedo(),
       measure: (a) => this._toolMeasure(a),
       get_file_context: () => this._toolGetFileContext(),
+      pump_sizing: (a) => this._toolPumpSizing(a),
     };
   }
   _parseArgs(str) {
@@ -1182,6 +1200,24 @@ export default class AIChatPanel {
           const o = { ...opts };
           if (it.halign) o.halign = it.halign;
           e = make.text({ x: num(it.x), y: num(it.y) }, String(it.text ?? ''), num(it.height, 4), num(it.rotation) * D2R, o);
+          break;
+        }
+        case 'dimension': {
+          // AI 尺寸标注（商用图纸必备）：linear/aligned/radial/diametric
+          if (it.subtype === 'linear' || it.subtype === 'aligned') {
+            e = newEntity('dimension', {
+              subtype: 'linear', layer,
+              x1: num(it.x1), y1: num(it.y1), x2: num(it.x2), y2: num(it.y2),
+              x3: num(it.x3, it.x1), y3: num(it.y3, it.y1),
+              angle: num(it.angle) * D2R,
+            });
+          } else if (it.subtype === 'radial' || it.subtype === 'diametric') {
+            e = newEntity('dimension', {
+              subtype: it.subtype, layer,
+              cx: num(it.cx), cy: num(it.cy), px: num(it.px), py: num(it.py),
+              tx: num(it.tx, it.cx), ty: num(it.ty, it.cy),
+            });
+          } else throw new Error('dimension 的 subtype 须为 linear/aligned/radial/diametric');
           break;
         }
         default: throw new Error('未知图元类型: ' + it.type);
@@ -1335,6 +1371,13 @@ export default class AIChatPanel {
   _toolMeasure(args) {
     const d = dist({ x: num(args.x1), y: num(args.y1) }, { x: num(args.x2), y: num(args.y2) });
     return `两点距离 = ${Math.round(d * 1000) / 1000} mm`;
+  }
+
+  _toolPumpSizing(args) {
+    const Q = Number(args?.Q), H = Number(args?.H), n = Number(args?.n) > 0 ? Number(args.n) : 2900;
+    if (!(Q > 0) || !(H > 0)) throw new Error('pump_sizing 需要正数的 Q（流量 m³/h）与 H（扬程 m）');
+    const p = sizingFromDuty({ Q, H, n });
+    return sizingText(p);
   }
 
   _toolGetFileContext() {

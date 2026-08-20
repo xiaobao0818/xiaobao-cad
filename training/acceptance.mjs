@@ -172,7 +172,11 @@ function check3d(check, bodies) {
     }
     case 'angularEven': {
       // 叶片/孔的角度均匀性：按角排序后相邻角差接近 360/N（叶轮叶片均布验收）
-      const items = kinds(check.kind).filter((b) => dist(b.params?.x, b.params?.y, check.cx, check.cy) > 1e-6);
+      // 指定 radius 时只统计该分布圆上的实体（模型常会多建其他零件，不能混入判定）
+      let items = kinds(check.kind).filter((b) => dist(b.params?.x, b.params?.y, check.cx, check.cy) > 1e-6);
+      if (check.radius != null) {
+        items = items.filter((b) => approx(dist(b.params.x, b.params.y, check.cx, check.cy), check.radius, check.tol ?? 2));
+      }
       const TAU = Math.PI * 2;
       const angles = items.map((b) => Math.atan2(b.params.y - check.cy, b.params.x - check.cx)).sort((a, b) => a - b);
       const N = angles.length;

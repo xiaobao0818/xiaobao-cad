@@ -75,7 +75,7 @@ export const TRAIN_TASKS = [
       { type: 'primDim', kind: 'cylinder', field: 'r', approx: 60, tol: 2, weight: 2 },
       { type: 'primParam', kind: 'cylinder', field: 'r', approx: 10, tol: 1, minCount: 1, weight: 2 },
       { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, minCount: 6, weight: 4 },
-      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, maxDevDeg: 5, weight: 3 },
+      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, maxDevDeg: 5, weight: 3 },
     ],
   },
   {
@@ -149,6 +149,24 @@ export const TRAIN_TASKS = [
       { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 35, tol: 2, minCount: 6, weight: 3 },
       { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
       { type: 'fitClearance', outerR: 30, boreR: 30.5, outerTol: 0.4, boreTol: 0.4, minGap: 0.1, maxGap: 1.5, weight: 4 },
+    ],
+  },
+  {
+    id: 'pumpduty3d',
+    ws: '3d',
+    name: '商用泵·需求驱动设计（3D）',
+    prompt: '客户要求一台单级单吸离心泵：流量 Q=100m³/h、扬程 H=32m、转速 n=2900rpm。请先用 pump_sizing 工具计算设计参数，再按参数创建商用级装配模型：泵壳（蜗壳基圆外圆柱 + 偏心内腔差集）、叶轮（轮盘 + 5 片均布叶片 + 轮毂孔差集）、泵轴（与轮毂孔间隙配合）。',
+    checks: [
+      { type: 'featureCount', min: 12, weight: 2 },
+      { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
+      { type: 'kindCount', kind: 'box', min: 5, weight: 2 },
+      { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 98, tol: 2, minCount: 1, weight: 3 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 92.5, tol: 2, minCount: 1, weight: 3 },
+      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 2, minCount: 5, weight: 3 },
+      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 2, maxDevDeg: 6, weight: 2 },
+      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
+      { type: 'fitClearance', outerR: 15.5, boreR: 16, outerTol: 0.6, boreTol: 0.6, minGap: 0.2, maxGap: 1.5, weight: 4 },
     ],
   },
   {

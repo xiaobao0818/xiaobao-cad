@@ -547,7 +547,15 @@ export class Kernel {
 
   fillet(id, radius) {
     this._assertReady();
+    if (!(radius > 0)) throw new Error('圆角半径必须大于 0');
     const shape = this._assertBody(id);
+    // 半径预检：OCC 失败会抛 C++ 异常，而浏览器构建缺少 ___cxa_is_pointer_type 会直接崩溃，
+    // 因此在调用前做几何可行性检查，避免进入失败路径
+    const bb = this.bbox(id);
+    const minDim = Math.min(bb.maxX - bb.minX, bb.maxY - bb.minY, bb.maxZ - bb.minZ);
+    if (radius >= minDim / 2) {
+      throw new Error(`圆角失败：半径 ${radius} 过大（实体最小尺寸 ${Math.round(minDim)}，半径应 < ${Math.round(minDim / 2)}）`);
+    }
     const maker = new this.oc.BRepFilletAPI_MakeFillet(shape, this.oc.ChFi3d_FilletShape.ChFi3d_Rational);
     const TopAbs = this.oc.TopAbs_ShapeEnum;
     const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);
@@ -561,7 +569,7 @@ export class Kernel {
     maker.Build();
     if (!maker.IsDone()) {
       maker.delete();
-      throw new Error(`圆角失败: radius=${radius}`);
+      throw new Error(`圆角失败：半径 ${radius} 对该几何体过大或棱边无法构造圆角（请减小半径重试）`);
     }
     const result = maker.Shape();
     maker.delete();
@@ -570,7 +578,13 @@ export class Kernel {
 
   chamfer(id, distance) {
     this._assertReady();
+    if (!(distance > 0)) throw new Error('倒角距离必须大于 0');
     const shape = this._assertBody(id);
+    const bb = this.bbox(id);
+    const minDim = Math.min(bb.maxX - bb.minX, bb.maxY - bb.minY, bb.maxZ - bb.minZ);
+    if (distance >= minDim / 2) {
+      throw new Error(`倒角失败：距离 ${distance} 过大（实体最小尺寸 ${Math.round(minDim)}，距离应 < ${Math.round(minDim / 2)}）`);
+    }
     const maker = new this.oc.BRepFilletAPI_MakeChamfer(shape);
     const TopAbs = this.oc.TopAbs_ShapeEnum;
     const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);

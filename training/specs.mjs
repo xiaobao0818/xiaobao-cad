@@ -47,6 +47,7 @@ const TASK_SPECS = {
   plate3d: ['flange'],
   pump2d: ['casing', 'volute'],
   sleeve3d: ['assembly'],
+  pumpduty3d: ['impeller', 'casing', 'assembly'],
 };
 
 /** 任务对应的规范条目（去重） */

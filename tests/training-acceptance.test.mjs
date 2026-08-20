@@ -5,6 +5,7 @@ import { TRAIN_TASKS, taskById } from '../training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
 import { memoryNotes, classifyFail, promptWithMemory } from '../training/memory.mjs';
+import { sizingFromDuty, sizingText, specificSpeed, bladeCount } from '../training/pumpdesign.mjs';
 import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
 let n = 0;
@@ -91,8 +92,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 11, '任务库应含基础 4 + 水泵 7 个任务');
-  ok('训练任务库 11 个任务（含水泵组件 7 个）');
+  assert.equal(TRAIN_TASKS.length, 12, '任务库应含基础 4 + 水泵 8 个任务');
+  ok('训练任务库 12 个任务（含水泵组件 8 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -350,6 +351,45 @@ function goodFlange2d() {
   const ring = r.checks.find((c) => c.detail && c.detail.includes('圆心距'));
   assert(ring && ring.detail.includes('28.0') && ring.detail.includes('35.0'), `明细应含实测距离，实际 "${ring?.detail}"`);
   ok('验收明细含实测数值（圆心距列表）');
+}
+
+{
+  // 泵设计计算：工况 → 关键尺寸（商用级选型）
+  const p = sizingFromDuty({ Q: 100, H: 32, n: 2900 });
+  assert(p.D2mm > p.D1mm && p.D2mm > 150 && p.D2mm < 220, `D2=${p.D2mm} 应合理`);
+  assert(p.shaftDmm >= 20, `轴径 ${p.shaftDmm} 应≥20mm`);
+  assert(p.Z >= 4 && p.Z <= 7, `叶片数 ${p.Z} 应 4~7`);
+  assert(p.ns > 100 && p.ns < 150, `比转速 ${p.ns} 应≈131`);
+  const p2 = sizingFromDuty({ Q: 100, H: 32, n: 1450 });
+  assert(p2.ns < p.ns, '低转速应比转速更低');
+  assert(specificSpeed(100, 32, 2900) > specificSpeed(50, 32, 2900), '流量越大比转速越高');
+  assert.equal(bladeCount(50), 7);
+  assert.throws(() => sizingFromDuty({ Q: 0, H: 10, n: 2900 }), /正数/);
+  const txt = sizingText(p);
+  assert(txt.includes('叶轮外径') && txt.includes(String(p.D2mm)), '设计文本应含关键尺寸');
+  ok(`泵设计计算：Q/H/n → D2=${p.D2mm}mm Z=${p.Z} 轴径=${p.shaftDmm}mm`);
+}
+{
+  // 商用泵需求驱动任务：好模型满分
+  const task = taskById('pumpduty3d');
+  const cy = (id, r, h, x = 0, y = 0) => ({ id, kind: 'cylinder', params: { x, y, r, h } });
+  const bodies = [
+    cy('outer', 98, 50), cy('cav', 60, 50, 18), cy('disk', 92.5, 8), cy('bore', 16, 8), cy('shaft', 15.5, 120),
+  ];
+  for (let k = 0; k < 5; k++) {
+    const a = (k * 2 * Math.PI) / 5;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 65 * Math.cos(a), y: 65 * Math.sin(a), dx: 40, dy: 6, dz: 12 } });
+  }
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['bore'] } },
+    { id: 'b3', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4'] } },
+  );
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `商用泵好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
+  assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
+  ok(`商用泵需求驱动任务（完整 100 / 缺轴 ${noShaft.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

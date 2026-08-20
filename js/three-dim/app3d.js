@@ -563,6 +563,20 @@ export class App3D {
         if (!id) throw new Error('未找到实体: ' + args.id + '（请先用 list_3d 获取 id）');
         const r = num(args.r);
         if (!(r > 0)) throw new Error('圆角半径必须大于 0');
+        // 半径预检：必须小于实体最小棱边尺寸的一半，否则必然失败（也避免模型反复重试空耗）
+        const kid = m._kernelIds.get(id);
+        if (kid != null) {
+          try {
+            const bb = this.kernel.bbox([].concat(kid)[0]);
+            const minDim = Math.min(bb.maxX - bb.minX, bb.maxY - bb.minY, bb.maxZ - bb.minZ);
+            if (r >= minDim / 2) {
+              throw new Error(`圆角半径 ${r} 过大：实体最小尺寸 ${Math.round(minDim)}，半径应 < ${Math.round(minDim / 2)}`);
+            }
+          } catch (e) {
+            if (/过大/.test(String(e.message))) throw e;
+            /* bbox 失败则跳过预检，交给内核报错 */
+          }
+        }
         const b = m.filletChamfer('fillet', id, r);
         this.refresh(true);
         if (m._booleanFailed.has(b.id)) {
@@ -690,6 +704,13 @@ export class App3D {
         },
       },
       { type: 'function', function: { name: 'undo_3d', description: '撤销上一次三维操作', parameters: { type: 'object', properties: {} } } },
+      {
+        type: 'function', function: {
+          name: 'pump_sizing',
+          description: '工业级离心泵设计计算：输入工况（Q m³/h、H m、n rpm）返回叶轮外径/叶片数/蜗壳基圆/轴径等关键尺寸。做泵时先调用确定尺寸再建模。',
+          parameters: { type: 'object', properties: { Q: { type: 'number' }, H: { type: 'number' }, n: { type: 'number' } }, required: ['Q', 'H'] },
+        },
+      },
       { type: 'function', function: { name: 'redo_3d', description: '重做三维操作', parameters: { type: 'object', properties: {} } } },
       {
         type: 'function', function: {
