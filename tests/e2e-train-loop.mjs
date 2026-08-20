@@ -13,6 +13,7 @@ const FB = process.env.FB === '1';
 const CONT = process.env.CONT === '1';
 const REAL = process.env.REAL === '1';
 const ROUNDS = parseInt(process.env.ROUNDS || '1', 10);
+const KEEP = process.env.KEEP === '1'; // 保留既有训练日志（分轮续跑：记忆/知识联动跨轮生效）
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
@@ -46,7 +47,7 @@ try {
     }, REAL_KEY);
   }
   await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : ''}${CONT ? '&continuous=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
-  await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
+  if (!KEEP) await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
   await page.waitForFunction(() => !!window.__aiPanel, { timeout: 60000, polling: 1000 });
