@@ -197,4 +197,6 @@ npm run check           # 全部文件语法检查
 - **训练报告导出**：统计页「导出 Markdown 训练报告」（`training/report.mjs`）——整体趋势/按任务/最近明细/薄弱点一章式报告
 - **商用泵对话式设计**：AI 助手新增 `pump_sizing` 工具——一句话给工况（流量/扬程/转速）即可算出叶轮外径/叶片数/蜗壳基圆/轴径等设计尺寸（`training/pumpdesign.mjs`，比转速+扬程系数经验公式）；`draw_entities` 支持尺寸标注（linear/aligned/radial/diametric），AI 可直接出带标注的图纸
 - **需求驱动训练任务**（pumpduty3d）："客户要 Q=100m³/h、H=32m、n=2900rpm 的泵" → 模型先算参数再建模，验收核对设计尺寸；真实 M3 实测 **81→93 分（Δ+12，审阅 6 轮+反馈 2 轮）**
+- **平台知识库**（`knowledge/data.js` + `tests/knowledge.html`）：内置工业级水泵设计知识——5 类常用材料表（叶轮/泵壳/泵轴/机械密封）、公差配合表（H7/f7 等）、比转速选型表（叶片数/效率/适用）、设计公式、GB/JB 国家标准、5 篇设计文档（设计流程/叶轮/蜗壳/泵轴/密封要点）；AI 助手新增 `query_knowledge` 工具随时检索（2D/3D 通用），训练时按任务自动注入相关知识条目
+- **训练库**（`training/` 目录）：任务库 12 个（tasks.mjs）、验收器 15+ 类检查（acceptance.mjs）、设计规范（specs.mjs）、泵设计计算（pumpdesign.mjs）、薄弱点记忆（memory.mjs）、知识桥接（knowledge.mjs）、统计与报告（stats/report.mjs）——平台自有训练体系，随使用持续扩充
 - **内核圆角崩溃修复**：OCC 圆角失败路径在浏览器构建缺失 RTTI 辅助函数（`___cxa_is_pointer_type`）会直接崩溃——改为调用前按实体 bbox 预检半径（圆角/倒角半径必须 < 最小尺寸/2），失败给出中文可读错误

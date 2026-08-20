@@ -112,6 +112,7 @@ import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
 import { promptWithSpecs } from '/training/specs.mjs';
 import { memoryNotes } from '/training/memory.mjs';
+import { knowledgeForTask } from '/training/knowledge.mjs';
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
@@ -174,7 +175,9 @@ async function runTask(task, round) {
   const beforeLen = panel.messages.length;
   const mem = memoryNotes(entries, task.id);
   if (mem) log(`🧠 已注入历史薄弱点记忆（${task.id}）`);
-  const baseAsk = promptWithSpecs(task) + (mem ? '\n\n' + mem : '');
+  const kb = knowledgeForTask(task.id);
+  if (kb.length) log(`📚 已注入知识库条目（${task.id}，${kb.length} 条）`);
+  const baseAsk = promptWithSpecs(task) + (kb.length ? '\n\n' + kb.join('\n') : '') + (mem ? '\n\n' + mem : '');
   panel.ask(REAL ? baseAsk : `[训练任务:${task.id}] ${baseAsk}`);
   const okDraw = await waitSettled(panel, REAL ? 900000 : 150000);
   if (stopFlag) return null;

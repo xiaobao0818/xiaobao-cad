@@ -6,6 +6,7 @@ import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
 import { memoryNotes, classifyFail, promptWithMemory } from '../training/memory.mjs';
 import { sizingFromDuty, sizingText, specificSpeed, bladeCount } from '../training/pumpdesign.mjs';
+import { searchKnowledge, searchText, knowledgeForTask } from '../training/knowledge.mjs';
 import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
 let n = 0;
@@ -390,6 +391,32 @@ function goodFlange2d() {
   const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
   assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
   ok(`商用泵需求驱动任务（完整 100 / 缺轴 ${noShaft.score}）`);
+}
+
+{
+  // 知识库检索：材料/配合/比转速/标准
+  const mat = searchKnowledge('叶轮 材料');
+  assert(mat.length > 0 && mat[0].source === '材料', '叶轮材料检索应命中材料表');
+  const fit = searchKnowledge('轴孔 配合');
+  assert(fit.some((h) => h.source === '公差配合' && h.title.includes('f7')), '配合检索应命中 H7/f7');
+  const ns = searchKnowledge('比转速');
+  assert(ns.some((h) => h.title.includes('ns')), '比转速检索应命中选型表');
+  const std = searchKnowledge('标准');
+  assert(std.some((h) => h.title.includes('GB/T 5657')), '标准检索应命中 GB/T 5657');
+  const nothing = searchKnowledge('量子力学');
+  assert.equal(nothing.length, 0, '无关检索应无命中');
+  const txt = searchText('叶轮 叶片');
+  assert(txt.includes('【') && txt.includes('叶片'), '检索文本格式正确');
+  ok('知识库检索：材料/配合/比转速/标准命中正确');
+}
+{
+  // 任务 → 知识注入
+  const kb = knowledgeForTask('impeller3d');
+  assert(kb.length >= 2, `叶轮任务应注入知识条目，实际 ${kb.length}`);
+  assert(kb.some((l) => l.includes('叶片数') || l.includes('叶片')), '应含叶轮设计知识');
+  const kb2 = knowledgeForTask('pumpduty3d');
+  assert(kb2.length >= 2, '商用泵任务应注入多条知识');
+  ok('任务知识注入（叶轮/商用泵）');
 }
 
 console.log(`全部通过：${n} 项`);

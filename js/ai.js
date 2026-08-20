@@ -6,6 +6,7 @@ import { make, newEntity } from './entities.js';
 import { Scene } from './scene.js';
 import { fileToText, buildDataSummary, buildSceneSummary, svgToEntities } from './io.js';
 import { sizingFromDuty, sizingText } from '../training/pumpdesign.mjs';
+import { searchText as kbSearchText } from '../training/knowledge.mjs';
 
 /* ---------------- 常量 ---------------- */
 const SETTINGS_KEY = 'xbcad:ai-settings';
@@ -296,6 +297,20 @@ const TOOLS = [
       name: 'get_file_context',
       description: '获取已附加参考文件（DXF/JSON/SVG/TXT）的摘要内容。',
       parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'query_knowledge',
+      description: '检索本平台知识库（工业级水泵设计知识：材料/公差配合/比转速选型/设计公式/国家标准/设计文档）。不确定设计参数或标准时先查知识库。',
+      parameters: {
+        type: 'object',
+        properties: {
+          topic: { type: 'string', description: '查询主题关键词，如 叶轮 材料 / 轴孔 配合 / 比转速 / 蜗壳 / 密封 / 标准' },
+        },
+        required: ['topic'],
+      },
     },
   },
   {
@@ -1153,6 +1168,7 @@ export default class AIChatPanel {
       measure: (a) => this._toolMeasure(a),
       get_file_context: () => this._toolGetFileContext(),
       pump_sizing: (a) => this._toolPumpSizing(a),
+      query_knowledge: (a) => kbSearchText(String(a?.topic || ''), { limit: 5 }),
     };
   }
   _parseArgs(str) {

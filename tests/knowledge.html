@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 知识库 · 工业级水泵设计</title>
+<style>
+  body { margin:0; padding:24px; background:#141821; color:#e8e8e8; font-family:'PingFang SC','Microsoft YaHei',system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; } h1 b { color:#ff8c42; }
+  .sub { color:#8a93a5; font-size:13px; margin-bottom:14px; }
+  input[type=search] { width:100%; max-width:560px; background:#1d2330; border:1px solid #2c3547; color:#e8e8e8; border-radius:8px; padding:10px 14px; font-size:14px; outline:none; }
+  input:focus { border-color:#ff8c42; }
+  .sec { margin-top:20px; }
+  .sec h2 { font-size:15px; color:#9fb3d1; border-left:3px solid #ff8c42; padding-left:8px; }
+  table { border-collapse:collapse; width:100%; max-width:900px; }
+  th,td { border:1px solid #2c3547; padding:6px 10px; font-size:13px; text-align:left; }
+  th { background:#1d2330; color:#9fb3d1; }
+  .card { background:#1d2330; border:1px solid #2c3547; border-radius:10px; padding:12px 16px; margin:8px 0; max-width:900px; font-size:13px; line-height:1.6; }
+  .card .src { color:#ff8c42; font-size:12px; }
+  #hitCount { color:#8a93a5; font-size:12px; margin-top:6px; }
+  .hl { color:#7ee08a; }
+</style>
+</head>
+<body>
+<h1>📚 小宝CAD <b>知识库</b> · 工业级水泵设计</h1>
+<div class="sub">本平台自带的水泵设计知识库——AI 助手可通过 query_knowledge 工具随时检索；训练时按任务自动注入相关条目。支持关键词：材料 / 公差 / 配合 / 比转速 / 叶片 / 蜗壳 / 轴 / 密封 / 标准 / 公式。</div>
+<input type="search" id="q" placeholder="检索知识库，如「轴孔 配合」「叶轮 材料」「比转速」「蜗壳」…">
+
+<div id="hits"></div>
+<hr style="border-color:#2c3547;margin:24px 0">
+
+<div class="sec"><h2>🛠 常用材料</h2><table id="materials"></table></div>
+<div class="sec"><h2>📏 公差配合</h2><table id="fits"></table></div>
+<div class="sec"><h2>🌀 比转速选型</h2><table id="ns"></table></div>
+<div class="sec"><h2>🧮 设计公式</h2><table id="formulas"></table></div>
+<div class="sec"><h2>📜 国家标准</h2><table id="standards"></table></div>
+<div class="sec"><h2>📖 设计文档</h2><div id="docs"></div></div>
+
+<script type="module">
+import { PUMP_MATERIALS, FITS, NS_TABLE, FORMULAS, STANDARDS, DOCS, searchKnowledge } from '/knowledge/data.js';
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+document.getElementById('materials').innerHTML =
+  '<tr><th>部件</th><th>材料</th><th>适用</th></tr>' +
+  PUMP_MATERIALS.flatMap((m) => m.items.map((i) => `<tr><td>${esc(m.part)}</td><td>${esc(i.name)}</td><td>${esc(i.use)}</td></tr>`)).join('');
+document.getElementById('fits').innerHTML =
+  '<tr><th>配合</th><th>类型</th><th>用途</th><th>备注</th></tr>' +
+  FITS.map((f) => `<tr><td>${esc(f.code)}</td><td>${esc(f.kind)}</td><td>${esc(f.use)}</td><td>${esc(f.note)}</td></tr>`).join('');
+document.getElementById('ns').innerHTML =
+  '<tr><th>比转速 ns</th><th>泵型</th><th>叶片数</th><th>效率</th><th>适用</th></tr>' +
+  NS_TABLE.map((r) => `<tr><td>${esc(r.ns)}</td><td>${esc(r.type)}</td><td>${esc(r.blades)}</td><td>${esc(r.efficiency)}</td><td>${esc(r.usage)}</td></tr>`).join('');
+document.getElementById('formulas').innerHTML =
+  '<tr><th>名称</th><th>公式</th><th>变量</th><th>备注</th></tr>' +
+  FORMULAS.map((f) => `<tr><td>${esc(f.name)}</td><td><code>${esc(f.expr)}</code></td><td>${esc(f.vars)}</td><td>${esc(f.note)}</td></tr>`).join('');
+document.getElementById('standards').innerHTML =
+  '<tr><th>标准号</th><th>名称</th><th>备注</th></tr>' +
+  STANDARDS.map((st) => `<tr><td>${esc(st.code)}</td><td>${esc(st.name)}</td><td>${esc(st.note)}</td></tr>`).join('');
+document.getElementById('docs').innerHTML =
+  DOCS.map((d) => `<div class="card"><div class="src">📖 ${esc(d.title)}</div>${esc(d.content)}</div>`).join('');
+
+const q = document.getElementById('q');
+const hits = document.getElementById('hits');
+const renderHits = () => {
+  const r = searchKnowledge(q.value, { limit: 8 });
+  hits.innerHTML = r.length
+    ? `<div id="hitCount">命中 ${r.length} 条</div>` + r.map((h) =>
+        `<div class="card"><div class="src">【${esc(h.source)}】${esc(h.title)}</div>${esc(h.content)}</div>`).join('')
+    : (q.value ? '<div id="hitCount">无命中，试试：材料/公差/配合/比转速/叶片/蜗壳/轴/密封/标准/公式</div>' : '');
+};
+q.addEventListener('input', renderHits);
+</script>
+</body>
+</html>

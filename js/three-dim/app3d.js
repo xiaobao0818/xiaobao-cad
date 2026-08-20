@@ -706,6 +706,13 @@ export class App3D {
       { type: 'function', function: { name: 'undo_3d', description: '撤销上一次三维操作', parameters: { type: 'object', properties: {} } } },
       {
         type: 'function', function: {
+          name: 'query_knowledge',
+          description: '检索本平台知识库（水泵设计知识：材料/公差/比转速/公式/标准）。不确定设计参数时先查。',
+          parameters: { type: 'object', properties: { topic: { type: 'string' } }, required: ['topic'] },
+        },
+      },
+      {
+        type: 'function', function: {
           name: 'pump_sizing',
           description: '工业级离心泵设计计算：输入工况（Q m³/h、H m、n rpm）返回叶轮外径/叶片数/蜗壳基圆/轴径等关键尺寸。做泵时先调用确定尺寸再建模。',
           parameters: { type: 'object', properties: { Q: { type: 'number' }, H: { type: 'number' }, n: { type: 'number' } }, required: ['Q', 'H'] },

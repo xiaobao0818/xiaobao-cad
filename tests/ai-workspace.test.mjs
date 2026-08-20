@@ -31,6 +31,14 @@ function makePanel(workspace, ai3d) {
 
 console.log('== 工作区工具隔离 ==');
 {
+  // query_knowledge 工具：检索平台知识库
+  const p2 = makePanel('2d', null);
+  const out = p2._callTool('query_knowledge', { topic: '轴 材料' });
+  assert(out.includes('2Cr13') || out.includes('材料'), `应返回知识内容，实际 ${out.slice(0, 80)}`);
+  assert(p2._callTool('query_knowledge', { topic: '配合' }).includes('H7'), '配合查询应含 H7/f7');
+  ok('query_knowledge 工具：检索平台水泵知识库');
+}
+{
   // pump_sizing 工具：工况 → 设计尺寸（商用泵对话式设计入口）
   const p2 = makePanel('2d', null);
   const out = p2._callTool('pump_sizing', { Q: 100, H: 32, n: 2900 });
