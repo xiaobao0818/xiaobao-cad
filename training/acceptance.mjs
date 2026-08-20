@@ -152,14 +152,17 @@ function check3d(check, bodies) {
   const kinds = (k) => bodies.filter((b) => b.kind === k);
   switch (check.type) {
     case 'featureCount': {
+      // 商用质量：特征数既要足够（≥min）也不能冗余（≤max，模型常建 2~5 倍冗余零件）
       const n = bodies.length;
-      const pass = n >= check.min;
-      return { pass, detail: `特征数=${n}（期望≥${check.min}）` };
+      const pass = n >= check.min && (check.max == null || n <= check.max);
+      const range = check.max == null ? `≥${check.min}` : `${check.min}~${check.max}`;
+      return { pass, detail: `特征数=${n}（期望 ${range}${n > check.max ? '，零件冗余，请删除多余零件' : ''}）` };
     }
     case 'kindCount': {
       const n = kinds(check.kind).length;
-      const pass = n >= check.min;
-      return { pass, detail: `${check.kind} 数量=${n}（期望≥${check.min}）` };
+      const pass = n >= check.min && (check.max == null || n <= check.max);
+      const range = check.max == null ? `≥${check.min}` : `${check.min}~${check.max}`;
+      return { pass, detail: `${check.kind} 数量=${n}（期望 ${range}${n > check.max ? '，冗余' : ''}）` };
     }
     case 'primDim': {
       const found = kinds(check.kind).find((b) => approx(b.params?.[check.field], check.approx, check.tol));
@@ -354,6 +357,12 @@ export function feedbackPrompt(task, result) {
     if (fit && fit.type === 'fitClearance') {
       hints.push(`轴半径应为 ${fit.outerR}（圆柱），孔半径应为 ${fit.boreR}（孔与轴同心），间隙 ${Math.round((fit.boreR - fit.outerR) * 100) / 100}。`);
     }
+  }
+  // 5) 特征冗余：删除多余零件
+  const over = fails.find((c) => String(c.detail).includes('冗余'));
+  if (over) {
+    const fc = (task.checks || []).find((c) => c.type === 'featureCount');
+    if (fc?.max) hints.push(`特征总数应 ≤${fc.max}（当前超出）。请删除任务要求之外的冗余零件（重复/多余的圆柱、盒体），只保留任务清单中的零件。`);
   }
   const guide = hints.length ? `\n【修复指引】${hints.join('；')}` : '';
   return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${guide}`;

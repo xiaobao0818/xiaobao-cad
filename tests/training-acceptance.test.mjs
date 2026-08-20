@@ -600,4 +600,28 @@ function goodFlange2d() {
   ok(`明细栏任务（完整 100 / 缺文字 ${noText.score}）`);
 }
 
+{
+  // 零件冗余验收：特征数超上限扣分 + 反馈含删除指引
+  const task = taskById('impeller3d');
+  const bodies = [
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+  ];
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 35 * Math.cos(a), y: 35 * Math.sin(a), dx: 30, dy: 6, dz: 10 } });
+  }
+  bodies.push({ id: 'cut', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['hole'] } });
+  bodies.push({ id: 'fuse', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: bodies.slice(2, 8).map((b) => b.id) } });
+  // 冗余：额外加 8 个圆柱
+  for (let k = 0; k < 8; k++) bodies.push({ id: `x${k}`, kind: 'cylinder', params: { x: 100 + k, y: 0, r: 3, h: 3 } });
+  const r = evaluate(task, { bodies });
+  const fc = r.checks.find((c) => c.detail && c.detail.includes('冗余'));
+  assert(fc && !fc.pass, '冗余模型应被特征数上限扣分');
+  const p = feedbackPrompt(task, r);
+  assert(p.includes('删除多余零件'), '反馈应含删除冗余零件指引');
+  assert(p.includes('≤15'), '指引应给出特征数上限');
+  ok('零件冗余验收：超上限扣分 + 删除指引');
+}
+
 console.log(`全部通过：${n} 项`);

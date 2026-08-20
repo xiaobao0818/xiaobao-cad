@@ -36,7 +36,7 @@ export const TRAIN_TASKS = [
     name: '四孔安装板（3D）',
     prompt: '请建一个四孔安装板的三维模型：100×80×10 的长方体板（中心在原点），四个角各打一个半径 8 的通孔（孔心在 (±35,±25)），用差集挖孔。',
     checks: [
-      { type: 'featureCount', min: 5, weight: 2 },
+      { type: 'featureCount', min: 5, max: 9, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 1, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 4, weight: 3 },
       { type: 'kindCount', kind: 'boolean', min: 1, weight: 3 },
@@ -52,7 +52,7 @@ export const TRAIN_TASKS = [
     name: '轴套（3D）',
     prompt: '请建一个轴套的三维模型：外圆柱半径 40、高 60，中心挖一个半径 25 的同心通孔（差集）。',
     checks: [
-      { type: 'featureCount', min: 3, weight: 2 },
+      { type: 'featureCount', min: 3, max: 6, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 2, weight: 3 },
       { type: 'kindCount', kind: 'boolean', min: 1, weight: 3 },
       { type: 'primParam', kind: 'cylinder', field: 'r', approx: 40, tol: 2, minCount: 1, weight: 2 },
@@ -68,7 +68,7 @@ export const TRAIN_TASKS = [
     name: '水泵叶轮（3D）',
     prompt: '请建一个离心泵叶轮：轮盘为半径 60、厚 8 的圆盘（中心在原点），轮毂处挖半径 10 的中心通孔。6 片叶片（盒体约 30×6×10）沿圆周均布：第 k 片中心坐标 = (35·cos(60°·k), 35·sin(60°·k))（k=0..5，即 (35,0)、(17.5,30.3)、(-17.5,30.3)、(-35,0)、(-17.5,-30.3)、(17.5,-30.3)），并把叶片与轮盘合并为整体。',
     checks: [
-      { type: 'featureCount', min: 9, weight: 2 },
+      { type: 'featureCount', min: 9, max: 15, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 2, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 6, weight: 3 },
       { type: 'kindCount', kind: 'boolean', min: 1, weight: 3 },
@@ -96,7 +96,7 @@ export const TRAIN_TASKS = [
     name: '水泵泵壳（3D）',
     prompt: '请建一个离心泵泵壳（简化蜗壳）：外圆柱半径 70、高 50（中心在原点），底部加 160×100×15 的安装底座，进水口法兰（半径 25、厚 12）在 (0,-90)，出水口法兰（半径 25、厚 12）在 (95,0)，最后用半径 45 的偏心内腔（圆心偏移 x=18）挖出流道。',
     checks: [
-      { type: 'featureCount', min: 6, weight: 2 },
+      { type: 'featureCount', min: 6, max: 12, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 4, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 1, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 2, weight: 3 },
@@ -112,7 +112,7 @@ export const TRAIN_TASKS = [
     name: '泵轴·台阶轴（3D）',
     prompt: '请建一根五段台阶轴（各段同轴，直径逐段递减）：第 1 段半径 30 长 40，第 2 段半径 25 长 60，第 3 段半径 20 长 80，第 4 段半径 15 长 50，第 5 段半径 10 长 30。',
     checks: [
-      { type: 'featureCount', min: 5, weight: 2 },
+      { type: 'featureCount', min: 5, max: 8, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
       { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 5, weight: 4 },
       { type: 'primSeq', kind: 'cylinder', field: 'r', dir: 'dec', minCount: 5, weight: 3 },
@@ -140,7 +140,7 @@ export const TRAIN_TASKS = [
     name: '微型泵整机装配（3D）',
     prompt: '请装配一台微型离心泵：①泵壳：外圆柱半径 70 高 50（原点），偏心内腔半径 45（x=18）用差集挖流道；②叶轮：轮盘半径 60 厚 8，轮毂孔半径 30.5 用差集挖出，6 片叶片（盒体）均布在半径 35 圆周上并与轮盘并集；③泵轴：半径 30 长 120，与叶轮中心孔保持间隙配合（轴 Φ60 / 孔 Φ61）。',
     checks: [
-      { type: 'featureCount', min: 12, weight: 2 },
+      { type: 'featureCount', min: 12, max: 20, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 6, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
@@ -157,7 +157,7 @@ export const TRAIN_TASKS = [
     name: '自吸泵（3D）',
     prompt: '请建一台自吸泵：泵壳外圆柱半径 90 高 60（原点）；上方储液腔圆柱半径 55 高 40（中心 (0,30)）并与泵壳并集；偏心内腔半径 65（x=20）差集；叶轮盘半径 70 厚 8、轮毂孔半径 16 差集、5 片叶片（盒体）均布半径 50 并集；泵轴半径 15.5 长 130 与轮毂孔间隙配合。',
     checks: [
-      { type: 'featureCount', min: 13, weight: 2 },
+      { type: 'featureCount', min: 13, max: 24, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 6, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 5, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 4, weight: 3 },
@@ -186,7 +186,7 @@ export const TRAIN_TASKS = [
     name: '双吸泵（3D）',
     prompt: '请建一台双吸泵：双吸叶轮——两个轮盘（半径 70 厚 8，z=-4 与 z=4）、中间轮毂圆柱（半径 20 高 16）、两排共 12 片叶片（盒体）均布半径 50（每排 6 片，角度 0°/60°/120°/180°/240°/300°）、中心孔半径 16.5；泵壳——外圆柱半径 90 高 80、两端进流口法兰（半径 30 厚 20，中心 (±50,0)）、内腔半径 65（x=20）差集；泵轴半径 16 长 130 与中心孔间隙配合。',
     checks: [
-      { type: 'featureCount', min: 25, weight: 2 },
+      { type: 'featureCount', min: 25, max: 40, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 8, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 12, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 5, weight: 3 },
@@ -245,7 +245,7 @@ export const TRAIN_TASKS = [
     name: '商用泵·需求驱动设计（3D）',
     prompt: '客户要求一台单级单吸离心泵：流量 Q=100m³/h、扬程 H=32m、转速 n=2900rpm。请先用 pump_sizing 工具计算设计参数，再按参数创建商用级装配模型：泵壳（蜗壳基圆外圆柱 + 偏心内腔差集）、叶轮（轮盘 + 5 片均布叶片 + 轮毂孔差集）、泵轴（与轮毂孔间隙配合）。叶片按公式放置：第 k 片盒体中心 = (65·cos(72°·k), 65·sin(72°·k))，k=0..4（即 (65,0)、(20.1,61.8)、(-52.6,38.2)、(-52.6,-38.2)、(20.1,-61.8)）。',
     checks: [
-      { type: 'featureCount', min: 12, weight: 2 },
+      { type: 'featureCount', min: 12, max: 22, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 5, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
@@ -263,7 +263,7 @@ export const TRAIN_TASKS = [
     name: '两级离心泵（3D）',
     prompt: '请建一台两级离心泵：①第一级泵壳段：外圆柱半径 70 高 50（z=0），偏心内腔半径 45（x=18）差集挖流道；②第二级泵壳段：同样的外圆柱与内腔放在 z=50；③每级一个叶轮：轮盘半径 60 厚 8、中心孔半径 30.5 差集、6 片叶片（盒体）均布半径 35 并集；④一根长轴半径 30 长 200 贯穿两级；⑤两端各一个轴承座：内径面半径 32 高 20（z=-20 与 z=200）。轴、叶轮孔、轴承孔必须同轴且间隙逐级为正。',
     checks: [
-      { type: 'featureCount', min: 25, weight: 2 },
+      { type: 'featureCount', min: 25, max: 40, weight: 2 },
       { type: 'kindCount', kind: 'cylinder', min: 11, weight: 2 },
       { type: 'kindCount', kind: 'box', min: 12, weight: 2 },
       { type: 'kindCount', kind: 'boolean', min: 6, weight: 3 },
