@@ -885,6 +885,7 @@ export default class AIChatPanel {
     let lastSig = null;
     let repeatCount = 0;
     let noChange = 0;
+    let noTextOnly = 0;
     let keyBefore = this._visibleContentKey();
     for (let round = 0; round < roundLimit; round++) {
       this._syncSystemMessage();
@@ -951,6 +952,25 @@ export default class AIChatPanel {
         if (toolCallCount >= callLimit) {
           return { fallback: false, text: await this._finalSummary(toolCallCount, '已达到设置的工具调用总次数上限') };
         }
+        continue;
+      }
+      // 模型没有调用工具：先尝试解析内容里的 CAD JSON 代码块（工具调用粘性差的模型兜底，如 MiniMax M3 偶发只输出文字计划）
+      if (msg.content) {
+        const execResult = await this._executeCodeBlocks(msg.content);
+        if (execResult) {
+          this.messages.push({ role: 'assistant', content: msg.content });
+          this.messages.push({ role: 'user', content: '[执行结果反馈]\n' + execResult });
+          this._addMessage('system', '🔧 模型未调用工具，已按其输出的 CAD 指令执行');
+          noTextOnly = 0;
+          continue;
+        }
+        noTextOnly++;
+        this.messages.push({ role: 'assistant', content: msg.content });
+        if (noTextOnly >= 2) {
+          return { fallback: false, text: msg.content };
+        }
+        // 再给一次机会：明确要求模型调用工具
+        this.messages.push({ role: 'user', content: '[系统提示] 请直接调用工具完成绘图/建模，不要只输出文字说明。' });
         continue;
       }
       const text = msg.content || '';

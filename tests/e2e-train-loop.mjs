@@ -11,27 +11,45 @@ const TASK = process.env.TASK || 'flange2d';
 const ALL = process.env.ALL === '1';
 const FB = process.env.FB === '1';
 const CONT = process.env.CONT === '1';
+const REAL = process.env.REAL === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
 const ok = (msg) => { n++; console.log(`  ✓ ${msg}`); };
 
+const REAL_KEY = process.env.MINIMAX_KEY || '';
+const LONG_WAIT = REAL ? 2700000 : 1500000;
 const browser = await puppeteer.launch({
   executablePath: CHROME,
   headless: true,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--disable-dev-shm-usage'],
   timeout: 60000,
+  protocolTimeout: 1800000,
 });
 
 try {
   // 清空训练日志，只跑 2D 法兰盘 1 轮（skip3d 加速）
   const page = await browser.newPage();
+  page.on('targetcrashed', () => console.log('  [目标崩溃] 页面进程崩溃（疑似 OOM/渲染器挂起）'));
+  page.on('console', (m) => { const t = m.text(); if (t.includes('[训练]') || t.includes('[3d]') || m.type() === 'error') console.log('  [页]', t.slice(0, 200)); });
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
-  await page.goto(`${BASE}/tests/train-loop.html?mock=1${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${CONT ? '&continuous=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
+  if (REAL) {
+    // 真实 MiniMax M3：通过 evaluateOnNewDocument 注入设置（Key 只经环境变量，不落盘）
+    await page.evaluateOnNewDocument((key) => {
+      localStorage.setItem('xbcad:ai-settings', JSON.stringify({
+        base: 'https://api.minimaxi.com', model: 'MiniMax-M3', key,
+        temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false,
+        visionBase: 'https://api.minimaxi.com', visionModel: 'MiniMax-M3', visionKey: key,
+        reviewRounds: 0, deepThink: true, settingsVersion: 2,
+      }));
+    }, REAL_KEY);
+  }
+  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : ''}${CONT ? '&continuous=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
   await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
-  await page.waitForFunction(() => !!window.__aiPanel, { timeout: 30000 });
+  await page.waitForFunction(() => !!window.__aiPanel, { timeout: 60000, polling: 1000 });
+  console.log('  [进度] AI 面板就绪');
   if (!ALL) await page.select('#taskSel', TASK);
   await page.$eval('#rounds', (el) => { el.value = '1'; });
   await page.click('#btnStart');
@@ -41,12 +59,12 @@ try {
     await page.waitForFunction(() => {
       const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
       return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
-    }, { timeout: 1500000 });
+    }, { timeout: LONG_WAIT, polling: 1000 });
   } else {
     // 持续模式永不“完成”：达到轮数后手动停止
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, { timeout: 1500000 });
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, { timeout: LONG_WAIT, polling: 1000 });
     await page.click('#btnStop');
-    await page.waitForFunction(() => document.getElementById('tProg').textContent === '已停止', { timeout: 60000 });
+    await page.waitForFunction(() => document.getElementById('tProg').textContent === '已停止', { timeout: 120000, polling: 1000 });
   }
 
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'));
@@ -66,6 +84,23 @@ try {
     const improved = entries.filter((e) => e.delta > 0).length;
     assert(improved === 11, `全部 11 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
     ok(`全任务训练回归：11/11 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
+  } else if (REAL) {
+    const e = entries[entries.length - 1];
+    console.log(`  真实 MiniMax 训练条目: ${JSON.stringify(e)}`);
+    assert.equal(e.taskId, TASK);
+    assert(e.scoreBefore > 0, `真实模型应画出图（验收 ${e.scoreBefore} 分）`);
+    assert(e.scoreAfter >= e.scoreBefore, `多模态审阅后分数不应降低（${e.scoreBefore}→${e.scoreAfter}）`);
+    assert(e.reviewRounds >= 1, `应至少 1 轮带截图的多模态审阅（实际 ${e.reviewRounds}）`);
+    ok(`真实 MiniMax M3 训练验收：画图 ${e.scoreBefore} 分 → 多模态审阅后 ${e.scoreAfter} 分（${e.reviewRounds} 轮审阅 + ${e.fbRounds} 轮反馈）`);
+    const checks = await page.evaluate(async (taskId) => {
+      const { evaluate } = await import('/training/acceptance.mjs');
+      const { taskById } = await import('/training/tasks.mjs');
+      const task = taskById(taskId);
+      const CAD = window.CAD;
+      const input = task.ws === '2d' ? CAD.scene.all() : { bodies: CAD.app3d?.model?.serialize().bodies || [] };
+      return evaluate(task, input).checks.map((c) => ({ pass: c.pass, detail: c.detail }));
+    }, TASK);
+    for (const c of checks) console.log(`    ${c.pass ? '✓' : '✗'} ${c.detail}`);
   } else if (FB) {
     const e = entries[entries.length - 1];
     console.log(`  训练条目: ${JSON.stringify(e)}`);
@@ -90,7 +125,7 @@ try {
   // 验证统计页能读取同一日志并渲染
   const page2 = await browser.newPage();
   await page2.goto(`${BASE}/tests/train-stats.html`, { waitUntil: 'load', timeout: 60000 });
-  await page2.waitForFunction(() => document.querySelector('#cards .v')?.textContent !== '0' || true, { timeout: 10000 });
+  await page2.waitForFunction(() => document.querySelector('#cards .v')?.textContent !== '0' || true, { timeout: 30000, polling: 1000 });
   const cardText = await page2.evaluate(() => document.getElementById('cards').innerText);
   assert(cardText.includes('总轮数'), '统计页应有指标卡片');
   console.log('  统计页渲染: ' + cardText.replace(/\n/g, ' | ').slice(0, 120));

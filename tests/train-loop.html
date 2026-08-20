@@ -114,7 +114,7 @@ import { promptWithSpecs } from '/training/specs.mjs';
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
-const log = (x) => { results.push(x); out(); };
+const log = (x) => { results.push(x); out(); console.log('[训练]', x); };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const sel = document.getElementById('taskSel');
@@ -125,7 +125,9 @@ document.getElementById('modeTag').textContent = location.search.includes('mock'
 const entries = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
 let stopFlag = false;
 const NO_REVIEW = location.search.includes('noreview');
+const REAL = location.search.includes('real'); // 真实模型：不带 mock 训练标记、放宽完成判定
 const CONTINUOUS = location.search.includes('continuous');
+const FB_MAX = Math.max(0, Math.min(10, parseInt(new URLSearchParams(location.search).get('fbmax') || '3', 10)));
 
 function renderStats() {
   const done = entries.filter((e) => e.reviewOutcome);
@@ -169,11 +171,11 @@ async function runTask(task, round) {
   const panel = window.__aiPanel;
   if (!panel) { log('AI 面板未就绪'); return null; }
   const beforeLen = panel.messages.length;
-  panel.ask(`[训练任务:${task.id}] ${promptWithSpecs(task)}`);
-  const okDraw = await waitSettled(panel, 150000);
+  panel.ask(REAL ? promptWithSpecs(task) : `[训练任务:${task.id}] ${promptWithSpecs(task)}`);
+  const okDraw = await waitSettled(panel, REAL ? 900000 : 150000);
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
-  const drawn = newMsgs().some((m) => m.role === 'assistant' && /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || ''));
+  const drawn = newMsgs().some((m) => m.role === 'assistant' && (REAL ? (m.content || '').length > 0 : /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || '')));
   const inputOf = () => (task.ws === '2d' ? CAD.scene.all() : { bodies: CAD.app3d.model.serialize().bodies });
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
@@ -182,7 +184,7 @@ async function runTask(task, round) {
   let reviewOutcome = '未执行', reviewRounds = 0, scoreAfter = scoreBefore;
   if (okDraw && drawn && !stopFlag && !NO_REVIEW) {
     panel._manualReview();
-    const okReview = await waitSettled(panel, 240000);
+    const okReview = await waitSettled(panel, REAL ? 1200000 : 240000);
     if (stopFlag) return null;
     const msgs = newMsgs();
     reviewRounds = msgs.filter((m) => m.role === 'user' && (
@@ -196,12 +198,12 @@ async function runTask(task, round) {
   }
   // 验收反馈闭环：分数未满 → 把失败明细发给模型修复 → 再验收（最多 3 轮）
   let fbRounds = 0;
-  while (scoreAfter < 100 && fbRounds < 3 && !stopFlag) {
+  while (scoreAfter < 100 && fbRounds < FB_MAX && !stopFlag) {
     const prompt = feedbackPrompt(task, evaluate(task, inputOf()));
     if (!prompt) break;
     fbRounds++;
     panel.ask(prompt);
-    await waitSettled(panel, 150000);
+    await waitSettled(panel, REAL ? 900000 : 150000);
     if (stopFlag) return null;
     scoreAfter = evaluate(task, inputOf()).score;
     log(`🔄 验收反馈第 ${fbRounds} 轮：修复后 ${scoreAfter} 分`);

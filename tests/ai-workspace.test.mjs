@@ -31,6 +31,27 @@ function makePanel(workspace, ai3d) {
 
 console.log('== 工作区工具隔离 ==');
 {
+  // 工具调用缺失的兜底：模型只输出文字时解析其 CAD JSON 代码块（MiniMax M3 偶发不调用工具）
+  const scene = { currentLayer: '0', entities: new Map(), addEntities(list) { for (const e of list) this.entities.set(e.id, e); }, beginUndoGroup() {}, endUndoGroup() {} };
+  const p2 = makePanel('2d', null);
+  p2.scene = scene;
+  const text = '我来画一个圆。\n```json\n{"draw":[{"type":"circle","cx":0,"cy":0,"r":5},{"type":"line","x1":-10,"y1":0,"x2":10,"y2":0}]}\n```';
+  const out = await p2._executeCodeBlocks(text);
+  assert(out && out.includes('已解析并执行'), '应执行代码块中的 CAD 指令');
+  assert.equal(scene.entities.size, 2, '应画出圆和线两个实体');
+  ok('模型纯文字回复时：解析 CAD JSON 代码块兜底执行（2D）');
+}
+{
+  // 3D 兜底：create3d 代码块走 ai3d 工具
+  let created = 0;
+  const ai3d = { create_primitive_3d: () => { created++; return 'ok'; }, list_3d: () => 'list' };
+  const p3 = makePanel('3d', ai3d);
+  const out = await p3._executeCodeBlocks('```json\n{"create3d":[{"kind":"box","dx":10,"dy":10,"dz":10},{"kind":"cylinder","r":5,"h":20}]}\n```');
+  assert(out && out.includes('已解析并执行'));
+  assert.equal(created, 2, '应创建 2 个三维实体');
+  ok('模型纯文字回复时：create3d 代码块兜底执行（3D）');
+}
+{
   const p2 = makePanel('2d', null);
   assert(p2._allTools().length > 10); // 全部 2D 工具
   assert(p2._allTools().every((t) => !/3d/.test(t.function.name)));
