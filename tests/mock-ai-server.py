@@ -199,6 +199,24 @@ def build_stage(stage, messages, has_tools):
             msg = {"role": "assistant", "content": "截图里发现整机缺泵轴，我补上泵轴（Φ60×120，与叶轮孔 Φ61 间隙配合）。",
                    "tool_calls": [tool_call("r-mp1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 30, "h": 120, "color": "#b9a3f0"})]}
             return resp(msg, "tool_calls")
+        if task == "selfprime3d" and not assistant_has(messages, "补上泵轴"):
+            ids = extract_ids(messages)
+            if len(ids) >= 2:
+                msg = {"role": "assistant", "content": "截图里发现自吸泵缺泵轴、储液腔没与泵壳合并，我补上泵轴和并集。",
+                       "tool_calls": [
+                           tool_call("r-sp1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 15.5, "h": 130, "color": "#b9a3f0"}),
+                           tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        if task == "drawingframe2d" and not assistant_has(messages, "补上文字"):
+            msg = {"role": "assistant", "content": "截图里发现标题栏缺文字，我补上文字。",
+                   "tool_calls": [tool_call("r-df1", "draw_entities", {"items": [
+                       {"type": "text", "x": 250, "y": 40, "text": "离心泵总装图", "height": 10},
+                       {"type": "text", "x": 250, "y": 28, "text": "比例 1:2", "height": 7},
+                       {"type": "text", "x": 250, "y": 16, "text": "材料 HT200", "height": 7},
+                       {"type": "text", "x": 330, "y": 8, "text": "图号 XBC-001", "height": 7},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "pumpdrawing2d" and not assistant_has(messages, "补上标注"):
             msg = {"role": "assistant", "content": "截图里发现图纸缺少尺寸标注，我补上标注（补上标注）。",
                    "tool_calls": [tool_call("r-dw1", "draw_entities", {"items": [
@@ -333,6 +351,47 @@ def build_stage(stage, messages, has_tools):
                    ]}
             return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 台阶轴已创建（4 段）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "selfprime3d":
+        if not assistant_has(messages, "自吸泵主体"):
+            blades = []
+            for k in range(5):
+                a = k * 2 * 3.141592653589793 / 5
+                blades.append(tool_call(f"t-sp{k+6}", "create_primitive_3d", {"kind": "box", "x": 50 * math.cos(a), "y": 50 * math.sin(a), "z": 0, "dx": 32, "dy": 6, "dz": 10, "color": "#f2c76e"}))
+            msg = {"role": "assistant", "content": "我先建泵壳、储液腔、内腔、叶轮和 5 片叶片（自吸泵主体，训练剧本：故意漏泵轴与储液腔并集，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-sp1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 90, "h": 60, "color": "#7fb2e8"}),
+                       tool_call("t-sp2", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 30, "z": 0, "r": 55, "h": 40, "color": "#8fd3a8"}),
+                       tool_call("t-sp3", "create_primitive_3d", {"kind": "cylinder", "x": 20, "y": 0, "z": 0, "r": 65, "h": 60, "color": "#e88b8b"}),
+                       tool_call("t-sp4", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 70, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-sp5", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 16, "h": 8, "color": "#e8a07f"}),
+                       *blades,
+                   ]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-sp11", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "自吸泵布尔"):
+            ids = extract_ids(messages)
+            if len(ids) >= 9:
+                msg = {"role": "assistant", "content": "我把内腔、轮毂孔、叶片的布尔都补上（自吸泵布尔）。",
+                       "tool_calls": [
+                           tool_call("t-sp12", "boolean_3d", {"op": "cut", "a": ids[0], "b": [ids[2]]}),
+                           tool_call("t-sp13", "boolean_3d", {"op": "cut", "a": ids[3], "b": [ids[4]]}),
+                           tool_call("t-sp14", "boolean_3d", {"op": "fuse", "a": ids[3], "b": ids[5:10]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "drawingframe2d":
+        if not assistant_has(messages, "图框主体"):
+            msg = {"role": "assistant", "content": "我先画图框和标题栏（图框主体，训练剧本：故意漏标题栏文字，等审阅补上）。",
+                   "tool_calls": [tool_call("t-df1", "draw_entities", {"items": [
+                       {"type": "rectangle", "x1": 0, "y1": 0, "x2": 420, "y2": 297},
+                       {"type": "rectangle", "x1": 240, "y1": 0, "x2": 420, "y2": 56},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 图框与标题栏已绘制完成（文字待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "pumpdrawing2d":
         if not assistant_has(messages, "剖视图主体"):

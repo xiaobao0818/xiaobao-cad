@@ -99,7 +99,7 @@ const TOOLS = [
     type: 'function',
     function: {
       name: 'draw_entities',
-      description: '精确创建 CAD 图元（直线/圆/圆弧/椭圆/多段线/矩形/点/文字）。一次可创建多个，坐标单位为 mm，Y 轴向上。',
+      description: '精确创建 CAD 图元（直线/圆/圆弧/椭圆/多段线/矩形/点/文字/尺寸标注）。一次可创建多个，坐标单位为 mm，Y 轴向上。画工程图纸时必须用尺寸标注标注关键尺寸。',
       parameters: {
         type: 'object',
         properties: {
@@ -110,7 +110,7 @@ const TOOLS = [
               type: 'object',
               description: '单个图元。根据 type 选择对应几何字段。',
               properties: {
-                type: { type: 'string', enum: ['line', 'circle', 'arc', 'ellipse', 'polyline', 'rectangle', 'point', 'text'], description: '图元类型' },
+                type: { type: 'string', enum: ['line', 'circle', 'arc', 'ellipse', 'polyline', 'rectangle', 'point', 'text', 'dimension'], description: '图元类型（dimension=尺寸标注）' },
                 layer: { type: 'string', description: '所属图层名称，缺省使用当前图层' },
                 color: { type: 'string', description: '颜色，形如 #rrggbb，缺省随层' },
                 x1: { type: 'number', description: '直线起点 X；矩形第一角 X' },
@@ -132,6 +132,14 @@ const TOOLS = [
                 text: { type: 'string', description: '文字内容（支持中文）' },
                 height: { type: 'number', description: '文字字高' },
                 halign: { type: 'string', enum: ['left', 'center', 'right'], description: '文字水平对齐方式（可选）' },
+                subtype: { type: 'string', enum: ['linear', 'aligned', 'radial', 'diametric'], description: '尺寸标注类型（type=dimension 时必填）' },
+                px: { type: 'number', description: '半径/直径标注的标注点 X（圆上一点）' },
+                py: { type: 'number', description: '半径/直径标注的标注点 Y' },
+                tx: { type: 'number', description: '标注文字位置 X（可选）' },
+                ty: { type: 'number', description: '标注文字位置 Y（可选）' },
+                x3: { type: 'number', description: '线性标注的标注线位置 X（与 x1,x2 配合）' },
+                y3: { type: 'number', description: '线性标注的标注线位置 Y（与 y1,y2 配合）' },
+                angle: { type: 'number', description: '线性标注方向角（度，可选，0=水平）' },
               },
               required: ['type'],
             },

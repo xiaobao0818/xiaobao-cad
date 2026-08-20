@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 13, '任务库应含基础 4 + 水泵 9 个任务');
-  ok('训练任务库 13 个任务（含水泵组件 9 个）');
+  assert.equal(TRAIN_TASKS.length, 15, '任务库应含基础 4 + 水泵 11 个任务');
+  ok('训练任务库 15 个任务（含水泵组件 11 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -490,6 +490,45 @@ function goodFlange2d() {
   assert(searchKnowledge('自吸')[0].title.includes('自吸'), '自吸泵文档可检索');
   assert(searchKnowledge('口环 材料')[0].source === '材料', '口环材料可检索');
   ok('知识库扩充：双吸/自吸/多级泵 + 口环/轴套材料');
+}
+
+{
+  // 图框/标题栏任务
+  const task = taskById('drawingframe2d');
+  const ents = [
+    { id: 'f1', type: 'polyline', closed: true, points: [P(0, 0), P(420, 0), P(420, 297), P(0, 297)] },
+    { id: 'f2', type: 'polyline', closed: true, points: [P(240, 0), P(420, 0), P(420, 56), P(240, 56)] },
+    { id: 't1', type: 'text', x: 250, y: 40, text: '离心泵总装图', height: 10 },
+    { id: 't2', type: 'text', x: 250, y: 28, text: '比例 1:2', height: 7 },
+    { id: 't3', type: 'text', x: 250, y: 16, text: '材料 HT200', height: 7 },
+    { id: 't4', type: 'text', x: 330, y: 8, text: '图号 XBC-001', height: 7 },
+  ];
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `图框任务应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noTitle = evaluate(task, ents.filter((e) => e.id !== 'f2'));
+  assert(noTitle.score < 80, `缺标题栏应扣分（实际 ${noTitle.score}）`);
+  ok(`图框·标题栏任务（完整 100 / 缺标题栏 ${noTitle.score}）`);
+}
+{
+  // 自吸泵任务
+  const task = taskById('selfprime3d');
+  const cy = (id, r, h, x = 0, y = 0) => ({ id, kind: 'cylinder', params: { x, y, r, h } });
+  const bodies = [cy('outer', 90, 60), cy('tank', 55, 40, 0, 30), cy('cav', 65, 60, 20), cy('disk', 70, 8), cy('bore', 16, 8), cy('shaft', 15.5, 130)];
+  for (let k = 0; k < 5; k++) {
+    const a = (k * 2 * Math.PI) / 5;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 50 * Math.cos(a), y: 50 * Math.sin(a), dx: 32, dy: 6, dz: 10 } });
+  }
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'fuse', a: 'outer', b: ['tank'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+    { id: 'b3', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['bore'] } },
+    { id: 'b4', kind: 'boolean', params: { op: 'fuse', a: 'disk', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4'] } },
+  );
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `自吸泵好模型应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
+  assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
+  ok(`自吸泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

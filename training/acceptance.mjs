@@ -99,6 +99,16 @@ function check2d(check, ents) {
       const pass = approx(w, check.w, check.tol) && approx(h, check.h, check.tol);
       return { pass, detail: `闭合轮廓 ${w.toFixed(1)}×${h.toFixed(1)}（期望 ${check.w}×${check.h} ±${check.tol}）` };
     }
+    case 'polylineBboxAt': {
+      // 指定位置的闭合轮廓（图框/标题栏）：任一闭合多段线 bbox ≈ [x1,y1,x2,y2]
+      const pl = pick('polyline').find((e) => e.closed && (() => {
+        const bb = bboxOf([e]);
+        if (!bb) return false;
+        return approx(bb[0], check.x1, check.tol) && approx(bb[1], check.y1, check.tol) &&
+               approx(bb[2], check.x2, check.tol) && approx(bb[3], check.y2, check.tol);
+      })());
+      return { pass: !!pl, detail: `闭合轮廓 @(${check.x1},${check.y1})-(${check.x2},${check.y2}) ±${check.tol}${pl ? ' ✓' : ' ✗（图框/标题栏缺失或尺寸不符）'}` };
+    }
     case 'dimensionCount': {
       // 图纸验收：尺寸标注数量（商用图纸必须带标注）
       const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);
