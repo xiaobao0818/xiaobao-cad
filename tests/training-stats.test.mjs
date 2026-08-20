@@ -1,6 +1,7 @@
 /* 小宝CAD 训练日志统计分析测试（node tests/training-stats.test.mjs） */
 import { strict as assert } from 'node:assert';
 import { summarize, qualityTrend, recentScore } from '../training/stats.mjs';
+import { entriesToMarkdown } from '../training/report.mjs';
 import { logEntry } from '../training/acceptance.mjs';
 
 let n = 0;
@@ -50,6 +51,18 @@ const entries = [
   const s2 = summarize(null);
   assert.equal(s2.rounds, 0);
   ok('空/空值日志防御');
+}
+
+{
+  const md = entriesToMarkdown(entries);
+  assert(md.startsWith('# 小宝CAD 画图训练报告'), '报告应有标题');
+  assert(md.includes('## 按任务'), '应有按任务章节');
+  assert(md.includes('## 最近轮次明细'), '应有明细章节');
+  assert(md.includes('微型泵整机'), '应包含任务名');
+  assert(md.includes('78') && md.includes('98'), '应包含整体均分');
+  const empty = entriesToMarkdown([]);
+  assert(empty.includes('总轮数：0'), '空日志不崩溃');
+  ok('Markdown 训练报告生成');
 }
 
 console.log(`全部通过：${n} 项`);

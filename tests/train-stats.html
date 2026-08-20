@@ -34,9 +34,11 @@
 <button id="btnLocal">📥 读取浏览器训练日志</button>
 <button id="btnLoad" class="ghost">📄 解析粘贴的 JSON</button>
 <button id="btnDemo" class="ghost">🧪 载入演示数据</button>
+<button id="btnReport">📄 导出 Markdown 训练报告</button>
 
 <script type="module">
 import { summarize, qualityTrend, recentScore } from '/training/stats.mjs';
+import { entriesToMarkdown } from '/training/report.mjs';
 
 let entries = [];
 function render() {
@@ -77,6 +79,15 @@ document.getElementById('btnDemo').addEventListener('click', () => {
     { ts: 5000, taskId: 'minipump3d', taskName: '微型泵整机', round: 2, ws: '3d', scoreBefore: 83, scoreAfter: 91, reviewOutcome: '审阅完成', reviewRounds: 1 },
   ];
   render();
+});
+document.getElementById('btnReport').addEventListener('click', () => {
+  const md = entriesToMarkdown(entries);
+  const blob = new Blob([md], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `xbcad-training-report-${new Date().toISOString().replace(/[:.]/g, '-')}.md`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
 });
 document.getElementById('btnLocal').click();
 </script>
