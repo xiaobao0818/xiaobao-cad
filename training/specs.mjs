@@ -53,6 +53,7 @@ const TASK_SPECS = {
   drawingframe2d: ['assembly'],
   threeview2d: ['assembly', 'casing'],
   doublesuction3d: ['impeller', 'casing', 'assembly'],
+  bom2d: ['assembly', '标准'],
 };
 
 /** 任务对应的规范条目（去重） */

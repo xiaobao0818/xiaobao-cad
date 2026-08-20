@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 17, '任务库应含基础 4 + 水泵 13 个任务');
-  ok('训练任务库 17 个任务（含水泵组件 13 个）');
+  assert.equal(TRAIN_TASKS.length, 18, '任务库应含基础 4 + 水泵 14 个任务');
+  ok('训练任务库 18 个任务（含水泵组件 14 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -575,6 +575,29 @@ function goodFlange2d() {
   const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
   assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
   ok(`双吸泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
+}
+
+{
+  // 明细栏 BOM 任务
+  const task = taskById('bom2d');
+  const ents = [];
+  for (let k = 0; k < 6; k++) {
+    const y1 = -12 * k;
+    ents.push({ id: `r${k}`, type: 'polyline', closed: true, points: [P(0, y1 - 12), P(180, y1 - 12), P(180, y1), P(0, y1)] });
+  }
+  ents.push(
+    { id: 't1', type: 'text', x: 6, y: -6, text: '序号 名称 数量 材料 备注', height: 6 },
+    { id: 't2', type: 'text', x: 6, y: -20, text: '1 泵壳 1 HT200', height: 5 },
+    { id: 't3', type: 'text', x: 6, y: -34, text: '2 叶轮 1 ZG1Cr18Ni9Ti', height: 5 },
+    { id: 't4', type: 'text', x: 6, y: -48, text: '3 泵轴 1 2Cr13', height: 5 },
+    { id: 't5', type: 'text', x: 6, y: -62, text: '4 轴承 2 6206', height: 5 },
+    { id: 't6', type: 'text', x: 6, y: -76, text: '5 机械密封 1 SiC-石墨', height: 5 },
+  );
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `明细栏应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noText = evaluate(task, ents.filter((e) => e.type !== 'text'));
+  assert(noText.score < 70, `缺文字应扣分（实际 ${noText.score}）`);
+  ok(`明细栏任务（完整 100 / 缺文字 ${noText.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

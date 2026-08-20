@@ -208,6 +208,17 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "bom2d" and not assistant_has(messages, "补上明细文字"):
+            msg = {"role": "assistant", "content": "截图里发现明细栏缺文字，我补上明细文字。",
+                   "tool_calls": [tool_call("r-bm1", "draw_entities", {"items": [
+                       {"type": "text", "x": 6, "y": -6, "text": "序号 名称 数量 材料 备注", "height": 6},
+                       {"type": "text", "x": 6, "y": -20, "text": "1 泵壳 1 HT200", "height": 5},
+                       {"type": "text", "x": 6, "y": -34, "text": "2 叶轮 1 ZG1Cr18Ni9Ti", "height": 5},
+                       {"type": "text", "x": 6, "y": -48, "text": "3 泵轴 1 2Cr13", "height": 5},
+                       {"type": "text", "x": 6, "y": -62, "text": "4 轴承 2 6206", "height": 5},
+                       {"type": "text", "x": 6, "y": -76, "text": "5 机械密封 1 SiC-石墨", "height": 5},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "doublesuction3d" and not assistant_has(messages, "补上泵轴"):
             msg = {"role": "assistant", "content": "截图里发现双吸泵缺泵轴，我补上泵轴（r16×130）。",
                    "tool_calls": [tool_call("r-ds1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 16, "h": 130, "color": "#b9a3f0"})]}
@@ -395,6 +406,17 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "bom2d":
+        if not assistant_has(messages, "明细栏主体"):
+            rows = []
+            for k in range(6):
+                y1 = -12 * k
+                rows.append({"type": "rectangle", "x1": 0, "y1": y1 - 12, "x2": 180, "y2": y1})
+            msg = {"role": "assistant", "content": "我先画明细栏表格 6 行（明细栏主体，训练剧本：故意漏文字，等审阅补上）。",
+                   "tool_calls": [tool_call("t-bm1", "draw_entities", {"items": rows})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 明细栏已绘制完成（表格，文字待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "doublesuction3d":
         if not assistant_has(messages, "双吸主体"):

@@ -86,12 +86,12 @@ try {
   } else if (ALL) {
     console.log(`  全任务回归：${entries.length} 轮`);
     const tasks = new Set(entries.map((e) => e.taskId));
-    assert.equal(tasks.size, 11, `应覆盖全部 11 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
+    assert.equal(tasks.size, 18, `应覆盖全部 18 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
     assert(entries.every((e) => e.scoreAfter === 100), `mock 剧本审阅修复后每个任务都应到 100 分：${entries.filter((e) => e.scoreAfter !== 100).map((e) => e.taskId).join(',')}`);
     assert(entries.every((e) => e.delta >= 0), '审阅不应降低分数');
     const improved = entries.filter((e) => e.delta > 0).length;
-    assert(improved === 11, `全部 11 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
-    ok(`全任务训练回归：11/11 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
+    assert(improved === 18, `全部 18 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
+    ok(`全任务训练回归：18/18 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
   } else if (REAL) {
     const e = entries[entries.length - 1];
     console.log(`  真实 MiniMax 训练条目: ${JSON.stringify(e)}`);
