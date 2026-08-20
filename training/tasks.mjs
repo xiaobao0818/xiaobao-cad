@@ -181,6 +181,20 @@ export const TRAIN_TASKS = [
     ],
   },
   {
+    id: 'threeview2d',
+    ws: '2d',
+    name: '泵装配三视图（2D）',
+    prompt: '请画离心泵装配三视图（商用图纸标准布局）：①主视图（x∈[0,100] 且 y∈[100,250] 区域）：泵壳外圆 r45、轮毂圆 r10、轴圆 r8（圆心均在 (50,175)）；②俯视图（x∈[0,100] 且 y∈[-120,30] 区域）：泵体矩形轮廓 90×80（左下 (5,-110)）与竖直中心线；③侧视图（x∈[120,220] 且 y∈[100,250] 区域）：外轮廓矩形 80×80（左下 (130,145)）与叶轮圆 r30（圆心 (170,185)）。',
+    checks: [
+      { type: 'countInBand', kind: 'circle', x1: 0, y1: 100, x2: 100, y2: 250, min: 3, weight: 4 },
+      { type: 'countInBand', kind: 'polyline', x1: 0, y1: -120, x2: 100, y2: 30, min: 1, weight: 3 },
+      { type: 'countInBand', kind: 'polyline', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 3 },
+      { type: 'countInBand', kind: 'circle', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 3 },
+      { type: 'count', kind: 'circle', min: 4, weight: 2 },
+      { type: 'linesThrough', cx: 50, cy: -70, min: 1, tol: 2, weight: 2 },
+    ],
+  },
+  {
     id: 'pumpdrawing2d',
     ws: '2d',
     name: '水泵总装剖视图·图纸（2D）',

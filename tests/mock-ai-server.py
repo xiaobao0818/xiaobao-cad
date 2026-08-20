@@ -208,6 +208,15 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "threeview2d" and not assistant_has(messages, "补上俯侧视图"):
+            msg = {"role": "assistant", "content": "截图里发现缺少俯视图轮廓和侧视图叶轮圆，我补上俯侧视图。",
+                   "tool_calls": [tool_call("r-tv1", "draw_entities", {"items": [
+                       {"type": "rectangle", "x1": 5, "y1": -110, "x2": 95, "y2": -30},
+                       {"type": "line", "x1": 50, "y1": -115, "x2": 50, "y2": -25, "layer": "中心线"},
+                       {"type": "rectangle", "x1": 130, "y1": 145, "x2": 210, "y2": 225},
+                       {"type": "circle", "cx": 170, "cy": 185, "r": 30},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "drawingframe2d" and not assistant_has(messages, "补上文字"):
             msg = {"role": "assistant", "content": "截图里发现标题栏缺文字，我补上文字。",
                    "tool_calls": [tool_call("r-df1", "draw_entities", {"items": [
@@ -382,6 +391,17 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "threeview2d":
+        if not assistant_has(messages, "三视图主体"):
+            msg = {"role": "assistant", "content": "我先画主视图的三个圆（三视图主体，训练剧本：故意漏俯视图轮廓与侧视图叶轮圆，等审阅补上）。",
+                   "tool_calls": [tool_call("t-tv1", "draw_entities", {"items": [
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 45},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 10},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 8},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 三视图已绘制完成（主视图，俯侧视图待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "drawingframe2d":
         if not assistant_has(messages, "图框主体"):

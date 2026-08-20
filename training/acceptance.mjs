@@ -109,6 +109,23 @@ function check2d(check, ents) {
       })());
       return { pass: !!pl, detail: `闭合轮廓 @(${check.x1},${check.y1})-(${check.x2},${check.y2}) ±${check.tol}${pl ? ' ✓' : ' ✗（图框/标题栏缺失或尺寸不符）'}` };
     }
+    case 'countInBand': {
+      // 区域统计（三视图布局验收）：指定区域内某类实体数量
+      const posOf = (e) => {
+        if (e.type === 'polyline' && Array.isArray(e.points) && e.points.length) {
+          let sx = 0, sy = 0;
+          for (const p of e.points) { sx += p.x; sy += p.y; }
+          return { x: sx / e.points.length, y: sy / e.points.length };
+        }
+        return { x: e.cx ?? e.x ?? (e.x1 ?? 0), y: e.cy ?? e.y ?? (e.y1 ?? 0) };
+      };
+      const ents = pick(check.kind).filter((e) => {
+        const { x, y } = posOf(e);
+        return x >= check.x1 - 1 && x <= check.x2 + 1 && y >= check.y1 - 1 && y <= check.y2 + 1;
+      });
+      const pass = ents.length >= (check.min ?? 1);
+      return { pass, detail: `${check.kind} 在区域(${check.x1},${check.y1})-(${check.x2},${check.y2})：${ents.length}（期望≥${check.min ?? 1}）` };
+    }
     case 'dimensionCount': {
       // 图纸验收：尺寸标注数量（商用图纸必须带标注）
       const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);

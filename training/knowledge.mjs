@@ -23,6 +23,7 @@ const TASK_TOPICS = {
   pumpduty3d: ['比转速', '叶轮', '蜗壳', '材料'],
   selfprime3d: ['自吸', '叶轮', '密封'],
   drawingframe2d: ['标准', '材料'],
+  threeview2d: ['标准', '蜗壳'],
 };
 
 /** 历史失败明细 → 知识库补救提醒（薄弱点自动关联知识条目） */

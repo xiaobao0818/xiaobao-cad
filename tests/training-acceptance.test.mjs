@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 15, '任务库应含基础 4 + 水泵 11 个任务');
-  ok('训练任务库 15 个任务（含水泵组件 11 个）');
+  assert.equal(TRAIN_TASKS.length, 16, '任务库应含基础 4 + 水泵 12 个任务');
+  ok('训练任务库 16 个任务（含水泵组件 12 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -529,6 +529,25 @@ function goodFlange2d() {
   const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
   assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
   ok(`自吸泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
+}
+
+{
+  // 三视图任务：区域统计验收
+  const task = taskById('threeview2d');
+  const ents = [
+    { id: 'c1', type: 'circle', cx: 50, cy: 175, r: 45 },
+    { id: 'c2', type: 'circle', cx: 50, cy: 175, r: 10 },
+    { id: 'c3', type: 'circle', cx: 50, cy: 175, r: 8 },
+    { id: 'p1', type: 'polyline', closed: true, points: [P(5, -110), P(95, -110), P(95, -30), P(5, -30)] },
+    { id: 'l1', type: 'line', x1: 50, y1: -115, x2: 50, y2: -25 },
+    { id: 'p2', type: 'polyline', closed: true, points: [P(130, 145), P(210, 145), P(210, 225), P(130, 225)] },
+    { id: 'c4', type: 'circle', cx: 170, cy: 185, r: 30 },
+  ];
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `三视图应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const missing = evaluate(task, ents.filter((e) => e.id !== 'c4'));
+  assert(missing.score < 90, `缺侧视图叶轮圆应扣分（实际 ${missing.score}）`);
+  ok(`三视图任务（完整 100 / 缺侧视图圆 ${missing.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

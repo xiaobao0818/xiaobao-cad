@@ -191,6 +191,17 @@ async function runTask(task, round) {
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
 
   // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
+  // 质量回退保护：审阅/反馈可能把好模型改差，先存快照，最终分数低于审阅前则回滚
+  const snapOf = () => (task.ws === '2d'
+    ? JSON.stringify(CAD.scene.serialize())
+    : JSON.stringify(CAD.app3d.model.serialize()));
+  const restoreSnap = (snap) => {
+    if (task.ws === '2d') {
+      const s2 = JSON.parse(snap);
+      s2.entities = (s2.entities || []).map((e) => ({ ...e, id: e.id || Math.random().toString(36).slice(2) }));
+      CAD.app.loadScene(new CAD.scene.constructor ? (() => { const { Scene: Sc } = window.__xbcadSceneModule || {}; return null; })() : null);
+    }
+  };
   let reviewOutcome = '未执行', reviewRounds = 0, scoreAfter = scoreBefore;
   if (okDraw && drawn && !stopFlag && !NO_REVIEW) {
     panel._manualReview();
@@ -218,12 +229,31 @@ async function runTask(task, round) {
     scoreAfter = evaluate(task, inputOf()).score;
     log(`🔄 验收反馈第 ${fbRounds} 轮：修复后 ${scoreAfter} 分`);
   }
+  let note = drawn ? '' : '绘制未完成';
+  // 回退保护：审阅+反馈后分数不升反降 → 恢复审阅前快照（保证训练单调不降）
+  if (scoreAfter < scoreBefore) {
+    try {
+      if (task.ws === '2d') {
+        const s2 = JSON.parse(snapBefore);
+        CAD.app.loadScene(Scene.load(s2));
+      } else {
+        CAD.app3d.model.load(JSON.parse(snapBefore));
+        CAD.app3d.refresh(true);
+      }
+      scoreAfter = evaluate(task, inputOf()).score;
+      note = '↩️ 审阅导致分数下降（' + scoreBefore + '→' + scoreAfter + ' 前），已回滚到审阅前快照';
+      log(note + '，恢复后 ' + scoreAfter + ' 分');
+    } catch (e) {
+      note = '审阅回滚失败: ' + (e?.message || e);
+      log('⚠️ ' + note);
+    }
+  }
   const finalEval = evaluate(task, inputOf());
   const fails = finalEval.checks.filter((c) => !c.pass).map((c) => c.detail);
   return logEntry({
     taskId: task.id, taskName: task.name, round, ws: task.ws,
     scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds, fails,
-    note: drawn ? '' : '绘制未完成',
+    note,
   });
 }
 
