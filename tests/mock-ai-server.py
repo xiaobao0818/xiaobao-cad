@@ -125,7 +125,7 @@ def training_task(messages):
         return m.group(1)
     a = last_plain_ask(messages) or ""
     # 自然语言工况需求识别：提到流量+扬程/转速 → 裸对话商用泵任务（可训练）
-    if "流量" in a and ("扬程" in a or "rpm" in a or "转速" in a) and "泵" in a:
+    if ("流量" in a or re.search(r"Q\s*=", a)) and ("扬程" in a or re.search(r"H\s*=", a) or "rpm" in a or "转速" in a) and "泵" in a:
         return "conversation3d"
     # 图纸请求识别：提到图纸+剖视/三视图/总装 → 图纸集任务
     if "图纸" in a and ("剖视" in a or "三视图" in a or "总装" in a or "出图" in a) and "泵" in a:

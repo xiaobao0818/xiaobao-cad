@@ -585,5 +585,20 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787253181034,
+    "taskId": "drawingchain2d",
+    "taskName": "泵总装图纸集（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
   }
 ]

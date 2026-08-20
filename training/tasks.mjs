@@ -211,7 +211,9 @@ export const TRAIN_TASKS = [
       { type: 'countInBand', kind: 'circle', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 2 },
       { type: 'dimensionCount', min: 3, weight: 3 },
       { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
-      { type: 'count', kind: 'text', min: 8, weight: 3 },
+      { type: 'count', kind: 'text', min: 8, max: 60, weight: 3 },
+      { type: 'count', kind: 'polyline', min: 4, max: 30, weight: 2 },
+      { type: 'count', kind: 'circle', min: 4, max: 40, weight: 2 },
     ],
   },
   {

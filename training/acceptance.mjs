@@ -69,7 +69,8 @@ function check2d(check, ents) {
     case 'count': {
       const n = pick(check.kind).length;
       const pass = n >= (check.min ?? 0) && n <= (check.max ?? Infinity);
-      return { pass, detail: `${check.kind} 数量=${n}（期望≥${check.min}${check.max != null ? ` 且≤${check.max}` : ''}）` };
+      const range = check.max == null ? `≥${check.min ?? 0}` : `${check.min ?? 0}~${check.max}`;
+      return { pass, detail: `${check.kind} 数量=${n}（期望 ${range}${n > check.max ? '，冗余，请删除多余实体' : ''}）` };
     }
     case 'circleAt': {
       const found = pick('circle').find((e) => approx(e.r, check.r, check.tol) && dist(e.cx, e.cy, check.cx, check.cy) <= check.tol);
@@ -363,6 +364,7 @@ export function feedbackPrompt(task, result) {
   if (over) {
     const fc = (task.checks || []).find((c) => c.type === 'featureCount');
     if (fc?.max) hints.push(`特征总数应 ≤${fc.max}（当前超出）。请删除任务要求之外的冗余零件（重复/多余的圆柱、盒体），只保留任务清单中的零件。`);
+    else hints.push('实体数量超出要求（冗余）。请删除重复/多余的实体，只保留任务清单中的图元（按任务描述的数量和位置）。');
   }
   const guide = hints.length ? `\n【修复指引】${hints.join('；')}` : '';
   return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${guide}`;
