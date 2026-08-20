@@ -1,6 +1,6 @@
 /* 小宝CAD 训练日志统计分析测试（node tests/training-stats.test.mjs） */
 import { strict as assert } from 'node:assert';
-import { summarize, qualityTrend, recentScore, convergence } from '../training/stats.mjs';
+import { summarize, qualityTrend, recentScore, convergence, firstAttemptTrend } from '../training/stats.mjs';
 import { entriesToMarkdown } from '../training/report.mjs';
 import { logEntry } from '../training/acceptance.mjs';
 
@@ -81,6 +81,15 @@ const entries = [
   const single = convergence(entries, { taskId: 'minipump3d' });
   assert.equal(single.taskId, 'minipump3d');
   ok('收敛趋势：轮次×首绘/收敛分数曲线');
+}
+
+{
+  const t = firstAttemptTrend(entries);
+  assert.equal(t.length, 4);
+  assert(t.every((p) => p.avg5 >= 0), '滑动平均应非负');
+  const rising = firstAttemptTrend([...entries, logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 3, ws: '2d', scoreBefore: 96, scoreAfter: 100, reviewOutcome: '已满意' })]);
+  assert(rising[4].avg5 >= rising[0].avg5, '训练越多首绘趋势应上升（或不降）');
+  ok('首绘质量趋势：滑动平均随训练轮次上升');
 }
 
 console.log(`全部通过：${n} 项`);

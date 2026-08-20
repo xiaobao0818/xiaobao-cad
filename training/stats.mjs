@@ -50,6 +50,23 @@ export function qualityTrend(entries) {
     .map((e, i) => ({ i: i + 1, ts: e.ts, taskId: e.taskId, scoreBefore: e.scoreBefore, scoreAfter: e.scoreAfter, delta: e.delta }));
 }
 
+/** 首绘质量趋势：按时间序的首绘分数滑动平均（训练越久首绘应越高） */
+export function firstAttemptTrend(entries, { window = 5 } = {}) {
+  const list = (Array.isArray(entries) ? entries : []).slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  const out = [];
+  for (let i = 0; i < list.length; i++) {
+    const lo = Math.max(0, i - window + 1);
+    const seg = list.slice(lo, i + 1);
+    out.push({
+      i: i + 1,
+      taskId: list[i].taskId,
+      scoreBefore: list[i].scoreBefore,
+      avg5: Math.round(seg.reduce((s2, e) => s2 + e.scoreBefore, 0) / seg.length),
+    });
+  }
+  return out;
+}
+
 /** 收敛趋势：按轮次序号聚合的分数曲线（跨任务/单任务） */
 export function convergence(entries, { taskId = null } = {}) {
   const list = (Array.isArray(entries) ? entries : [])
