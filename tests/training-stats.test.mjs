@@ -1,6 +1,6 @@
 /* 小宝CAD 训练日志统计分析测试（node tests/training-stats.test.mjs） */
 import { strict as assert } from 'node:assert';
-import { summarize, qualityTrend, recentScore } from '../training/stats.mjs';
+import { summarize, qualityTrend, recentScore, convergence } from '../training/stats.mjs';
 import { entriesToMarkdown } from '../training/report.mjs';
 import { logEntry } from '../training/acceptance.mjs';
 
@@ -71,6 +71,16 @@ const entries = [
   const md = entriesToMarkdown(rows);
   assert(md.includes('知识库提醒') || md.includes('叶片'), '报告薄弱点应联动知识库条目');
   ok('报告薄弱点自动关联知识库建议');
+}
+
+{
+  const c = convergence(entries);
+  assert.equal(c.rounds, 4);
+  assert(c.curve.length >= 1, '应有收敛曲线');
+  assert(c.curve[0].firstAttempt > 0 && c.curve[0].converged >= c.curve[0].firstAttempt, '收敛后分数应≥首绘');
+  const single = convergence(entries, { taskId: 'minipump3d' });
+  assert.equal(single.taskId, 'minipump3d');
+  ok('收敛趋势：轮次×首绘/收敛分数曲线');
 }
 
 console.log(`全部通过：${n} 项`);

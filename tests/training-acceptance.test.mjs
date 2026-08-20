@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 20, '任务库应含基础 4 + 水泵 16 个任务');
-  ok('训练任务库 20 个任务（含水泵组件 16 个）');
+  assert.equal(TRAIN_TASKS.length, 21, '任务库应含基础 4 + 水泵 17 个任务');
+  ok('训练任务库 21 个任务（含水泵组件 17 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -655,6 +655,30 @@ function goodFlange2d() {
   const noDim = evaluate(task, ents.filter((e) => e.type !== 'dimension'));
   assert(noDim.score < 85, `缺标注应扣分（实际 ${noDim.score}）`);
   ok(`图纸集任务（完整 100 / 缺标注 ${noDim.score}）`);
+}
+
+{
+  // 轴流泵任务
+  const task = taskById('axialflow3d');
+  const cy = (id, r, h, z = 0) => ({ id, kind: 'cylinder', params: { x: 0, y: 0, z, r, h } });
+  const bodies = [cy('outer', 110, 120), cy('hub', 60, 40, 60), cy('shaft', 20, 160)];
+  for (let k = 0; k < 6; k++) {
+    const a = (k * Math.PI) / 3;
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 85 * Math.cos(a), y: 85 * Math.sin(a), z: 60, dx: 90, dy: 8, dz: 50 } });
+  }
+  for (let k = 0; k < 4; k++) {
+    const a = (k * Math.PI) / 2 + 0.3927;
+    bodies.push({ id: `gd${k}`, kind: 'box', params: { x: 95 * Math.cos(a), y: 95 * Math.sin(a), z: 30, dx: 40, dy: 6, dz: 30 } });
+  }
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'fuse', a: 'hub', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4', 'bl5'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'fuse', a: 'outer', b: ['gd0', 'gd1', 'gd2', 'gd3'] } },
+  );
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `轴流泵应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
+  assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
+  ok(`轴流泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

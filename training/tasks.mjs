@@ -198,6 +198,22 @@ export const TRAIN_TASKS = [
     ],
   },
   {
+    id: 'axialflow3d',
+    ws: '3d',
+    name: '轴流泵（3D）',
+    prompt: '请建一台轴流泵（高比转速，ns>300）：泵壳圆柱半径 110 高 120；轮毂圆柱半径 60 高 40（中心 z=60）；6 片叶片（盒体约 90×8×50）均布半径 85（第 k 片中心 = (85·cos(60°·k), 85·sin(60°·k))，z=60）；导叶 4 片（盒体）均布半径 95（z=30）；泵轴半径 20 长 160 穿过轮毂。',
+    checks: [
+      { type: 'featureCount', min: 12, max: 26, weight: 2 },
+      { type: 'kindCount', kind: 'cylinder', min: 3, weight: 2 },
+      { type: 'kindCount', kind: 'box', min: 10, weight: 3 },
+      { type: 'kindCount', kind: 'boolean', min: 2, weight: 2 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 110, tol: 2, minCount: 1, weight: 2 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 60, tol: 2, minCount: 1, weight: 2 },
+      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 85, tol: 2, minCount: 6, weight: 3 },
+      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 2, weight: 3 },
+    ],
+  },
+  {
     id: 'drawingchain2d',
     ws: '2d',
     name: '泵总装图纸集（2D）',

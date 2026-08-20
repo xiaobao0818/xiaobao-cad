@@ -28,6 +28,7 @@ const TASK_TOPICS = {
   doublesuction3d: ['双吸', '叶轮', '配合'],
   bom2d: ['标准', '材料'],
   drawingchain2d: ['标准', '材料', '密封'],
+  axialflow3d: ['轴流', '叶片', '材料'],
 };
 
 /** 历史失败明细 → 知识库补救提醒（薄弱点自动关联知识条目） */

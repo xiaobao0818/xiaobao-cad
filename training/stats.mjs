@@ -50,6 +50,25 @@ export function qualityTrend(entries) {
     .map((e, i) => ({ i: i + 1, ts: e.ts, taskId: e.taskId, scoreBefore: e.scoreBefore, scoreAfter: e.scoreAfter, delta: e.delta }));
 }
 
+/** 收敛趋势：按轮次序号聚合的分数曲线（跨任务/单任务） */
+export function convergence(entries, { taskId = null } = {}) {
+  const list = (Array.isArray(entries) ? entries : [])
+    .filter((e) => !taskId || e.taskId === taskId)
+    .sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  const byRound = new Map();
+  for (const e of list) {
+    if (!byRound.has(e.round)) byRound.set(e.round, []);
+    byRound.get(e.round).push(e);
+  }
+  const curve = [...byRound.entries()].sort((a, b) => a[0] - b[0]).map(([round, es]) => ({
+    round,
+    rounds: es.length,
+    firstAttempt: Math.round(es.reduce((s2, e) => s2 + e.scoreBefore, 0) / es.length),
+    converged: Math.round(es.reduce((s2, e) => s2 + e.scoreAfter, 0) / es.length),
+  }));
+  return { taskId: taskId || 'all', rounds: list.length, curve };
+}
+
 /** 训练目标达成度：近期 N 轮平均验收分（≥90 视为“已学会该任务”） */
 export function recentScore(entries, n = 10) {
   const list = (Array.isArray(entries) ? entries : []).slice(-n);

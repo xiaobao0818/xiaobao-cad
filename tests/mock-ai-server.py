@@ -217,6 +217,10 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "axialflow3d" and not assistant_has(messages, "补上泵轴"):
+            msg = {"role": "assistant", "content": "截图里发现轴流泵缺泵轴，我补上泵轴（r20×160）。",
+                   "tool_calls": [tool_call("r-ax1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 20, "h": 160, "color": "#b9a3f0"})]}
+            return resp(msg, "tool_calls")
         if task == "drawingchain2d" and not assistant_has(messages, "补上标注文字"):
             msg = {"role": "assistant", "content": "截图里发现图纸集缺标注与标题栏/BOM 文字，我补上标注文字。",
                    "tool_calls": [tool_call("r-dc1", "draw_entities", {"items": [
@@ -432,6 +436,37 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "axialflow3d":
+        if not assistant_has(messages, "轴流主体"):
+            blades = []
+            for k in range(6):
+                a = k * 3.141592653589793 / 3
+                blades.append(tool_call(f"t-ax{k+6}", "create_primitive_3d", {"kind": "box", "x": 85 * math.cos(a), "y": 85 * math.sin(a), "z": 60, "dx": 90, "dy": 8, "dz": 50, "color": "#f2c76e"}))
+            guides = []
+            for k in range(4):
+                a = k * 3.141592653589793 / 2 + 0.3927
+                guides.append(tool_call(f"t-axg{k}", "create_primitive_3d", {"kind": "box", "x": 95 * math.cos(a), "y": 95 * math.sin(a), "z": 30, "dx": 40, "dy": 6, "dz": 30, "color": "#8fd3a8"}))
+            msg = {"role": "assistant", "content": "我先建泵壳、轮毂、6 片叶片和 4 片导叶（轴流主体，训练剧本：故意漏泵轴，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-ax1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 110, "h": 120, "color": "#7fb2e8"}),
+                       tool_call("t-ax2", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 60, "r": 60, "h": 40, "color": "#e8a07f"}),
+                       *blades, *guides,
+                   ]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-ax16", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "轴流布尔"):
+            ids = extract_ids(messages)
+            if len(ids) >= 12:
+                msg = {"role": "assistant", "content": "我把叶片、导叶的布尔都补上（轴流布尔）。",
+                       "tool_calls": [
+                           tool_call("t-ax17", "boolean_3d", {"op": "fuse", "a": ids[1], "b": ids[2:8]}),
+                           tool_call("t-ax18", "boolean_3d", {"op": "fuse", "a": ids[0], "b": ids[8:12]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 轴流泵已创建（泵壳 + 轮毂 + 6 叶片 + 4 导叶，泵轴待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "drawingchain2d":
         if not assistant_has(messages, "图纸集主体"):
