@@ -199,6 +199,15 @@ def build_stage(stage, messages, has_tools):
             msg = {"role": "assistant", "content": "截图里发现整机缺泵轴，我补上泵轴（Φ60×120，与叶轮孔 Φ61 间隙配合）。",
                    "tool_calls": [tool_call("r-mp1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 30, "h": 120, "color": "#b9a3f0"})]}
             return resp(msg, "tool_calls")
+        if task == "pumpdrawing2d" and not assistant_has(messages, "补上标注"):
+            msg = {"role": "assistant", "content": "截图里发现图纸缺少尺寸标注，我补上标注（补上标注）。",
+                   "tool_calls": [tool_call("r-dw1", "draw_entities", {"items": [
+                       {"type": "dimension", "subtype": "diametric", "cx": 0, "cy": 0, "px": 70, "py": 0, "tx": 30, "ty": 30},
+                       {"type": "dimension", "subtype": "diametric", "cx": 0, "cy": 0, "px": 40, "py": 0, "tx": -30, "ty": -30},
+                       {"type": "dimension", "subtype": "diametric", "cx": 0, "cy": 0, "px": 12, "py": 0, "tx": 50, "ty": -40},
+                       {"type": "dimension", "subtype": "linear", "x1": -90, "y1": 100, "x2": 90, "y2": 100, "x3": 0, "y3": 115},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "volute2d" and not assistant_has(messages, "补上后半螺旋"):
             items = []
             for i in range(4, 8):
@@ -324,6 +333,19 @@ def build_stage(stage, messages, has_tools):
                    ]}
             return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 台阶轴已创建（4 段）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "pumpdrawing2d":
+        if not assistant_has(messages, "剖视图主体"):
+            msg = {"role": "assistant", "content": "我先画剖视图的 4 个圆和中心线（剖视图主体，训练剧本：故意漏尺寸标注，等审阅补上）。",
+                   "tool_calls": [tool_call("t-dw1", "draw_entities", {"items": [
+                       {"type": "circle", "cx": 0, "cy": 0, "r": 70},
+                       {"type": "circle", "cx": 18, "cy": 0, "r": 45},
+                       {"type": "circle", "cx": 0, "cy": 0, "r": 40},
+                       {"type": "circle", "cx": 0, "cy": 0, "r": 12},
+                       {"type": "line", "x1": 0, "y1": -90, "x2": 0, "y2": 90, "layer": "中心线"},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 水泵剖视图已绘制完成（几何部分，标注待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "volute2d":
         if not assistant_has(messages, "蜗壳主体"):

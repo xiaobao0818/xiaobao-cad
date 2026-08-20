@@ -152,6 +152,23 @@ export const TRAIN_TASKS = [
     ],
   },
   {
+    id: 'pumpdrawing2d',
+    ws: '2d',
+    name: '水泵总装剖视图·图纸（2D）',
+    prompt: '请画水泵总装剖视图（商用图纸）：竖直中心线穿过原点；泵壳外轮廓圆 r70（原点）；内腔圆 r45（圆心 (18,0)）；叶轮圆 r40（原点）；轮毂圆 r12（原点）；并标注关键尺寸：泵壳外径（直径标注 Φ140）、叶轮直径（直径标注 Φ80）、轮毂直径（直径标注 Φ24）、总宽度（线性标注，两端 -90 与 90）。',
+    checks: [
+      { type: 'count', kind: 'circle', min: 4, weight: 2 },
+      { type: 'circleAt', cx: 0, cy: 0, r: 70, tol: 1, weight: 2 },
+      { type: 'circleAt', cx: 18, cy: 0, r: 45, tol: 1, weight: 2 },
+      { type: 'circleAt', cx: 0, cy: 0, r: 40, tol: 1, weight: 2 },
+      { type: 'circleAt', cx: 0, cy: 0, r: 12, tol: 1, weight: 2 },
+      { type: 'linesThrough', cx: 0, cy: 0, min: 1, tol: 2, weight: 2 },
+      { type: 'dimensionCount', min: 4, weight: 3 },
+      { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 3 },
+      { type: 'dimensionCount', subtype: 'linear', min: 1, weight: 2 },
+    ],
+  },
+  {
     id: 'pumpduty3d',
     ws: '3d',
     name: '商用泵·需求驱动设计（3D）',

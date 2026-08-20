@@ -3,6 +3,7 @@
  * 训练提示注入相关知识条目 + AI 助手 query_knowledge 检索
  * ============================================================ */
 import { searchKnowledge, searchText } from '../knowledge/data.js';
+import { classifyFail } from './memory.mjs';
 
 export { searchKnowledge, searchText };
 
@@ -21,6 +22,15 @@ const TASK_TOPICS = {
   sleeve3d: ['配合', '公差'],
   pumpduty3d: ['比转速', '叶轮', '蜗壳', '材料'],
 };
+
+/** 历史失败明细 → 知识库补救提醒（薄弱点自动关联知识条目） */
+export function knowledgeHintForFails(fails, { limit = 2 } = {}) {
+  const topics = (Array.isArray(fails) ? fails : []).map((f) => classifyFail(f)).join(' ');
+  if (!topics) return '';
+  const hits = searchKnowledge(topics, { limit });
+  if (!hits.length) return '';
+  return '【知识库提醒（针对历史扣分项）】\n' + hits.map((h) => `- ${h.title}：${h.content}`).join('\n');
+}
 
 /** 任务知识片段（注入训练提示，最多 3 条） */
 export function knowledgeForTask(taskId, { limit = 3 } = {}) {

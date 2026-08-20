@@ -6,7 +6,7 @@ import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
 import { memoryNotes, classifyFail, promptWithMemory } from '../training/memory.mjs';
 import { sizingFromDuty, sizingText, specificSpeed, bladeCount } from '../training/pumpdesign.mjs';
-import { searchKnowledge, searchText, knowledgeForTask } from '../training/knowledge.mjs';
+import { searchKnowledge, searchText, knowledgeForTask, knowledgeHintForFails } from '../training/knowledge.mjs';
 import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
 let n = 0;
@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 12, '任务库应含基础 4 + 水泵 8 个任务');
-  ok('训练任务库 12 个任务（含水泵组件 8 个）');
+  assert.equal(TRAIN_TASKS.length, 13, '任务库应含基础 4 + 水泵 9 个任务');
+  ok('训练任务库 13 个任务（含水泵组件 9 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -417,6 +417,35 @@ function goodFlange2d() {
   const kb2 = knowledgeForTask('pumpduty3d');
   assert(kb2.length >= 2, '商用泵任务应注入多条知识');
   ok('任务知识注入（叶轮/商用泵）');
+}
+
+{
+  // 图纸任务：几何 + 尺寸标注验收
+  const task = taskById('pumpdrawing2d');
+  const ents = [
+    { id: 'c1', type: 'circle', cx: 0, cy: 0, r: 70 },
+    { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
+    { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
+    { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+    { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 70, py: 0, tx: 30, ty: 30 },
+    { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 40, py: 0, tx: -30, ty: -30 },
+    { id: 'd3', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 12, py: 0, tx: 50, ty: -40 },
+    { id: 'd4', type: 'dimension', subtype: 'linear', x1: -90, y1: 100, x2: 90, y2: 100, x3: 0, y3: 115 },
+  ];
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `图纸任务应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noDims = evaluate(task, ents.filter((e) => e.type !== 'dimension'));
+  assert(noDims.score < 80, `无标注图纸应扣分（实际 ${noDims.score}）`);
+  ok(`水泵图纸任务：几何+标注验收（完整 100 / 无标注 ${noDims.score}）`);
+}
+{
+  // 薄弱点 → 知识库补救提醒
+  const hint = knowledgeHintForFails(['box 圆心距 [35.1, 28.3] 命中 5/6']);
+  assert(hint.includes('【知识库提醒'), '应生成知识库补救提醒');
+  assert(hint.includes('叶片') || hint.includes('均布'), '提醒应关联叶片均布知识');
+  assert.equal(knowledgeHintForFails([]), '', '无失败应返回空');
+  ok('薄弱点自动关联知识库条目');
 }
 
 console.log(`全部通过：${n} 项`);

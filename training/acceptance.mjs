@@ -99,6 +99,12 @@ function check2d(check, ents) {
       const pass = approx(w, check.w, check.tol) && approx(h, check.h, check.tol);
       return { pass, detail: `闭合轮廓 ${w.toFixed(1)}×${h.toFixed(1)}（期望 ${check.w}×${check.h} ±${check.tol}）` };
     }
+    case 'dimensionCount': {
+      // 图纸验收：尺寸标注数量（商用图纸必须带标注）
+      const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);
+      const pass = dims.length >= check.min;
+      return { pass, detail: `尺寸标注 ${dims.length} 个${check.subtype ? `（${check.subtype}）` : ''}（期望≥${check.min}）` };
+    }
     case 'spiralGrowth': {
       // 蜗壳型线验收：系列圆圆心沿螺旋线渐进放大（半径随角度单调不减）
       const TAU = Math.PI * 2;
