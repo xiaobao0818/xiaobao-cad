@@ -181,6 +181,23 @@ export const TRAIN_TASKS = [
     ],
   },
   {
+    id: 'doublesuction3d',
+    ws: '3d',
+    name: '双吸泵（3D）',
+    prompt: '请建一台双吸泵：双吸叶轮——两个轮盘（半径 70 厚 8，z=-4 与 z=4）、中间轮毂圆柱（半径 20 高 16）、两排共 12 片叶片（盒体）均布半径 50（每排 6 片，角度 0°/60°/120°/180°/240°/300°）、中心孔半径 16.5；泵壳——外圆柱半径 90 高 80、两端进流口法兰（半径 30 厚 20，中心 (±50,0)）、内腔半径 65（x=20）差集；泵轴半径 16 长 130 与中心孔间隙配合。',
+    checks: [
+      { type: 'featureCount', min: 25, weight: 2 },
+      { type: 'kindCount', kind: 'cylinder', min: 8, weight: 2 },
+      { type: 'kindCount', kind: 'box', min: 12, weight: 2 },
+      { type: 'kindCount', kind: 'boolean', min: 5, weight: 3 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 90, tol: 2, minCount: 1, weight: 2 },
+      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 70, tol: 2, minCount: 2, weight: 3 },
+      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 50, tol: 2, minCount: 12, weight: 4 },
+      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 4, weight: 3 },
+      { type: 'fitClearance', outerR: 16, boreR: 16.5, outerTol: 0.4, boreTol: 0.4, minGap: 0.2, maxGap: 1, weight: 3 },
+    ],
+  },
+  {
     id: 'threeview2d',
     ws: '2d',
     name: '泵装配三视图（2D）',

@@ -1,0 +1,17 @@
+[
+  {
+    "ts": 1787241913843,
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 88,
+    "scoreAfter": 100,
+    "delta": 12,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  }
+]

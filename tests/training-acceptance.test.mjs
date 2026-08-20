@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 16, '任务库应含基础 4 + 水泵 12 个任务');
-  ok('训练任务库 16 个任务（含水泵组件 12 个）');
+  assert.equal(TRAIN_TASKS.length, 17, '任务库应含基础 4 + 水泵 13 个任务');
+  ok('训练任务库 17 个任务（含水泵组件 13 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -548,6 +548,33 @@ function goodFlange2d() {
   const missing = evaluate(task, ents.filter((e) => e.id !== 'c4'));
   assert(missing.score < 90, `缺侧视图叶轮圆应扣分（实际 ${missing.score}）`);
   ok(`三视图任务（完整 100 / 缺侧视图圆 ${missing.score}）`);
+}
+
+{
+  // 双吸泵任务
+  const task = taskById('doublesuction3d');
+  const cy = (id, r, h, x = 0, z = 0) => ({ id, kind: 'cylinder', params: { x, y: 0, z, r, h } });
+  const bodies = [
+    cy('outer', 90, 80), cy('cav', 65, 80, 20), cy('f1', 30, 20, -50), cy('f2', 30, 20, 50),
+    cy('disk1', 70, 8, 0, -4), cy('disk2', 70, 8, 0, 4), cy('hub', 20, 16), cy('bore', 16.5, 16),
+  ];
+  for (let k = 0; k < 12; k++) {
+    const a = (k % 6) * (Math.PI / 3);
+    bodies.push({ id: `bl${k}`, kind: 'box', params: { x: 50 * Math.cos(a), y: 50 * Math.sin(a), z: k < 6 ? -4 : 4, dx: 30, dy: 6, dz: 8 } });
+  }
+  bodies.push(
+    { id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk1', b: ['bore'] } },
+    { id: 'b3', kind: 'boolean', params: { op: 'cut', a: 'disk2', b: ['bore'] } },
+    { id: 'b4', kind: 'boolean', params: { op: 'fuse', a: 'disk1', b: ['bl0', 'bl1', 'bl2', 'bl3', 'bl4', 'bl5'] } },
+    { id: 'b5', kind: 'boolean', params: { op: 'fuse', a: 'disk2', b: ['bl6', 'bl7', 'bl8', 'bl9', 'bl10', 'bl11'] } },
+    cy('shaft', 16, 130),
+  );
+  const r = evaluate(task, { bodies });
+  assert.equal(r.score, 100, `双吸泵应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noShaft = evaluate(task, { bodies: bodies.filter((b) => b.id !== 'shaft') });
+  assert(noShaft.score < 95, `缺泵轴应扣分（实际 ${noShaft.score}）`);
+  ok(`双吸泵任务（完整 100 / 缺轴 ${noShaft.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);

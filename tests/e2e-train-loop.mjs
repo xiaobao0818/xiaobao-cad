@@ -3,6 +3,7 @@
  * 运行：node tests/e2e-train-loop.mjs
  * 验证：AI 画图(带缺陷) → 确定性验收低分 → MiniMax 多模态审阅修复 → 再验收高分 → 日志落盘 */
 import puppeteer from 'puppeteer-core';
+import { writeFileSync, mkdirSync } from 'node:fs';
 import { strict as assert } from 'node:assert';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -70,6 +71,11 @@ try {
   }
 
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'));
+  // 训练日志落盘（供报告生成与归档）
+  try {
+    mkdirSync('training/logs', { recursive: true });
+    writeFileSync('training/logs/last-log.json', JSON.stringify(entries, null, 2));
+  } catch (e) { console.log('  [warn] 日志落盘失败:', e.message); }
   if (CONT) {
     console.log(`  持续训练：${entries.length} 轮`);
     // 弱项优先特性：前 11 轮应覆盖全部 11 个任务（未练过优先）

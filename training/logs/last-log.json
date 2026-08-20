@@ -1,0 +1,17 @@
+[
+  {
+    "ts": 1787242347214,
+    "taskId": "threeview2d",
+    "taskName": "泵装配三视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 76,
+    "scoreAfter": 100,
+    "delta": 24,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  }
+]

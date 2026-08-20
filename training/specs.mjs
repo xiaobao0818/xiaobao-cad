@@ -52,6 +52,7 @@ const TASK_SPECS = {
   selfprime3d: ['impeller', 'casing', 'assembly'],
   drawingframe2d: ['assembly'],
   threeview2d: ['assembly', 'casing'],
+  doublesuction3d: ['impeller', 'casing', 'assembly'],
 };
 
 /** 任务对应的规范条目（去重） */

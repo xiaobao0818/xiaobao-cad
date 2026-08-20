@@ -208,6 +208,10 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "doublesuction3d" and not assistant_has(messages, "补上泵轴"):
+            msg = {"role": "assistant", "content": "截图里发现双吸泵缺泵轴，我补上泵轴（r16×130）。",
+                   "tool_calls": [tool_call("r-ds1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 16, "h": 130, "color": "#b9a3f0"})]}
+            return resp(msg, "tool_calls")
         if task == "threeview2d" and not assistant_has(messages, "补上俯侧视图"):
             msg = {"role": "assistant", "content": "截图里发现缺少俯视图轮廓和侧视图叶轮圆，我补上俯侧视图。",
                    "tool_calls": [tool_call("r-tv1", "draw_entities", {"items": [
@@ -391,6 +395,43 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "doublesuction3d":
+        if not assistant_has(messages, "双吸主体"):
+            blades = []
+            for k in range(12):
+                a = (k % 6) * 3.141592653589793 / 3
+                z = -4 if k < 6 else 4
+                blades.append(tool_call(f"t-ds{k+7}", "create_primitive_3d", {"kind": "box", "x": 50 * math.cos(a), "y": 50 * math.sin(a), "z": z, "dx": 30, "dy": 6, "dz": 8, "color": "#f2c76e"}))
+            msg = {"role": "assistant", "content": "我先建双吸叶轮两轮盘、轮毂、两排叶片、泵壳与两法兰（双吸主体，训练剧本：故意漏泵轴，等审阅补上）。",
+                   "tool_calls": [
+                       tool_call("t-ds1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 90, "h": 80, "color": "#7fb2e8"}),
+                       tool_call("t-ds2", "create_primitive_3d", {"kind": "cylinder", "x": 20, "y": 0, "z": 0, "r": 65, "h": 80, "color": "#e88b8b"}),
+                       tool_call("t-ds3", "create_primitive_3d", {"kind": "cylinder", "x": -50, "y": 0, "z": 0, "r": 30, "h": 20, "color": "#e8a07f"}),
+                       tool_call("t-ds4", "create_primitive_3d", {"kind": "cylinder", "x": 50, "y": 0, "z": 0, "r": 30, "h": 20, "color": "#e8a07f"}),
+                       tool_call("t-ds5", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": -4, "r": 70, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-ds6", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 4, "r": 70, "h": 8, "color": "#8fd3a8"}),
+                       tool_call("t-ds7", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 20, "h": 16, "color": "#8fd3a8"}),
+                       tool_call("t-ds8", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 16.5, "h": 16, "color": "#e8a07f"}),
+                       *blades,
+                   ]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "查询实体"):
+            msg = {"role": "assistant", "content": "查询实体 id。", "tool_calls": [tool_call("t-ds20", "list_3d", {})]}
+            return resp(msg, "tool_calls")
+        if not assistant_has(messages, "双吸布尔"):
+            ids = extract_ids(messages)
+            if len(ids) >= 18:  # 创建顺序：壳、腔、法兰1、法兰2、盘1、盘2、轮毂、孔、12 叶片
+                msg = {"role": "assistant", "content": "我把内腔、中心孔、叶片的布尔都补上（双吸布尔）。",
+                       "tool_calls": [
+                           tool_call("t-ds21", "boolean_3d", {"op": "cut", "a": ids[0], "b": [ids[1]]}),
+                           tool_call("t-ds22", "boolean_3d", {"op": "cut", "a": ids[4], "b": [ids[7]]}),
+                           tool_call("t-ds23", "boolean_3d", {"op": "cut", "a": ids[5], "b": [ids[7]]}),
+                           tool_call("t-ds24", "boolean_3d", {"op": "fuse", "a": ids[4], "b": ids[8:14]}),
+                           tool_call("t-ds25", "boolean_3d", {"op": "fuse", "a": ids[5], "b": ids[14:20]}),
+                       ]}
+                return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 双吸泵已创建（叶轮双盘 + 两排叶片 + 泵壳双法兰，泵轴待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "threeview2d":
         if not assistant_has(messages, "三视图主体"):
