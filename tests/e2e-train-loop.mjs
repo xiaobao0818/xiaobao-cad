@@ -3,7 +3,7 @@
  * 运行：node tests/e2e-train-loop.mjs
  * 验证：AI 画图(带缺陷) → 确定性验收低分 → MiniMax 多模态审阅修复 → 再验收高分 → 日志落盘 */
 import puppeteer from 'puppeteer-core';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { strict as assert } from 'node:assert';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -71,10 +71,16 @@ try {
   }
 
   const entries = await page.evaluate(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]'));
-  // 训练日志落盘（供报告生成与归档）
+  // 训练日志落盘（跨会话合并去重，KEEP 续跑真实累积）
   try {
     mkdirSync('training/logs', { recursive: true });
-    writeFileSync('training/logs/last-log.json', JSON.stringify(entries, null, 2));
+    let merged = entries;
+    try {
+      const prev = JSON.parse(readFileSync('training/logs/last-log.json', 'utf8'));
+      const seen = new Set(prev.map((e) => e.ts));
+      merged = [...prev, ...entries.filter((e) => !seen.has(e.ts))];
+    } catch (e) { /* 首次运行 */ }
+    writeFileSync('training/logs/last-log.json', JSON.stringify(merged, null, 2));
   } catch (e) { console.log('  [warn] 日志落盘失败:', e.message); }
   if (CONT) {
     console.log(`  持续训练：${entries.length} 轮`);

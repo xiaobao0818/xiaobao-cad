@@ -1,16 +1,31 @@
 [
   {
-    "ts": 1787243993785,
-    "taskId": "pumpduty3d",
-    "taskName": "商用泵·需求驱动设计（3D）",
+    "ts": 1787244453007,
+    "taskId": "bom2d",
+    "taskName": "装配图明细栏（BOM）（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 67,
+    "scoreAfter": 100,
+    "delta": 33,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 5,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787245189715,
+    "taskId": "selfprime3d",
+    "taskName": "自吸泵（3D）",
     "round": 1,
     "ws": "3d",
-    "scoreBefore": 89,
+    "scoreBefore": 75,
     "scoreAfter": 100,
-    "delta": 11,
+    "delta": 25,
     "reviewOutcome": "已满意",
     "reviewRounds": 6,
-    "fbRounds": 2,
+    "fbRounds": 1,
     "fails": [],
     "note": ""
   }

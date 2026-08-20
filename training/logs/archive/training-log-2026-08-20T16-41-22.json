@@ -1,0 +1,17 @@
+[
+  {
+    "ts": 1787244078312,
+    "taskId": "shaft3d",
+    "taskName": "泵轴·台阶轴（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 13,
+    "scoreAfter": 100,
+    "delta": 87,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  }
+]
