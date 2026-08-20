@@ -111,6 +111,7 @@
 import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
 import { promptWithSpecs } from '/training/specs.mjs';
+import { memoryNotes } from '/training/memory.mjs';
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
@@ -171,7 +172,10 @@ async function runTask(task, round) {
   const panel = window.__aiPanel;
   if (!panel) { log('AI 面板未就绪'); return null; }
   const beforeLen = panel.messages.length;
-  panel.ask(REAL ? promptWithSpecs(task) : `[训练任务:${task.id}] ${promptWithSpecs(task)}`);
+  const mem = memoryNotes(entries, task.id);
+  if (mem) log(`🧠 已注入历史薄弱点记忆（${task.id}）`);
+  const baseAsk = promptWithSpecs(task) + (mem ? '\n\n' + mem : '');
+  panel.ask(REAL ? baseAsk : `[训练任务:${task.id}] ${baseAsk}`);
   const okDraw = await waitSettled(panel, REAL ? 900000 : 150000);
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
@@ -208,9 +212,11 @@ async function runTask(task, round) {
     scoreAfter = evaluate(task, inputOf()).score;
     log(`🔄 验收反馈第 ${fbRounds} 轮：修复后 ${scoreAfter} 分`);
   }
+  const finalEval = evaluate(task, inputOf());
+  const fails = finalEval.checks.filter((c) => !c.pass).map((c) => c.detail);
   return logEntry({
     taskId: task.id, taskName: task.name, round, ws: task.ws,
-    scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds,
+    scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds, fails,
     note: drawn ? '' : '绘制未完成',
   });
 }

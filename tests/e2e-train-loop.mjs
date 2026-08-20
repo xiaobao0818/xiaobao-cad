@@ -12,6 +12,7 @@ const ALL = process.env.ALL === '1';
 const FB = process.env.FB === '1';
 const CONT = process.env.CONT === '1';
 const REAL = process.env.REAL === '1';
+const ROUNDS = parseInt(process.env.ROUNDS || '1', 10);
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 
 let n = 0;
@@ -40,7 +41,7 @@ try {
         base: 'https://api.minimaxi.com', model: 'MiniMax-M3', key,
         temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false,
         visionBase: 'https://api.minimaxi.com', visionModel: 'MiniMax-M3', visionKey: key,
-        reviewRounds: 0, deepThink: true, settingsVersion: 2,
+        reviewRounds: 6, deepThink: true, settingsVersion: 2,
       }));
     }, REAL_KEY);
   }
@@ -51,7 +52,7 @@ try {
   await page.waitForFunction(() => !!window.__aiPanel, { timeout: 60000, polling: 1000 });
   console.log('  [进度] AI 面板就绪');
   if (!ALL) await page.select('#taskSel', TASK);
-  await page.$eval('#rounds', (el) => { el.value = '1'; });
+  await page.$eval('#rounds', (el, v) => { el.value = String(v); }, ROUNDS);
   await page.click('#btnStart');
 
   // 等待训练日志出现（画图 → 审阅 → 再打分 完成）
@@ -87,6 +88,13 @@ try {
   } else if (REAL) {
     const e = entries[entries.length - 1];
     console.log(`  真实 MiniMax 训练条目: ${JSON.stringify(e)}`);
+    assert.equal(entries.length, ROUNDS, `应完成 ${ROUNDS} 轮，实际 ${entries.length}`);
+    assert(entries.every((x) => Array.isArray(x.fails)), '每轮都应落盘失败明细（fails）');
+    if (ROUNDS >= 2) {
+      const memInjected = await page.evaluate(() => window.__aiPanel.messages.some((m) => m.role === 'user' && typeof m.content === 'string' && m.content.includes('【历史薄弱点')));
+      assert(memInjected, '第 2 轮起的提示应注入历史薄弱点记忆');
+      ok(`跨轮薄弱点记忆已注入（${entries.filter((x) => x.fails.length).length}/${ROUNDS} 轮带失败明细）`);
+    }
     assert.equal(e.taskId, TASK);
     assert(e.scoreBefore > 0, `真实模型应画出图（验收 ${e.scoreBefore} 分）`);
     assert(e.scoreAfter >= e.scoreBefore, `多模态审阅后分数不应降低（${e.scoreBefore}→${e.scoreAfter}）`);

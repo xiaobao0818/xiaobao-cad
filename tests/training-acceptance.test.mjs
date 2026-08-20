@@ -4,6 +4,7 @@ import { strict as assert } from 'node:assert';
 import { TRAIN_TASKS, taskById } from '../training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
+import { memoryNotes, classifyFail, promptWithMemory } from '../training/memory.mjs';
 import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
 let n = 0;
@@ -281,7 +282,7 @@ function goodFlange2d() {
   assert.equal(evaluate(task, { bodies: mk(even) }).score, 100, '均布叶片应 100 分');
   const uneven = [0, 50 * Math.PI / 180, 2 * Math.PI / 3, Math.PI, 4 * Math.PI / 3, 5 * Math.PI / 3];
   const rU = evaluate(task, { bodies: mk(uneven) });
-  const ang = rU.checks.find((c) => c.detail && c.detail.includes('角度均布'));
+  const ang = rU.checks.find((c) => c.detail && c.detail.includes('最大角差偏差'));
   assert(ang && !ang.pass, '叶片偏置应被角度均布检查发现');
   ok(`叶片角度均布验收（均分 100 / 偏 10° ${rU.score}）`);
 }
@@ -313,6 +314,42 @@ function goodFlange2d() {
   const dedupe = specsForTask('minipump3d');
   assert.equal(new Set(dedupe).size, dedupe.length, '装配+叶轮规范应去重');
   ok(`设计规范注入：${TRAIN_TASKS.length} 个任务全部附带规范（${Object.keys(PUMP_SPECS).length} 类规范）`);
+}
+
+{
+  // 跨轮薄弱点记忆：历史失败明细 → 分类聚合 → 注入提示
+  const rows = [
+    logEntry({ taskId: 'impeller3d', taskName: '叶轮', round: 1, ws: '3d', scoreBefore: 60, scoreAfter: 80, reviewOutcome: '已满意', fails: ['box 圆心距 [35.1, 28.3, 35.0] 命中 5/6', 'box 角度 [0, 60, 120, 180, 240, 300]，最大角差偏差 8.4°'] }),
+    logEntry({ taskId: 'impeller3d', taskName: '叶轮', round: 2, ws: '3d', scoreBefore: 80, scoreAfter: 85, reviewOutcome: '审阅完成', fails: ['box 圆心距 [35.2, 34.9, 35.0, 35.1, 28.1, 35.0] 命中 5/6'] }),
+    logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 1, ws: '2d', scoreBefore: 70, scoreAfter: 85, reviewOutcome: '已满意', fails: ['过圆心的直线 0（期望≥2）'] }),
+  ];
+  const notes = memoryNotes(rows, 'impeller3d');
+  assert(notes.includes('【历史薄弱点'), '应生成薄弱点提示');
+  assert(notes.includes('均布') && notes.includes('2 次'), '均布问题应聚合为 2 次');
+  assert(notes.includes('角度'), '角度问题应被提及');
+  assert.equal(memoryNotes(rows, 'sleeve3d'), '', '无历史的任务应返回空');
+  const p = promptWithMemory(taskById('impeller3d'), rows);
+  assert(p.includes('【历史薄弱点'), '提示应含记忆段落');
+  assert.equal(classifyFail('轴 Φ60/孔 Φ61：缺轴'), '轴孔间隙配合（轴径<孔径，间隙为正且在容差内）');
+  ok('跨轮薄弱点记忆：历史扣分聚合注入新一轮提示');
+}
+{
+  // 验收明细带实测数值（反馈可执行）
+  const task = taskById('impeller3d');
+  const bodies = [
+    { id: 'disk', kind: 'cylinder', params: { x: 0, y: 0, r: 60, h: 8 } },
+    { id: 'hole', kind: 'cylinder', params: { x: 0, y: 0, r: 10, h: 8 } },
+    { id: 'b0', kind: 'box', params: { x: 35, y: 0, dx: 30, dy: 6, dz: 10 } },
+    { id: 'b1', kind: 'box', params: { x: 0, y: 35, dx: 30, dy: 6, dz: 10 } },
+    { id: 'b2', kind: 'box', params: { x: -35, y: 0, dx: 30, dy: 6, dz: 10 } },
+    { id: 'b3', kind: 'box', params: { x: 0, y: -35, dx: 30, dy: 6, dz: 10 } },
+    { id: 'b4', kind: 'box', params: { x: 28, y: 0, dx: 30, dy: 6, dz: 10 } },
+    { id: 'b5', kind: 'box', params: { x: 0, y: -28, dx: 30, dy: 6, dz: 10 } },
+  ];
+  const r = evaluate(task, { bodies });
+  const ring = r.checks.find((c) => c.detail && c.detail.includes('圆心距'));
+  assert(ring && ring.detail.includes('28.0') && ring.detail.includes('35.0'), `明细应含实测距离，实际 "${ring?.detail}"`);
+  ok('验收明细含实测数值（圆心距列表）');
 }
 
 console.log(`全部通过：${n} 项`);

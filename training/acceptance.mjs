@@ -145,9 +145,12 @@ function check3d(check, bodies) {
     /* —— 水泵组件专用验收 —— */
     case 'coaxial': {
       // 同轴度：多个圆柱(或指定 kind)轴线均过 (cx,cy)（台阶轴/轴套/泵壳内腔）
-      const hits = kinds(check.kind).filter((b) => approx(b.params?.x, check.cx, check.tol) && approx(b.params?.y, check.cy, check.tol));
+      const items = kinds(check.kind).filter((b) => b.params?.x != null);
+      const offs = items.map((b) => dist(b.params.x, b.params.y, check.cx, check.cy)).sort((a, b) => a - b);
+      const hits = items.filter((b) => approx(b.params?.x, check.cx, check.tol) && approx(b.params?.y, check.cy, check.tol));
       const pass = hits.length >= (check.minCount ?? 2);
-      return { pass, detail: `${check.kind} 同轴于(${check.cx},${check.cy})：${hits.length}/${check.minCount ?? 2}` };
+      const list = offs.map((d) => d.toFixed(2)).join(', ');
+      return { pass, detail: `${check.kind} 偏心量 [${list}]，同轴于(${check.cx},${check.cy})：${hits.length}/${check.minCount ?? 2}` };
     }
     case 'primSeq': {
       // 台阶轴验收：不同直径段数（台阶数）达到要求，并按直径降序排列
@@ -160,9 +163,12 @@ function check3d(check, bodies) {
     }
     case 'ringDist': {
       // 环形均布：kind 实体中心落在半径 radius 的圆上（叶轮叶片/法兰孔）
-      const onRing = kinds(check.kind).filter((b) => approx(dist(b.params?.x, b.params?.y, check.cx, check.cy), check.radius, check.tol));
+      const items = kinds(check.kind).filter((b) => b.params?.x != null);
+      const dists = items.map((b) => dist(b.params.x, b.params.y, check.cx, check.cy)).sort((a, b) => a - b);
+      const onRing = items.filter((b) => approx(dist(b.params.x, b.params.y, check.cx, check.cy), check.radius, check.tol));
       const pass = onRing.length >= (check.minCount ?? 3);
-      return { pass, detail: `${check.kind} 均布于 R=${check.radius} 圆上：${onRing.length}/${check.minCount ?? 3}` };
+      const list = dists.map((d) => d.toFixed(1)).join(', ');
+      return { pass, detail: `${check.kind} 圆心距 [${list}]，R=${check.radius}±${check.tol} 命中 ${onRing.length}/${check.minCount ?? 3}` };
     }
     case 'angularEven': {
       // 叶片/孔的角度均匀性：按角排序后相邻角差接近 360/N（叶轮叶片均布验收）
@@ -176,7 +182,8 @@ function check3d(check, bodies) {
       const maxDev = Math.max(...gaps.map((g) => Math.abs(g - expected)));
       const devDeg = (maxDev * 180) / Math.PI;
       const pass = devDeg <= (check.maxDevDeg ?? 5);
-      return { pass, detail: `${check.kind} 角度均布：N=${N}，最大角差偏差 ${devDeg.toFixed(1)}°（≤${check.maxDevDeg ?? 5}°${pass ? '✓' : '✗'}）` };
+      const list = angles.map((a) => ((a * 180) / Math.PI).toFixed(1)).join(', ');
+      return { pass, detail: `${check.kind} 角度 [${list}]，最大角差偏差 ${devDeg.toFixed(1)}°（≤${check.maxDevDeg ?? 5}°${pass ? '✓' : '✗'}）` };
     }
     case 'dimSum': {
       // 尺寸求和：台阶轴总长 = 各段 h 之和
@@ -260,8 +267,8 @@ export function evaluate(task, input) {
 }
 
 /** 训练日志条目序列化（页面与 Node 共用） */
-export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, ts = Date.now(), note = '' }) {
-  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, note };
+export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, fails = [], ts = Date.now(), note = '' }) {
+  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, fails, note };
 }
 
 /** 验收反馈提示：把未通过的检查明细转成给模型的修复指令（训练闭环的"梯度"） */
