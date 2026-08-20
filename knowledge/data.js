@@ -79,6 +79,14 @@ export const DOCS = [
   { id: 'seal-rules', title: '密封与轴承', content: '机械密封常用 SiC-石墨（清水）、SiC-SiC（含颗粒）；填料密封用于低压；轴承座与泵壳同轴度<0.05mm；叶轮与泵壳轴向间隙 0.5~1mm。' },
 ];
 
+export const PUMP_MODELS = [
+  { model: 'IS50-32-125', series: 'IS 单级单吸', Q: 12.5, H: 20, n: 2900, powerKW: 1.5, dIn: 50, dOut: 32, note: '小流量中扬程清水' },
+  { model: 'IS65-50-160', series: 'IS 单级单吸', Q: 25, H: 32, n: 2900, powerKW: 4, dIn: 65, dOut: 50, note: '常规工业清水' },
+  { model: 'IS100-65-200', series: 'IS 单级单吸', Q: 100, H: 32, n: 2900, powerKW: 15, dIn: 100, dOut: 65, note: '大流量中扬程（本平台商用泵训练基准）' },
+  { model: 'IS150-125-315', series: 'IS 单级单吸', Q: 200, H: 32, n: 1450, powerKW: 37, dIn: 150, dOut: 125, note: '大流量低转速' },
+  { model: 'S300-58A', series: '双吸泵', Q: 288, H: 58, n: 1450, powerKW: 75, dIn: 300, dOut: 250, note: '大流量中扬程双吸' },
+];
+
 /* ---------------- 检索 ---------------- */
 function matchable(doc, fields) {
   return fields.map((f) => String(doc[f] ?? '')).join(' ');
@@ -106,6 +114,7 @@ export function searchKnowledge(query, { limit = 6 } = {}) {
   for (const f of FORMULAS) push('公式', f.name, `${f.expr}（${f.vars}）${f.note}`, score(matchable(f, ['name', 'expr', 'note'])));
   for (const st of STANDARDS) push('标准', `${st.code} ${st.name}`, st.note, score(matchable(st, ['code', 'name', 'note'])));
   for (const d of DOCS) push('设计文档', d.title, d.content, score(matchable(d, ['title', 'content'])));
+  for (const pm of PUMP_MODELS) push('泵型号', `${pm.model}（${pm.series}）`, `Q=${pm.Q}m³/h H=${pm.H}m n=${pm.n}rpm 电机${pm.powerKW}kW 口径${pm.dIn}/${pm.dOut}：${pm.note}`, score(matchable(pm, ['model', 'series', 'note'])));
   return hits.sort((a, b) => b.s - a.s).slice(0, limit).map(({ s, ...rest }) => rest);
 }
 

@@ -1302,5 +1302,20 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787254342863,
+    "taskId": "pumpboth",
+    "taskName": "泵模型+图纸·联合对话（3D+2D）",
+    "round": 1,
+    "ws": "both",
+    "scoreBefore": 63,
+    "scoreAfter": 100,
+    "delta": 37,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
   }
 ]

@@ -118,7 +118,9 @@ try {
       const { taskById } = await import('/training/tasks.mjs');
       const task = taskById(taskId);
       const CAD = window.CAD;
-      const input = task.ws === '2d' ? CAD.scene.all() : { bodies: CAD.app3d?.model?.serialize().bodies || [] };
+      const input = task.ws === '2d' ? CAD.scene.all()
+        : task.ws === 'both' ? { bodies: CAD.app3d?.model?.serialize().bodies || [], entities: CAD.scene.all() }
+        : { bodies: CAD.app3d?.model?.serialize().bodies || [] };
       return evaluate(task, input).checks.map((c) => ({ pass: c.pass, detail: c.detail }));
     }, TASK);
     for (const c of checks) console.log(`    ${c.pass ? '✓' : '✗'} ${c.detail}`);
