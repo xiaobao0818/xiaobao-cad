@@ -286,10 +286,10 @@ export function feedbackPrompt(task, result) {
   const fails = (result?.checks || []).filter((c) => !c.pass);
   if (!fails.length) return '';
   const lines = fails.map((c) => `- ${c.detail}`);
-  // 分布圆失败 → 附上期望的精确坐标（模型按坐标放置远比"均布"抽象描述可靠）
-  const ringFails = fails.some((c) => String(c.detail).includes('圆心距'));
-  let ringHint = '';
-  if (ringFails) {
+  // 针对各类失败的精确修复指引（坐标级，远比抽象描述可靠）
+  const hints = [];
+  // 1) 分布圆：期望坐标列表
+  if (fails.some((c) => String(c.detail).includes('圆心距'))) {
     const ring = (task.checks || []).find((c) => c.type === 'ringDist');
     if (ring) {
       const n = ring.minCount ?? 6;
@@ -298,8 +298,36 @@ export function feedbackPrompt(task, result) {
         const a = (k * 2 * Math.PI) / n;
         coords.push(`(${(ring.radius * Math.cos(a)).toFixed(1)}, ${(ring.radius * Math.sin(a)).toFixed(1)})`);
       }
-      ringHint = `\n【修复指引】沿圆周均布的 ${n} 个实体（${ring.kind}）中心坐标应精确为：${coords.join('、')}（圆心 (${ring.cx},${ring.cy})，半径 ${ring.radius}）。请把不在该圆上的实体删除或移动到这些坐标。`;
+      hints.push(`沿圆周均布的 ${n} 个实体（${ring.kind}）中心坐标应精确为：${coords.join('、')}（圆心 (${ring.cx},${ring.cy})，半径 ${ring.radius}）。请把不在该圆上的实体删除或移动到这些坐标。`);
     }
   }
-  return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${ringHint}`;
+  // 2) 同轴度：全部轴心归零
+  if (fails.some((c) => String(c.detail).includes('偏心量'))) {
+    const coax = (task.checks || []).find((c) => c.type === 'coaxial');
+    if (coax) hints.push(`所有 ${coax.kind} 的中心 x,y 都必须设为 (${coax.cx}, ${coax.cy})（偏心量≈0）。请把偏离的实体位置改正。`);
+  }
+  // 3) 角度均布：期望角度列表
+  if (fails.some((c) => String(c.detail).includes('角差'))) {
+    const ang = (task.checks || []).find((c) => c.type === 'angularEven');
+    if (ang) {
+      const ring = (task.checks || []).find((c) => c.type === 'ringDist');
+      const n = ring?.minCount ?? 6;
+      const r = ring?.radius ?? 35;
+      const pos = [];
+      for (let k = 0; k < n; k++) {
+        const a = (k * 2 * Math.PI) / n;
+        pos.push(`(${(r * Math.cos(a)).toFixed(1)}, ${(r * Math.sin(a)).toFixed(1)})`);
+      }
+      hints.push(`圆周上 ${n} 个实体角度应等分（相邻 ${Math.round(360 / n)}°），建议坐标：${pos.join('、')}。`);
+    }
+  }
+  // 4) 轴孔配合：给出精确半径
+  if (fails.some((c) => String(c.detail).includes('配合'))) {
+    const fit = (task.checks || []).find((c) => c.type === 'fitClearance' || c.type === 'fitChain');
+    if (fit && fit.type === 'fitClearance') {
+      hints.push(`轴半径应为 ${fit.outerR}（圆柱），孔半径应为 ${fit.boreR}（孔与轴同心），间隙 ${Math.round((fit.boreR - fit.outerR) * 100) / 100}。`);
+    }
+  }
+  const guide = hints.length ? `\n【修复指引】${hints.join('；')}` : '';
+  return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${guide}`;
 }

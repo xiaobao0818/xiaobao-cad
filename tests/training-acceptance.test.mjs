@@ -467,4 +467,29 @@ function goodFlange2d() {
   ok('反馈修复指引：分布圆失败 → 精确坐标列表');
 }
 
+{
+  // 修复指引推广：同轴度/配合失败也给精确指引
+  const task = taskById('minipump3d');
+  const bad = [
+    { id: 'outer', kind: 'cylinder', params: { x: 0, y: 0, r: 70, h: 50 } },
+    { id: 'cav', kind: 'cylinder', params: { x: 18, y: 0, r: 45, h: 50 } },
+    { id: 'disk', kind: 'cylinder', params: { x: 5, y: 0, r: 60, h: 8 } }, // 偏心
+    { id: 'bore', kind: 'cylinder', params: { x: 0, y: 0, r: 30.5, h: 8 } },
+    { id: 'b1', kind: 'boolean', params: { op: 'cut', a: 'outer', b: ['cav'] } },
+    { id: 'b2', kind: 'boolean', params: { op: 'cut', a: 'disk', b: ['bore'] } },
+  ];
+  const r = evaluate(task, { bodies: bad });
+  const p = feedbackPrompt(task, r);
+  assert(p.includes('偏心量') || p.includes('配合'), '应含同轴/配合指引');
+  assert(p.includes('修复指引'), '应有修复指引段落');
+  ok('修复指引推广：同轴度/配合失败同样给精确指引');
+}
+{
+  // 知识库扩充：双吸/自吸/多级文档
+  assert(searchKnowledge('双吸泵')[0].title.includes('双吸'), '双吸泵文档可检索');
+  assert(searchKnowledge('自吸')[0].title.includes('自吸'), '自吸泵文档可检索');
+  assert(searchKnowledge('口环 材料')[0].source === '材料', '口环材料可检索');
+  ok('知识库扩充：双吸/自吸/多级泵 + 口环/轴套材料');
+}
+
 console.log(`全部通过：${n} 项`);
