@@ -27,6 +27,7 @@ const TASK_TOPICS = {
   threeview2d: ['标准', '蜗壳'],
   doublesuction3d: ['双吸', '叶轮', '配合'],
   bom2d: ['标准', '材料'],
+  drawingchain2d: ['标准', '材料', '密封'],
 };
 
 /** 历史失败明细 → 知识库补救提醒（薄弱点自动关联知识条目） */

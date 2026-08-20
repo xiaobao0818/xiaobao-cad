@@ -214,6 +214,23 @@ def build_stage(stage, messages, has_tools):
                            tool_call("r-sp2", "boolean_3d", {"op": "fuse", "a": ids[0], "b": [ids[1]]}),
                        ]}
                 return resp(msg, "tool_calls")
+        if task == "drawingchain2d" and not assistant_has(messages, "补上标注文字"):
+            msg = {"role": "assistant", "content": "截图里发现图纸集缺标注与标题栏/BOM 文字，我补上标注文字。",
+                   "tool_calls": [tool_call("r-dc1", "draw_entities", {"items": [
+                       {"type": "dimension", "subtype": "diametric", "cx": 50, "cy": 175, "px": 95, "py": 175, "tx": 30, "ty": 140},
+                       {"type": "dimension", "subtype": "diametric", "cx": 50, "cy": 175, "px": 60, "py": 175, "tx": 70, "ty": 220},
+                       {"type": "dimension", "subtype": "diametric", "cx": 50, "cy": 175, "px": 58, "py": 175, "tx": 20, "ty": 230},
+                       {"type": "text", "x": 250, "y": 40, "text": "离心泵总装图", "height": 10},
+                       {"type": "text", "x": 250, "y": 28, "text": "比例 1:2", "height": 7},
+                       {"type": "text", "x": 330, "y": 8, "text": "图号 XBC-001", "height": 7},
+                       {"type": "text", "x": 6, "y": -6, "text": "序号 名称 数量 材料 备注", "height": 6},
+                       {"type": "text", "x": 6, "y": -20, "text": "1 泵壳 1 HT200", "height": 5},
+                       {"type": "text", "x": 6, "y": -34, "text": "2 叶轮 1 ZG1Cr18Ni9Ti", "height": 5},
+                       {"type": "text", "x": 6, "y": -48, "text": "3 泵轴 1 2Cr13", "height": 5},
+                       {"type": "text", "x": 6, "y": -62, "text": "4 轴承 2 6206", "height": 5},
+                       {"type": "text", "x": 6, "y": -76, "text": "5 机械密封 1 SiC-石墨", "height": 5},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "bom2d" and not assistant_has(messages, "补上明细文字"):
             msg = {"role": "assistant", "content": "截图里发现明细栏缺文字，我补上明细文字。",
                    "tool_calls": [tool_call("r-bm1", "draw_entities", {"items": [
@@ -412,6 +429,28 @@ def build_stage(stage, messages, has_tools):
                        ]}
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 自吸泵已创建（泵壳 + 储液腔 + 叶轮 + 叶片，泵轴与储液腔并集待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "drawingchain2d":
+        if not assistant_has(messages, "图纸集主体"):
+            msg = {"role": "assistant", "content": "我先画图框、标题栏、三视图几何和明细栏表格（图纸集主体，训练剧本：故意漏标注与文字，等审阅补上）。",
+                   "tool_calls": [tool_call("t-dc1", "draw_entities", {"items": [
+                       {"type": "rectangle", "x1": 0, "y1": 0, "x2": 420, "y2": 297},
+                       {"type": "rectangle", "x1": 240, "y1": 0, "x2": 420, "y2": 56},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 45},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 10},
+                       {"type": "circle", "cx": 50, "cy": 175, "r": 8},
+                       {"type": "rectangle", "x1": 5, "y1": -110, "x2": 95, "y2": -30},
+                       {"type": "line", "x1": 50, "y1": -115, "x2": 50, "y2": -25, "layer": "中心线"},
+                       {"type": "rectangle", "x1": 130, "y1": 145, "x2": 210, "y2": 225},
+                       {"type": "circle", "cx": 170, "cy": 185, "r": 30},
+                       {"type": "rectangle", "x1": 0, "y1": -90, "x2": 180, "y2": -78},
+                       {"type": "rectangle", "x1": 0, "y1": -102, "x2": 180, "y2": -90},
+                       {"type": "rectangle", "x1": 0, "y1": -114, "x2": 180, "y2": -102},
+                       {"type": "rectangle", "x1": 0, "y1": -126, "x2": 180, "y2": -114},
+                       {"type": "rectangle", "x1": 0, "y1": -138, "x2": 180, "y2": -126},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 图纸集已绘制完成（几何+表格，标注与文字待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "bom2d":
         if not assistant_has(messages, "明细栏主体"):

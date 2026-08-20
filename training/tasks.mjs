@@ -198,6 +198,23 @@ export const TRAIN_TASKS = [
     ],
   },
   {
+    id: 'drawingchain2d',
+    ws: '2d',
+    name: '泵总装图纸集（2D）',
+    prompt: '请出离心泵总装图纸集（商用出图标准）：①图框 420×297（左下原点）+ 右下标题栏 180×56，标题栏写「离心泵总装图」「比例 1:2」「图号 XBC-001」；②主视图（x∈[0,100],y∈[100,250]）：泵壳外圆 r45、轮毂 r10、轴圆 r8（圆心 (50,175)）加直径标注 Φ90/Φ20/Φ16；③俯视图（x∈[0,100],y∈[-120,30]）：泵体矩形 90×80（左下 (5,-110)）+ 中心线；④侧视图（x∈[120,220],y∈[100,250]）：外轮廓矩形 80×80（左下 (130,145)）+ 叶轮圆 r30（(170,185)）；⑤明细栏：序号/名称/数量/材料/备注 5 行（泵壳 HT200、叶轮 ZG1Cr18Ni9Ti、泵轴 2Cr13、轴承 6206、机械密封 SiC-石墨）。',
+    checks: [
+      { type: 'polylineBboxAt', x1: 0, y1: 0, x2: 420, y2: 297, tol: 2, weight: 2 },
+      { type: 'polylineBboxAt', x1: 240, y1: 0, x2: 420, y2: 56, tol: 2, weight: 2 },
+      { type: 'countInBand', kind: 'circle', x1: 0, y1: 100, x2: 100, y2: 250, min: 3, weight: 3 },
+      { type: 'countInBand', kind: 'polyline', x1: 0, y1: -120, x2: 100, y2: 30, min: 1, weight: 2 },
+      { type: 'countInBand', kind: 'polyline', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 2 },
+      { type: 'countInBand', kind: 'circle', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 2 },
+      { type: 'dimensionCount', min: 3, weight: 3 },
+      { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
+      { type: 'count', kind: 'text', min: 8, weight: 3 },
+    ],
+  },
+  {
     id: 'bom2d',
     ws: '2d',
     name: '装配图明细栏（BOM）（2D）',

@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 19, '任务库应含基础 4 + 水泵 15 个任务');
-  ok('训练任务库 19 个任务（含水泵组件 15 个）');
+  assert.equal(TRAIN_TASKS.length, 20, '任务库应含基础 4 + 水泵 16 个任务');
+  ok('训练任务库 20 个任务（含水泵组件 16 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -622,6 +622,39 @@ function goodFlange2d() {
   assert(p.includes('删除多余零件'), '反馈应含删除冗余零件指引');
   assert(p.includes('≤15'), '指引应给出特征数上限');
   ok('零件冗余验收：超上限扣分 + 删除指引');
+}
+
+{
+  // 图纸集任务：图框+三视图+标注+BOM 一体
+  const task = taskById('drawingchain2d');
+  const ents = [
+    { id: 'f1', type: 'polyline', closed: true, points: [P(0, 0), P(420, 0), P(420, 297), P(0, 297)] },
+    { id: 'f2', type: 'polyline', closed: true, points: [P(240, 0), P(420, 0), P(420, 56), P(240, 56)] },
+    { id: 'c1', type: 'circle', cx: 50, cy: 175, r: 45 },
+    { id: 'c2', type: 'circle', cx: 50, cy: 175, r: 10 },
+    { id: 'c3', type: 'circle', cx: 50, cy: 175, r: 8 },
+    { id: 'p1', type: 'polyline', closed: true, points: [P(5, -110), P(95, -110), P(95, -30), P(5, -30)] },
+    { id: 'l1', type: 'line', x1: 50, y1: -115, x2: 50, y2: -25 },
+    { id: 'p2', type: 'polyline', closed: true, points: [P(130, 145), P(210, 145), P(210, 225), P(130, 225)] },
+    { id: 'c4', type: 'circle', cx: 170, cy: 185, r: 30 },
+    { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 50, cy: 175, px: 95, py: 175 },
+    { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 50, cy: 175, px: 60, py: 175 },
+    { id: 'd3', type: 'dimension', subtype: 'diametric', cx: 50, cy: 175, px: 58, py: 175 },
+    { id: 't1', type: 'text', x: 250, y: 40, text: '离心泵总装图', height: 10 },
+    { id: 't2', type: 'text', x: 250, y: 28, text: '比例 1:2', height: 7 },
+    { id: 't3', type: 'text', x: 330, y: 8, text: '图号 XBC-001', height: 7 },
+    { id: 't4', type: 'text', x: 6, y: -6, text: '序号 名称 数量 材料 备注', height: 6 },
+    { id: 't5', type: 'text', x: 6, y: -20, text: '1 泵壳 1 HT200', height: 5 },
+    { id: 't6', type: 'text', x: 6, y: -34, text: '2 叶轮 1 ZG1Cr18Ni9Ti', height: 5 },
+    { id: 't7', type: 'text', x: 6, y: -48, text: '3 泵轴 1 2Cr13', height: 5 },
+    { id: 't8', type: 'text', x: 6, y: -62, text: '4 轴承 2 6206', height: 5 },
+    { id: 't9', type: 'text', x: 6, y: -76, text: '5 机械密封 1 SiC-石墨', height: 5 },
+  ];
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `图纸集应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  const noDim = evaluate(task, ents.filter((e) => e.type !== 'dimension'));
+  assert(noDim.score < 85, `缺标注应扣分（实际 ${noDim.score}）`);
+  ok(`图纸集任务（完整 100 / 缺标注 ${noDim.score}）`);
 }
 
 console.log(`全部通过：${n} 项`);
