@@ -65,4 +65,12 @@ const entries = [
   ok('Markdown 训练报告生成');
 }
 
+{
+  // 报告薄弱点联动知识库
+  const rows = entries.map((e, i) => ({ ...e, fails: i === 0 ? ['box 圆心距 [35.1, 28.3] 命中 5/6'] : e.fails }));
+  const md = entriesToMarkdown(rows);
+  assert(md.includes('知识库提醒') || md.includes('叶片'), '报告薄弱点应联动知识库条目');
+  ok('报告薄弱点自动关联知识库建议');
+}
+
 console.log(`全部通过：${n} 项`);

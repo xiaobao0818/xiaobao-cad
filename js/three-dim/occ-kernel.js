@@ -557,23 +557,32 @@ export class Kernel {
       throw new Error(`圆角失败：半径 ${radius} 过大（实体最小尺寸 ${Math.round(minDim)}，半径应 < ${Math.round(minDim / 2)}）`);
     }
     const maker = new this.oc.BRepFilletAPI_MakeFillet(shape, this.oc.ChFi3d_FilletShape.ChFi3d_Rational);
-    const TopAbs = this.oc.TopAbs_ShapeEnum;
-    const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);
-    while (explorer.More()) {
-      const edgeShape = explorer.Current();          // borrowed
-      const edge = this.oc.TopoDS.Edge_1(edgeShape); // borrowed view
-      maker.Add_2(radius, edge);
-      explorer.Next();
-    }
-    explorer.delete();
-    maker.Build();
-    if (!maker.IsDone()) {
+    try {
+      const TopAbs = this.oc.TopAbs_ShapeEnum;
+      const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);
+      while (explorer.More()) {
+        const edgeShape = explorer.Current();          // borrowed
+        const edge = this.oc.TopoDS.Edge_1(edgeShape); // borrowed view
+        maker.Add_2(radius, edge);
+        explorer.Next();
+      }
+      explorer.delete();
+      maker.Build();
+      if (!maker.IsDone()) {
+        throw new Error(`圆角失败：半径 ${radius} 对该几何体过大或棱边无法构造圆角（请减小半径重试）`);
+      }
+      const result = maker.Shape();
       maker.delete();
-      throw new Error(`圆角失败：半径 ${radius} 对该几何体过大或棱边无法构造圆角（请减小半径重试）`);
+      return this._store(result);
+    } catch (e) {
+      try { maker.delete(); } catch (e2) { /* 忽略 */ }
+      // 浏览器构建缺失 C++ 异常传播助手（___cxa_* 未导出）：OCC 内部异常会变裸 ReferenceError，
+      // 转为可读错误，避免误报为内核崩溃
+      if (e instanceof ReferenceError && /___cxa/.test(String(e.message))) {
+        throw new Error('圆角失败：该棱边组合超出当前内核支持（OCC 异常路径缺失），请对更简单的实体或更小的半径重试');
+      }
+      throw e;
     }
-    const result = maker.Shape();
-    maker.delete();
-    return this._store(result);
   }
 
   chamfer(id, distance) {
@@ -586,23 +595,30 @@ export class Kernel {
       throw new Error(`倒角失败：距离 ${distance} 过大（实体最小尺寸 ${Math.round(minDim)}，距离应 < ${Math.round(minDim / 2)}）`);
     }
     const maker = new this.oc.BRepFilletAPI_MakeChamfer(shape);
-    const TopAbs = this.oc.TopAbs_ShapeEnum;
-    const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);
-    while (explorer.More()) {
-      const edgeShape = explorer.Current();          // borrowed
-      const edge = this.oc.TopoDS.Edge_1(edgeShape); // borrowed view
-      maker.Add_2(distance, edge);
-      explorer.Next();
-    }
-    explorer.delete();
-    maker.Build();
-    if (!maker.IsDone()) {
+    try {
+      const TopAbs = this.oc.TopAbs_ShapeEnum;
+      const explorer = new this.oc.TopExp_Explorer_2(shape, TopAbs.TopAbs_EDGE, TopAbs.TopAbs_SHAPE);
+      while (explorer.More()) {
+        const edgeShape = explorer.Current();          // borrowed
+        const edge = this.oc.TopoDS.Edge_1(edgeShape); // borrowed view
+        maker.Add_2(distance, edge);
+        explorer.Next();
+      }
+      explorer.delete();
+      maker.Build();
+      if (!maker.IsDone()) {
+        throw new Error(`倒角失败：距离 ${distance} 对该几何体过大或棱边无法构造倒角（请减小距离重试）`);
+      }
+      const result = maker.Shape();
       maker.delete();
-      throw new Error(`倒角失败: distance=${distance}`);
+      return this._store(result);
+    } catch (e) {
+      try { maker.delete(); } catch (e2) { /* 忽略 */ }
+      if (e instanceof ReferenceError && /___cxa/.test(String(e.message))) {
+        throw new Error('倒角失败：该棱边组合超出当前内核支持（OCC 异常路径缺失），请对更简单的实体或更小的距离重试');
+      }
+      throw e;
     }
-    const result = maker.Shape();
-    maker.delete();
-    return this._store(result);
   }
 
   /* ------------------------------------------------------------- lifecycle -- */

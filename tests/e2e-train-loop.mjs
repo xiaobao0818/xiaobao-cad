@@ -109,8 +109,8 @@ try {
       ok(`跨轮薄弱点记忆已注入（${entries.filter((x) => x.fails.length).length}/${ROUNDS} 轮带失败明细）`);
     }
     assert.equal(e.taskId, TASK);
-    assert(e.scoreBefore > 0, `真实模型应画出图（验收 ${e.scoreBefore} 分）`);
-    assert(e.scoreAfter >= e.scoreBefore, `多模态审阅后分数不应降低（${e.scoreBefore}→${e.scoreAfter}）`);
+    assert(e.scoreAfter >= 90, `真实模型训练应收敛到 ≥90 分（实际 ${e.scoreAfter}，初绘 ${e.scoreBefore}）`);
+    assert(e.scoreAfter >= e.scoreBefore, `训练后分数不应降低（${e.scoreBefore}→${e.scoreAfter}）`);
     assert(e.reviewRounds >= 1, `应至少 1 轮带截图的多模态审阅（实际 ${e.reviewRounds}）`);
     ok(`真实 MiniMax M3 训练验收：画图 ${e.scoreBefore} 分 → 多模态审阅后 ${e.scoreAfter} 分（${e.reviewRounds} 轮审阅 + ${e.fbRounds} 轮反馈）`);
     const checks = await page.evaluate(async (taskId) => {

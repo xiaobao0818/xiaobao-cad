@@ -67,6 +67,7 @@ export function specsForTask(taskId) {
 /** 任务提示 + 工业设计规范（训练时注入） */
 export function promptWithSpecs(task) {
   const specs = specsForTask(task.id);
-  if (!specs.length) return task.prompt;
-  return task.prompt + '\n【工业设计规范】\n- ' + specs.join('\n- ');
+  const lean = task.ws === '3d' ? '\n【建模纪律】按任务清单精确建模：只创建任务要求的零件，不添加任务之外的多余零件/圆角/倒角/装饰特征。' : '';
+  if (!specs.length) return task.prompt + lean;
+  return task.prompt + '\n【工业设计规范】\n- ' + specs.join('\n- ') + lean;
 }

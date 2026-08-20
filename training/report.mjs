@@ -4,6 +4,7 @@
  * ============================================================ */
 import { summarize } from './stats.mjs';
 import { memoryNotes } from './memory.mjs';
+import { knowledgeHintForFails } from './knowledge.mjs';
 
 const dt = (ts) => (ts ? new Date(ts).toISOString().replace('T', ' ').slice(0, 19) : '—');
 const pct = (v) => `${v}%`;
@@ -38,7 +39,10 @@ export function entriesToMarkdown(entries) {
   const weak = [];
   for (const [id, name] of tasks) {
     const notes = memoryNotes(list, id, { maxNotes: 2 });
-    if (notes) weak.push(`### ${name}\n${notes}`);
+    if (!notes) continue;
+    const histFails = list.filter((e) => e.taskId === id && Array.isArray(e.fails)).flatMap((e) => e.fails);
+    const kb = knowledgeHintForFails(histFails);
+    weak.push(`### ${name}\n${notes}${kb ? '\n\n' + kb : ''}`);
   }
   if (weak.length) {
     L.push('');

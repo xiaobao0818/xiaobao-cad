@@ -28,5 +28,50 @@
     "fbRounds": 1,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787245423132,
+    "taskId": "impeller3d",
+    "taskName": "水泵叶轮（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 0,
+    "scoreAfter": 100,
+    "delta": 100,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 1,
+    "fails": [],
+    "note": "绘制未完成"
+  },
+  {
+    "ts": 1787247109184,
+    "taskId": "casing3d",
+    "taskName": "水泵泵壳（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 88,
+    "scoreAfter": 100,
+    "delta": 12,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 3,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787247151817,
+    "taskId": "shaft3d",
+    "taskName": "泵轴·台阶轴（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 1,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]
