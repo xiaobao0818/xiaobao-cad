@@ -121,7 +121,13 @@ def extra_rounds(messages):
 
 def training_task(messages):
     m = re.search(r"\[训练任务:(\w+)\]", last_plain_ask(messages) or "")
-    return m.group(1) if m else None
+    if m:
+        return m.group(1)
+    a = last_plain_ask(messages) or ""
+    # 自然语言工况需求识别：提到流量+扬程/转速 → 裸对话商用泵任务（可训练）
+    if "流量" in a and ("扬程" in a or "rpm" in a or "转速" in a) and "泵" in a:
+        return "conversation3d"
+    return None
 
 def build_stage(stage, messages, has_tools):
     if not has_tools:
@@ -183,7 +189,7 @@ def build_stage(stage, messages, has_tools):
             msg = {"role": "assistant", "content": "截图里发现台阶轴只有 4 段，我补上第 5 段（r10×30）。",
                    "tool_calls": [tool_call("r-sh1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 10, "h": 30, "color": "#8fd3a8"})]}
             return resp(msg, "tool_calls")
-        if task == "pumpduty3d" and not assistant_has(messages, "补上泵轴"):
+        if task in ("pumpduty3d", "conversation3d") and not assistant_has(messages, "补上泵轴"):
             msg = {"role": "assistant", "content": "截图里发现商用泵缺泵轴，我按 pump_sizing 的轴径补上（轴径 31mm，补上泵轴）。",
                    "tool_calls": [tool_call("r-pd1", "create_primitive_3d", {"kind": "cylinder", "x": 0, "y": 0, "z": 0, "r": 15.5, "h": 120, "color": "#b9a3f0"})]}
             return resp(msg, "tool_calls")
@@ -580,7 +586,7 @@ def build_stage(stage, messages, has_tools):
                 return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 两级泵已装配完成（两级泵壳 + 叶轮 + 叶片，长轴与轴承座待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
-    if task == "pumpduty3d":
+    if task in ("pumpduty3d", "conversation3d"):
         if not assistant_has(messages, "设计参数"):
             msg = {"role": "assistant", "content": "先用泵设计计算确定尺寸（设计参数）。",
                    "tool_calls": [tool_call("t-pd0", "pump_sizing", {"Q": 100, "H": 32, "n": 2900})]}

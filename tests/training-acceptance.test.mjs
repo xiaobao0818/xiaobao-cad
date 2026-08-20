@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 18, '任务库应含基础 4 + 水泵 14 个任务');
-  ok('训练任务库 18 个任务（含水泵组件 14 个）');
+  assert.equal(TRAIN_TASKS.length, 19, '任务库应含基础 4 + 水泵 15 个任务');
+  ok('训练任务库 19 个任务（含水泵组件 15 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {

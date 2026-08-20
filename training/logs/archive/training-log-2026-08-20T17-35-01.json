@@ -223,37 +223,5 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
-  },
-  {
-    "ts": 1787249246799,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 93,
-    "scoreAfter": 93,
-    "delta": 0,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 1,
-    "fbRounds": 3,
-    "fails": [
-      "cylinder 数量=4（期望 ≥5）"
-    ],
-    "note": ""
-  },
-  {
-    "ts": 1787249273425,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 93,
-    "scoreAfter": 100,
-    "delta": 7,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 2,
-    "fbRounds": 0,
-    "fails": [],
-    "note": ""
   }
 ]

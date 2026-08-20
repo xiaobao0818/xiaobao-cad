@@ -21,6 +21,7 @@ const TASK_TOPICS = {
   pump2d: ['蜗壳', '叶轮'],
   sleeve3d: ['配合', '公差'],
   pumpduty3d: ['比转速', '叶轮', '蜗壳', '材料'],
+  conversation3d: ['比转速', '叶轮', '蜗壳', '材料'],
   selfprime3d: ['自吸', '叶轮', '密封'],
   drawingframe2d: ['标准', '材料'],
   threeview2d: ['标准', '蜗壳'],

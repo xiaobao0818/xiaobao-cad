@@ -48,6 +48,7 @@ const TASK_SPECS = {
   pump2d: ['casing', 'volute'],
   sleeve3d: ['assembly'],
   pumpduty3d: ['impeller', 'casing', 'assembly'],
+  conversation3d: ['impeller', 'casing', 'assembly'],
   pumpdrawing2d: ['casing', 'volute', 'assembly'],
   selfprime3d: ['impeller', 'casing', 'assembly'],
   drawingframe2d: ['assembly'],
