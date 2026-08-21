@@ -932,33 +932,6 @@
     "note": ""
   },
   {
-    "ts": 1787253356150,
-    "taskId": "pumpboth",
-    "taskName": "泵模型+图纸·联合对话（3D+2D）",
-    "round": 1,
-    "ws": "both",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 3,
-    "fails": [
-      "特征数=0（期望 12~22）",
-      "cylinder 数量=0（期望 ≥5）",
-      "box 数量=0（期望 ≥5）",
-      "box 圆心距 []，R=65±2 命中 0/5",
-      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）",
-      "circle 在区域(0,100)-(100,250)：0（期望≥3）",
-      "尺寸标注 0 个（期望≥3）",
-      "尺寸标注 0 个（diametric）（期望≥2）",
-      "闭合轮廓 @(0,0)-(420,297) ±2 ✗（图框/标题栏缺失或尺寸不符）",
-      "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）",
-      "text 数量=0（期望 8~60）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
     "ts": 1787253382318,
     "taskId": "pumpboth",
     "taskName": "泵模型+图纸·联合对话（3D+2D）",
@@ -2249,107 +2222,6 @@
     "note": ""
   },
   {
-    "ts": 1787305778037,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 2,
-    "fails": [
-      "特征数=0（期望 12~22）",
-      "cylinder 数量=0（期望 ≥5）",
-      "box 数量=0（期望 ≥5）",
-      "boolean 数量=0（期望 ≥3）",
-      "cylinder.r≈98 命中 0/1",
-      "cylinder.r≈92.5 命中 0/1",
-      "box 圆心距 []，R=65±1.5 命中 0/5",
-      "box 角度均布：实体不足 2 个",
-      "cylinder 偏心量 []，同轴于(0,0)：0/3",
-      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
-    "ts": 1787305800501,
-    "taskId": "casing3d",
-    "taskName": "水泵泵壳（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 2,
-    "fails": [
-      "特征数=0（期望 6~12）",
-      "cylinder 数量=0（期望 ≥4）",
-      "box 数量=0（期望 ≥1）",
-      "boolean 数量=0（期望 ≥2）",
-      "cylinder.r≈70 未找到",
-      "cylinder.r≈45 命中 0/1",
-      "cylinder @(±18,±0) 命中 0/1",
-      "cylinder 偏心量 []，同轴于(0,0)：0/1"
-    ],
-    "note": "绘制未完成"
-  },
-  {
-    "ts": 1787305823279,
-    "taskId": "doublesuction3d",
-    "taskName": "双吸泵（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 2,
-    "fails": [
-      "特征数=0（期望 25~40）",
-      "cylinder 数量=0（期望 ≥8）",
-      "box 数量=0（期望 ≥12）",
-      "boolean 数量=0（期望 ≥5）",
-      "cylinder.r≈90 命中 0/1",
-      "cylinder.r≈70 命中 0/2",
-      "box 圆心距 []，R=50±2 命中 0/12",
-      "cylinder 偏心量 []，同轴于(0,0)：0/4",
-      "轴 Φ32/孔 Φ33：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
-    "ts": 1787305873503,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 2,
-    "fails": [
-      "特征数=0（期望 12~22）",
-      "cylinder 数量=0（期望 ≥5）",
-      "box 数量=0（期望 ≥5）",
-      "boolean 数量=0（期望 ≥3）",
-      "cylinder.r≈98 命中 0/1",
-      "cylinder.r≈92.5 命中 0/1",
-      "box 圆心距 []，R=65±1.5 命中 0/5",
-      "box 角度均布：实体不足 2 个",
-      "cylinder 偏心量 []，同轴于(0,0)：0/3",
-      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
     "ts": 1787305970459,
     "taskId": "flange2d",
     "taskName": "法兰盘俯视图（2D）",
@@ -2382,58 +2254,6 @@
     "note": ""
   },
   {
-    "ts": 1787309566859,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 3,
-    "fails": [
-      "特征数=0（期望 12~22）",
-      "cylinder 数量=0（期望 ≥5）",
-      "box 数量=0（期望 ≥5）",
-      "boolean 数量=0（期望 ≥3）",
-      "cylinder.r≈98 命中 0/1",
-      "cylinder.r≈92.5 命中 0/1",
-      "box 圆心距 []，R=65±1.5 命中 0/5",
-      "box 角度均布：实体不足 2 个",
-      "cylinder 偏心量 []，同轴于(0,0)：0/3",
-      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
-    "ts": 1787309632764,
-    "taskId": "conversation3d",
-    "taskName": "商用泵·裸对话需求（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 0,
-    "scoreAfter": 0,
-    "delta": 0,
-    "reviewOutcome": "未执行",
-    "reviewRounds": 0,
-    "fbRounds": 3,
-    "fails": [
-      "特征数=0（期望 12~22）",
-      "cylinder 数量=0（期望 ≥5）",
-      "box 数量=0（期望 ≥5）",
-      "boolean 数量=0（期望 ≥3）",
-      "cylinder.r≈98 命中 0/1",
-      "cylinder.r≈92.5 命中 0/1",
-      "box 圆心距 []，R=65±1.5 命中 0/5",
-      "box 角度均布：实体不足 2 个",
-      "cylinder 偏心量 []，同轴于(0,0)：0/3",
-      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ],
-    "note": "绘制未完成"
-  },
-  {
     "ts": 1787310913692,
     "taskId": "conversation3d",
     "taskName": "商用泵·裸对话需求（3D）",
@@ -2448,6 +2268,36 @@
     "fails": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
     ],
+    "note": ""
+  },
+  {
+    "ts": 1787311900250,
+    "taskId": "casing3d",
+    "taskName": "水泵泵壳（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787312838257,
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 79,
+    "scoreAfter": 100,
+    "delta": 21,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 1,
+    "fails": [],
     "note": ""
   }
 ]

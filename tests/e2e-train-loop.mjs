@@ -53,6 +53,35 @@ try {
   // 选单任务：法兰盘，1 轮
   await page.waitForFunction(() => !!window.__aiPanel, { timeout: 60000, polling: 1000 });
   console.log('  [进度] AI 面板就绪');
+  if (REAL) {
+    // 兜底：若设置注入失败（偶发竞态），再次注入 Key 并重载面板设置
+    const kNow = await page.evaluate(() => window.__aiPanel?.settings?.key || '');
+    if (!kNow) {
+      console.log('  [warn] 设置注入未生效，重试注入 Key');
+      await page.evaluate((key) => {
+        localStorage.setItem('xbcad:ai-settings', JSON.stringify({
+          base: 'https://api.minimaxi.com', model: 'MiniMax-M3', key,
+          temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false,
+          visionBase: 'https://api.minimaxi.com', visionModel: 'MiniMax-M3', visionKey: key,
+          reviewRounds: 6, deepThink: true, settingsVersion: 2,
+        }));
+        const p = window.__aiPanel;
+        if (p && typeof p._loadSettings === 'function') p.settings = p._loadSettings();
+        // 最后手段：直接强制赋值，避免任何加载竞态
+        if (p && (!p.settings?.key) && typeof p.settings === 'object') p.settings.key = key;
+        return window.__aiPanel?.settings?.key || '';
+      }, REAL_KEY);
+    }
+    const kFinal = await page.evaluate(() => {
+      const raw = localStorage.getItem('xbcad:ai-settings') || '';
+      const p = window.__aiPanel;
+      let parsed = {};
+      try { parsed = JSON.parse(raw); } catch (e) {}
+      return { key: p?.settings?.key || '', rawLen: raw.length, storedKeyLen: String(parsed.key || '').length, panelId: p ? p._id || '?' : 'none' };
+    });
+    if (!kFinal.key) console.log(`  [warn] Key 注入最终仍失败（rawLen=${kFinal.rawLen} storedKeyLen=${kFinal.storedKeyLen} panel=${kFinal.panelId}）`);
+    else console.log('  [ok] Key 已就绪（len=' + kFinal.key.length + '）');
+  }
   if (!ALL) await page.select('#taskSel', TASK);
   await page.$eval('#rounds', (el, v) => { el.value = String(v); }, ROUNDS);
   await page.click('#btnStart');
