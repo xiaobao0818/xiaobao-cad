@@ -4305,5 +4305,67 @@
       "box 角度均布：实体不足 2 个"
     ],
     "note": "↩️ 审阅导致分数下降（74→59），已回滚到审阅前快照"
+  },
+  {
+    "ts": 1787350635487,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 93,
+    "scoreAfter": 100,
+    "delta": 7,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787351616523,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 74,
+    "scoreAfter": 100,
+    "delta": 26,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 3,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787353298985,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 89,
+    "scoreAfter": 100,
+    "delta": 11,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 4,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787354400000,
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 93,
+    "scoreAfter": 93,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 2,
+    "fails": [
+      "（E2E 等待超时未收尾，首绘 93 分实测）"
+    ],
+    "note": "量具校准+泵工况铁律+精简原则后首绘 93"
   }
 ]
