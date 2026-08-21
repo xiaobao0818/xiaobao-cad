@@ -2526,5 +2526,35 @@
     "fbRounds": 2,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787329190899,
+    "taskId": "sleeve3d",
+    "taskName": "轴套（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 86,
+    "scoreAfter": 100,
+    "delta": 14,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787329898970,
+    "taskId": "pumpduty3d",
+    "taskName": "商用泵·需求驱动设计（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
   }
 ]
