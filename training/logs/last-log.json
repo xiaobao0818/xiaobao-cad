@@ -4219,5 +4219,35 @@
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 60.0°（≤4°✗）"
     ],
     "note": ""
+  },
+  {
+    "ts": 1787344141548,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 74,
+    "scoreAfter": 100,
+    "delta": 26,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787345367490,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 44,
+    "scoreAfter": 100,
+    "delta": 56,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
   }
 ]
