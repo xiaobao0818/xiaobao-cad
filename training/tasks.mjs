@@ -3,6 +3,7 @@
  * 每个任务：AI 自然语言指令 + 确定性验收标准（几何/结构）
  * 训练闭环：AI 画图 → 验收打分 → MiniMax M3 多模态审阅 → 修复 → 再打分
  * ============================================================ */
+import { dutyChecks } from './pumpdesign.mjs';
 
 export const TRAIN_TASKS = [
   {
@@ -204,7 +205,8 @@ export const TRAIN_TASKS = [
     id: 'pumpboth',
     ws: 'both',
     name: '泵模型+图纸·联合对话（3D+2D）',
-    prompt: '做一台 Q=100m³/h、H=32m、n=2900rpm 的离心泵并出全套图纸：①先用 pump_sizing 计算参数；②在 3D 工作区建模（泵壳蜗壳基圆外圆柱 r98 + 内腔差集、叶轮轮盘 r92.5 + 5 叶片均布 R65 + 轮毂孔、泵轴 r15.5，共 12~22 个特征）；③用 switch_workspace 切到 2D 工作区画图纸：主视图（圆 r45 轮毂 r10 轴 r8）+ 直径标注 + 图框 420×297 + 标题栏 180×56 + 明细栏（泵壳/叶轮/泵轴/轴承/机械密封）。',
+    duty: { Q: 100, H: 32, n: 2900 },
+    promptTpl: (d) => `做一台 Q=${d.Q}m³/h、H=${d.H}m、n=${d.n}rpm 的离心泵并出全套商用图纸：①先用 pump_sizing 计算设计参数；②在 3D 工作区按计算参数建模（泵壳：蜗壳基圆外圆柱+内腔差集；叶轮：轮盘+均布叶片+轮毂孔；泵轴：与轮毂孔间隙配合）；③用 switch_workspace 切到 2D 工作区画图纸：主视图（泵壳/轮毂/轴同心圆）+ 直径标注 + 图框 + 标题栏 + 明细栏（泵壳/叶轮/泵轴/轴承/机械密封）。`,
     checks: [
       { side: '3d', type: 'featureCount', min: 12, max: 22, weight: 2 },
       { side: '3d', type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
@@ -315,37 +317,17 @@ export const TRAIN_TASKS = [
     id: 'conversation3d',
     ws: '3d',
     name: '商用泵·裸对话需求（3D）',
-    prompt: '客户要求一台单级单吸离心泵：流量 100m³/h，扬程 32m，转速 2900rpm，介质清水。请设计并创建商用级装配模型。',
-    checks: [
-      { type: 'featureCount', min: 12, max: 22, weight: 2 },
-      { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
-      { type: 'kindCount', kind: 'box', min: 5, weight: 2 },
-      { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
-      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 98, tol: 2, minCount: 1, weight: 3 },
-      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 92.5, tol: 2, minCount: 1, weight: 3 },
-      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 1.5, minCount: 5, weight: 3 },
-      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 2, maxDevDeg: 4, weight: 2 },
-      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
-      { type: 'fitClearance', outerR: 15.5, boreR: 16, outerTol: 0.6, boreTol: 0.6, minGap: 0.2, maxGap: 1.5, weight: 4 },
-    ],
+    duty: { Q: 100, H: 32, n: 2900 },
+    promptTpl: (d) => `客户要求一台单级单吸离心泵：流量 ${d.Q}m³/h，扬程 ${d.H}m，转速 ${d.n}rpm，介质清水。请设计并创建商用级装配模型。`,
+    checks: dutyChecks({ Q: 100, H: 32, n: 2900 }),
   },
   {
     id: 'pumpduty3d',
     ws: '3d',
     name: '商用泵·需求驱动设计（3D）',
-    prompt: '客户要求一台单级单吸离心泵：流量 Q=100m³/h、扬程 H=32m、转速 n=2900rpm。请先用 pump_sizing 工具计算设计参数，再按参数创建商用级装配模型：泵壳（蜗壳基圆外圆柱 + 偏心内腔差集）、叶轮（轮盘 + 5 片均布叶片 + 轮毂孔差集）、泵轴（与轮毂孔间隙配合）。叶片按公式放置：第 k 片盒体中心 = (65·cos(72°·k), 65·sin(72°·k))，k=0..4（即 (65,0)、(20.1,61.8)、(-52.6,38.2)、(-52.6,-38.2)、(20.1,-61.8)）。',
-    checks: [
-      { type: 'featureCount', min: 12, max: 22, weight: 2 },
-      { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
-      { type: 'kindCount', kind: 'box', min: 5, weight: 2 },
-      { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
-      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 98, tol: 2, minCount: 1, weight: 3 },
-      { type: 'primParam', kind: 'cylinder', field: 'r', approx: 92.5, tol: 2, minCount: 1, weight: 3 },
-      { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 1.5, minCount: 5, weight: 3 },
-      { type: 'angularEven', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 2, maxDevDeg: 4, weight: 2 },
-      { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
-      { type: 'fitClearance', outerR: 15.5, boreR: 16, outerTol: 0.6, boreTol: 0.6, minGap: 0.2, maxGap: 1.5, weight: 4 },
-    ],
+    duty: { Q: 100, H: 32, n: 2900 },
+    promptTpl: (d) => `客户要求一台单级单吸离心泵：流量 ${d.Q}m³/h、扬程 ${d.H}m、转速 ${d.n}rpm。请先用 pump_sizing 工具计算设计参数，再按参数创建商用级装配模型：泵壳（蜗壳基圆外圆柱 + 偏心内腔差集）、叶轮（轮盘 + 均布叶片 + 轮毂孔差集）、泵轴（与轮毂孔间隙配合）。`,
+    checks: dutyChecks({ Q: 100, H: 32, n: 2900 }),
   },
   {
     id: 'multistage3d',
@@ -366,6 +348,34 @@ export const TRAIN_TASKS = [
         { name: '叶轮孔', r: 30.5, tol: 0.4 },
         { name: '轴承孔', r: 32, tol: 0.5 },
       ] },
+    ],
+  },
+  {
+    id: 'pumpduty3d-bare',
+    ws: '3d',
+    name: '商用泵·裸需求（3D）',
+    duty: { Q: 100, H: 32, n: 2900 },
+    promptTpl: (d) => `客户要求一台单级单吸离心泵：流量 ${d.Q}m³/h、扬程 ${d.H}m、转速 ${d.n}rpm。请设计并创建商用级装配模型。`,
+    checks: dutyChecks({ Q: 100, H: 32, n: 2900 }),
+  },
+  {
+    id: 'pumpboth-bare',
+    ws: 'both',
+    name: '泵模型+图纸·裸需求（3D+2D）',
+    duty: { Q: 100, H: 32, n: 2900 },
+    promptTpl: (d) => `做一台 Q=${d.Q}m³/h、H=${d.H}m、n=${d.n}rpm 的离心泵并出全套商用图纸：先在 3D 工作区创建泵壳、叶轮、泵轴装配模型；再用 switch_workspace 切到 2D 工作区绘制主视图（含直径标注）、图框、标题栏与明细栏。`,
+    checks: [
+      { side: '3d', type: 'featureCount', min: 12, max: 22, weight: 2 },
+      { side: '3d', type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
+      { side: '3d', type: 'kindCount', kind: 'box', min: 5, weight: 2 },
+      { side: '3d', type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: 65, tol: 2, minCount: 5, weight: 3 },
+      { side: '3d', type: 'fitClearance', outerR: 15.5, boreR: 16, outerTol: 0.6, boreTol: 0.6, minGap: 0.2, maxGap: 1.5, weight: 3 },
+      { side: '2d', type: 'countInBand', kind: 'circle', x1: 0, y1: 100, x2: 100, y2: 250, min: 3, weight: 3 },
+      { side: '2d', type: 'dimensionCount', min: 3, weight: 3 },
+      { side: '2d', type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
+      { side: '2d', type: 'polylineBboxAt', x1: 0, y1: 0, x2: 420, y2: 297, tol: 2, weight: 2 },
+      { side: '2d', type: 'polylineBboxAt', x1: 240, y1: 0, x2: 420, y2: 56, tol: 2, weight: 2 },
+      { side: '2d', type: 'count', kind: 'text', min: 8, max: 60, weight: 3 },
     ],
   },
 ];

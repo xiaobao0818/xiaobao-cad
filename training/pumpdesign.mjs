@@ -80,3 +80,23 @@ export function sizingText(p) {
     '按上述尺寸建模：泵壳外圆柱半径=D3/2、叶轮轮盘半径=D2/2、泵轴半径=轴径/2、轮毂孔半径=轴径/2+0.5。',
   ].join('\n');
 }
+
+/** 由工况生成验收检查项（裸需求任务：模型必须先 pump_sizing 算出尺寸才能通过）
+ *  所有期望值都从设计计算推导，换一组工况（如 Q=200/H=50/n=1450）检查项自动缩放 */
+export function dutyChecks(duty) {
+  const p = sizingFromDuty(duty);
+  const ringR = Math.round(0.7 * (p.D2mm / 2));
+  const shaftR = p.shaftDmm / 2;
+  return [
+    { type: 'featureCount', min: 12, max: 22, weight: 2 },
+    { type: 'kindCount', kind: 'cylinder', min: 5, weight: 2 },
+    { type: 'kindCount', kind: 'box', min: p.Z, weight: 2 },
+    { type: 'kindCount', kind: 'boolean', min: 3, weight: 3 },
+    { type: 'primParam', kind: 'cylinder', field: 'r', approx: p.D3mm / 2, tol: 2, minCount: 1, weight: 3 },
+    { type: 'primParam', kind: 'cylinder', field: 'r', approx: p.D2mm / 2, tol: 2, minCount: 1, weight: 3 },
+    { type: 'ringDist', kind: 'box', cx: 0, cy: 0, radius: ringR, tol: 1.5, minCount: p.Z, weight: 3 },
+    { type: 'angularEven', kind: 'box', cx: 0, cy: 0, radius: ringR, tol: 2, maxDevDeg: 4, weight: 2 },
+    { type: 'coaxial', kind: 'cylinder', cx: 0, cy: 0, tol: 2, minCount: 3, weight: 3 },
+    { type: 'fitClearance', outerR: shaftR, boreR: shaftR + 0.5, outerTol: 0.6, boreTol: 0.6, minGap: 0.2, maxGap: 1.5, weight: 4 },
+  ];
+}

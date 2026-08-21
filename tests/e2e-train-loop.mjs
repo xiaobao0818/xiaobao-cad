@@ -16,6 +16,7 @@ const REAL = process.env.REAL === '1';
 const ROUNDS = parseInt(process.env.ROUNDS || '1', 10);
 const KEEP = process.env.KEEP === '1'; // 保留既有训练日志（分轮续跑：记忆/知识联动跨轮生效）
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
+const DUTY = process.env.DUTY || ''; // 换工况测试：DUTY=Q,H,n 覆盖任务工况（prompt 重渲染 + dutyChecks 重建）
 
 let n = 0;
 const ok = (msg) => { n++; console.log(`  ✓ ${msg}`); };
@@ -47,7 +48,7 @@ try {
       }));
     }, REAL_KEY);
   }
-  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : ''}${CONT ? '&continuous=1' : ''}`, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : ''}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
   if (!KEEP) await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
@@ -145,12 +146,12 @@ try {
   } else if (ALL) {
     console.log(`  全任务回归：${entries.length} 轮`);
     const tasks = new Set(entries.map((e) => e.taskId));
-    assert.equal(tasks.size, 22, `应覆盖全部 22 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
+    assert.equal(tasks.size, 24, `应覆盖全部 24 个任务，实际 ${tasks.size}: ${[...tasks].join(',')}`);
     assert(entries.every((e) => e.scoreAfter === 100), `mock 剧本审阅修复后每个任务都应到 100 分：${entries.filter((e) => e.scoreAfter !== 100).map((e) => e.taskId).join(',')}`);
     assert(entries.every((e) => e.delta >= 0), '审阅不应降低分数');
     const improved = entries.filter((e) => e.delta > 0).length;
-    assert(improved === 22, `全部 22 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
-    ok(`全任务训练回归：22/22 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
+    assert(improved === 24, `全部 24 个任务的画图都带缺陷且审阅修复提升（实际提升 ${improved} 个）`);
+    ok(`全任务训练回归：24/24 任务 审阅修复后均 100 分（${improved} 个任务 Δ>0）`);
   } else if (REAL) {
     const e = entries[entries.length - 1];
     console.log(`  真实 MiniMax 训练条目: ${JSON.stringify(e)}`);

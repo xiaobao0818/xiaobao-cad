@@ -58,20 +58,25 @@ const TASK_SPECS = {
   drawingchain2d: ['assembly', '标准', '材料'],
   axialflow3d: ['assembly', 'impeller'],
   pumpboth: ['impeller', 'casing', 'assembly'],
+  'pumpduty3d-bare': ['impeller', 'casing', 'assembly'],
+  'pumpboth-bare': ['impeller', 'casing', 'assembly'],
 };
 
-/** 任务对应的规范条目（去重） */
+/** 任务对应的规范条目（去重；-bare 裸需求任务复用基任务规范） */
 export function specsForTask(taskId) {
-  const keys = TASK_SPECS[taskId] || [];
+  const keys = TASK_SPECS[taskId] || TASK_SPECS[String(taskId).replace(/-bare$/, '')] || [];
   const out = [];
   for (const k of keys) for (const s of PUMP_SPECS[k] || []) if (!out.includes(s)) out.push(s);
   return out;
 }
 
-/** 任务提示 + 工业设计规范（训练时注入） */
+/** 任务提示 + 工业设计规范（训练时注入）；promptTpl 任务先按工况渲染 */
 export function promptWithSpecs(task) {
+  const prompt = typeof task.promptTpl === 'function'
+    ? task.promptTpl(task.duty || { Q: 100, H: 32, n: 2900 })
+    : (task.prompt || '');
   const specs = specsForTask(task.id);
   const lean = task.ws === '3d' ? '\n【建模纪律】按任务清单精确建模：只创建任务要求的零件，不添加任务之外的多余零件/圆角/倒角/装饰特征。' : '';
-  if (!specs.length) return task.prompt + lean;
-  return task.prompt + '\n【工业设计规范】\n- ' + specs.join('\n- ') + lean;
+  if (!specs.length) return prompt + lean;
+  return prompt + '\n【工业设计规范】\n- ' + specs.join('\n- ') + lean;
 }

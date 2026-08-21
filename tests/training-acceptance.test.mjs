@@ -5,7 +5,7 @@ import { TRAIN_TASKS, taskById } from '../training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '../training/acceptance.mjs';
 import { specsForTask, promptWithSpecs, PUMP_SPECS } from '../training/specs.mjs';
 import { memoryNotes, classifyFail, promptWithMemory } from '../training/memory.mjs';
-import { sizingFromDuty, sizingText, specificSpeed, bladeCount } from '../training/pumpdesign.mjs';
+import { sizingFromDuty, sizingText, specificSpeed, bladeCount, dutyChecks } from '../training/pumpdesign.mjs';
 import { searchKnowledge, searchText, knowledgeForTask, knowledgeHintForFails } from '../training/knowledge.mjs';
 import { TRAIN_TASKS as ALL_TASKS, taskById as taskById2 } from '../training/tasks.mjs';
 
@@ -93,8 +93,8 @@ function goodFlange2d() {
   ok('训练日志条目字段完整');
 }
 {
-  assert.equal(TRAIN_TASKS.length, 22, '任务库应含基础 4 + 水泵 18 个任务');
-  ok('训练任务库 22 个任务（含水泵组件 18 个）');
+  assert.equal(TRAIN_TASKS.length, 24, '任务库应含基础 4 + 水泵 18 + 裸需求 2 个任务');
+  ok('训练任务库 24 个任务（含水泵组件 18 个 + 裸需求 2 个）');
 }
 /* ============ 水泵组件验收 ============ */
 {
@@ -307,7 +307,8 @@ function goodFlange2d() {
   // 工业设计规范注入：每个任务都应带规范，叶轮任务含叶片数规范
   for (const t of TRAIN_TASKS) {
     const p = promptWithSpecs(t);
-    assert(typeof p === 'string' && p.includes(t.prompt), `${t.id} 提示应保留原任务`);
+    const expectPrompt = typeof t.promptTpl === 'function' ? t.promptTpl(t.duty || { Q: 100, H: 32, n: 2900 }) : t.prompt;
+    assert(typeof p === 'string' && p.includes(expectPrompt), `${t.id} 提示应保留原任务`);
     assert(specsForTask(t.id).length > 0, `${t.id} 应有设计规范`);
   }
   const imp = promptWithSpecs(taskById('impeller3d'));
@@ -369,6 +370,23 @@ function goodFlange2d() {
   const txt = sizingText(p);
   assert(txt.includes('叶轮外径') && txt.includes(String(p.D2mm)), '设计文本应含关键尺寸');
   ok(`泵设计计算：Q/H/n → D2=${p.D2mm}mm Z=${p.Z} 轴径=${p.shaftDmm}mm`);
+}
+
+{
+  // 裸需求任务：dutyChecks 随工况缩放（换工况验收自动适应，不写死答案）
+  const c1 = dutyChecks({ Q: 100, H: 32, n: 2900 });
+  const c2 = dutyChecks({ Q: 200, H: 50, n: 1450 });
+  const r1 = c1.find((c) => c.type === 'primParam' && c.approx === 92.5);
+  const r2 = c2.find((c) => c.type === 'primParam' && c.field === 'r' && c.minCount === 1 && c.approx !== 92.5);
+  assert(r1, '基准工况应有 D2/2≈92.5 检查');
+  assert(r2 && r2.approx > 100, `换工况后叶轮半径应缩放（实际 ${r2?.approx}）`);
+  const z1 = c1.find((c) => c.type === 'ringDist');
+  const z2 = c2.find((c) => c.type === 'ringDist');
+  assert(z1.radius === 65 && z2.radius > 100, `分布圆应随 D2 缩放（${z1.radius} → ${z2.radius}）`);
+  const bare = taskById('pumpduty3d-bare');
+  assert(bare && bare.checks.length === 10, '裸需求任务应有完整验收');
+  assert(!(bare.prompt || '').includes('r98') && !bare.promptTpl({ Q: 100, H: 32, n: 2900 }).includes('92.5'), '裸需求提示词不得含答案尺寸');
+  ok(`裸需求任务：dutyChecks 随工况缩放（r≈${r1.approx} → r≈${r2.approx}，分布圆 ${z1.radius} → ${z2.radius}）`);
 }
 {
   // 商用泵需求驱动任务：好模型满分

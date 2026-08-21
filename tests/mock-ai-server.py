@@ -120,9 +120,13 @@ def extra_rounds(messages):
                and any(tc["id"] == "c10" for tc in m["tool_calls"]))
 
 def training_task(messages):
-    m = re.search(r"\[训练任务:(\w+)\]", last_plain_ask(messages) or "")
+    m = re.search(r"\[训练任务:([\w-]+)\]", last_plain_ask(messages) or "")
     if m:
-        return m.group(1)
+        tid = m.group(1)
+        # 裸需求任务复用基任务剧本（-bare 与基任务相同几何/尺寸）
+        if tid.endswith("-bare") and tid[:-5] in {"pumpduty3d", "pumpboth"}:
+            return tid[:-5]
+        return tid
     a = last_plain_ask(messages) or ""
     # 自然语言工况需求识别：提到流量+扬程/转速 → 裸对话商用泵任务（可训练）
     if ("流量" in a or re.search(r"Q\s*=", a)) and ("扬程" in a or re.search(r"H\s*=", a) or "rpm" in a or "转速" in a) and "泵" in a:

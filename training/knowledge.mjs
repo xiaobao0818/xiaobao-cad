@@ -41,9 +41,9 @@ export function knowledgeHintForFails(fails, { limit = 2 } = {}) {
   return '【知识库提醒（针对历史扣分项）】\n' + hits.map((h) => `- ${h.title}：${h.content}`).join('\n');
 }
 
-/** 任务知识片段（注入训练提示，最多 3 条） */
+/** 任务知识片段（注入训练提示，最多 3 条；-bare 裸需求任务复用基任务主题） */
 export function knowledgeForTask(taskId, { limit = 3 } = {}) {
-  const topics = TASK_TOPICS[taskId] || [];
+  const topics = TASK_TOPICS[taskId] || TASK_TOPICS[String(taskId).replace(/-bare$/, '')] || [];
   const out = [];
   for (const t of topics) {
     const hits = searchKnowledge(t, { limit: 1 });

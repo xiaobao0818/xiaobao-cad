@@ -114,6 +114,8 @@ import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
 import { promptWithSpecs } from '/training/specs.mjs';
 import { memoryNotes } from '/training/memory.mjs';
 import { knowledgeForTask, knowledgeHintForFails } from '/training/knowledge.mjs';
+import { dutyChecks } from '/training/pumpdesign.mjs';
+window.__dutyChecks = { dutyChecks };
 
 const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
@@ -134,6 +136,21 @@ const NO_REVIEW = location.search.includes('noreview');
 const REAL = location.search.includes('real'); // 真实模型：不带 mock 训练标记、放宽完成判定
 const CONTINUOUS = location.search.includes('continuous');
 const FB_MAX = Math.max(0, Math.min(10, parseInt(new URLSearchParams(location.search).get('fbmax') || '3', 10)));
+// 换工况测试：?duty=Q,H,n 覆盖任务工况（promptTpl 重渲染 + dutyChecks 重建验收）
+const DUTY_OVERRIDE = (() => {
+  const raw = new URLSearchParams(location.search).get('duty') || '';
+  const p = raw.split(',').map((x) => Number(x.trim()));
+  return p.length === 3 && p.every((x) => x > 0) ? { Q: p[0], H: p[1], n: p[2] } : null;
+})();
+/** 应用工况覆盖：返回新任务对象（prompt 按新工况渲染、checks 由 dutyChecks 重建） */
+function taskWithDuty(task, duty) {
+  if (!duty) return task;
+  const t = { ...task };
+  if (typeof t.promptTpl === 'function') t.prompt = t.promptTpl(duty);
+  const { dutyChecks: dc } = window.__dutyChecks || {};
+  if (dc && task.id.startsWith('pumpduty3d')) t.checks = dc(duty);
+  return t;
+}
 
 function renderStats() {
   const done = entries.filter((e) => e.reviewOutcome);
@@ -186,16 +203,23 @@ async function runTask(task, round) {
   const kbHint = knowledgeHintForFails(histFails);
   if (kbHint) log(`💡 已注入知识库补救提醒（${task.id}）`);
   const baseAsk = promptWithSpecs(task) + (kb.length ? '\n\n' + kb.join('\n') : '') + (kbHint ? '\n\n' + kbHint : '') + (mem ? '\n\n' + mem : '');
+  const prodBefore = () => (task.ws === '3d'
+    ? CAD.app3d?.model?.count() || 0
+    : task.ws === 'both' ? (CAD.app3d?.model?.count() || 0) + (CAD.scene?.count() || 0)
+    : CAD.scene?.count() || 0);
+  const prod0 = prodBefore(); // 产出基线：必须在 ask 之前快照
   panel.ask(REAL ? baseAsk : `[训练任务:${task.id}] ${baseAsk}`);
   const okDraw = await waitSettled(panel, REAL ? 900000 : 150000);
   if (stopFlag) return null;
   const newMsgs = () => panel.messages.slice(beforeLen);
-  const drawn = newMsgs().some((m) => m.role === 'assistant' && (REAL ? (m.content || '').length > 0 : /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || '')));
+  // 量具校准：以实际产出判定「画完没有」，禁止用助手文案正则——
+  // 文案判定会把「说了没画」误判为完成（scoreBefore 虚高），或把「画了但没自夸」误判为 0 且跳过审阅
   const inputOf = () => (task.ws === '2d' ? CAD.scene.all()
     : task.ws === 'both' ? { bodies: CAD.app3d.model.serialize().bodies, entities: CAD.scene.all() }
     : { bodies: CAD.app3d.model.serialize().bodies });
+  const drawn = okDraw && prodBefore() > prod0;
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
-  log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
+  log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${drawn ? '完成' : '未完成'}（产出 ${prod0} → ${prodBefore()}），验收 ${scoreBefore} 分`);
   const _dbgLast = newMsgs().filter((m) => m.role === 'assistant').pop();
   if (_dbgLast) log('🩺 最后助手回复: ' + JSON.stringify(_dbgLast).slice(0, 600));
   else {
@@ -295,7 +319,7 @@ document.getElementById('btnStart').addEventListener('click', async () => {
   stopFlag = false;
   document.getElementById('btnStart').dataset.run = '1';
   const taskSelVal = sel.value;
-  const tasks = taskSelVal === 'all' ? TRAIN_TASKS : [taskById(taskSelVal)];
+  const tasks = (taskSelVal === 'all' ? TRAIN_TASKS : [taskById(taskSelVal)]).map((t) => taskWithDuty(t, DUTY_OVERRIDE));
   const rounds = CONTINUOUS ? Infinity : Math.max(1, Math.min(20, parseInt(document.getElementById('rounds').value, 10) || 2));
   const prog = document.getElementById('tProg');
   log(`▶ 开始训练${CONTINUOUS ? '（持续模式·弱项优先，点「停止」结束）' : ''}：${tasks.map((t) => t.name).join(' / ')}，每任务 ${CONTINUOUS ? '∞' : rounds} 轮`);
