@@ -68,7 +68,12 @@ export function sizingFromDuty({ Q, H, n }) {
 export function sizingText(p) {
   const ringR = Math.round(0.7 * (p.D2mm / 2));
   const bladeAngles = [];
-  for (let k = 0; k < p.Z; k++) bladeAngles.push(Math.round((360 * k) / p.Z));
+  const bladePos = [];
+  for (let k = 0; k < p.Z; k++) {
+    const a = (2 * Math.PI * k) / p.Z;
+    bladeAngles.push(Math.round((360 * k) / p.Z));
+    bladePos.push(`(${Math.round(ringR * Math.cos(a))}, ${Math.round(ringR * Math.sin(a))})`);
+  }
   return [
     `离心泵设计参数（Q=${p.Q}m³/h，H=${p.H}m，n=${p.n}rpm）：`,
     `· 比转速 ns=${p.ns}（${p.ns <= 60 ? '低比转速' : p.ns <= 120 ? '中比转速' : '高比转速'}，扬程系数 ψ=${p.psi}）`,
@@ -76,7 +81,7 @@ export function sizingText(p) {
     `· 进口直径 D1=${p.D1mm}mm，出口直径=${p.outletDmm}mm`,
     `· 蜗壳基圆 D3=${p.D3mm}mm（隔舌间隙≈5%D2），蜗壳宽度 b3=${p.b3mm}mm`,
     `· 轴径 d=${p.shaftDmm}mm（轴功率≈${p.powerKW}kW，间隙配合轮毂孔=轴径+0.5mm）`,
-    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片角度：${bladeAngles.join('°、')}°（第 k 片中心坐标 = (${ringR}·cos(360°·k/${p.Z}), ${ringR}·sin(360°·k/${p.Z}))）`,
+    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}（第 k 片 = (${ringR}·cos(360°·k/${p.Z}), ${ringR}·sin(360°·k/${p.Z}))）`,
     '按上述尺寸建模：泵壳外圆柱半径=D3/2、叶轮轮盘半径=D2/2、泵轴半径=轴径/2、轮毂孔半径=轴径/2+0.5。',
   ].join('\n');
 }

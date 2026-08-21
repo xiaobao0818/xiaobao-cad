@@ -4169,5 +4169,23 @@
       "cylinder.r≈98 命中 0/1"
     ],
     "note": ""
+  },
+  {
+    "ts": 1787339711226,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 74,
+    "scoreAfter": 81,
+    "delta": 7,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 3,
+    "fbRounds": 1,
+    "fails": [
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个"
+    ],
+    "note": ""
   }
 ]
