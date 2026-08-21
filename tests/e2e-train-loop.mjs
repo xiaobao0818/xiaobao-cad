@@ -60,17 +60,16 @@ try {
   // 等待训练日志出现（画图 → 审阅 → 再打分 完成）
   // 韧性轮询：页面主线程可能被重渲染/布尔运算长时间占用导致 CDP 调用超时，
   // 捕获异常继续等，靠页面心跳区分「还在跑」与「已卡死」
-  const pollDone = async (pred, timeoutMs, hbGap) => {
+  const pollDone = async (predSrc, timeoutMs, hbGap) => {
     const t0 = Date.now();
-    let lastHb = 0, hbStall = 0;
     while (Date.now() - t0 < timeoutMs) {
       try {
-        const r = await page.evaluate((p, gap) => {
+        const r = await page.evaluate((src, gap) => {
+          const fn = new Function('return (' + src + ')')();
           const hb = window.__hb || 0;
-          if (gap && hb) { const since = Date.now() - hb; if (since > gap) return { done: false, hb: hb, hbStall: since }; }
-          return { done: p(), hb: hb, hbStall: 0 };
-        }, pred, hbGap || 0);
-        if (r.hb) { lastHb = r.hb; hbStall = 0; }
+          const hbStall = gap && hb ? Math.max(0, Date.now() - hb - 4000) : 0;
+          return { done: !!fn(), hb, hbStall };
+        }, predSrc, hbGap || 0);
         if (r.done) return true;
         if (r.hbStall > 0) console.log(`  [warn] 页面心跳停滞 ${(r.hbStall / 1000).toFixed(0)}s（渲染/布尔运算占用主线程）`);
       } catch (e) {
@@ -82,14 +81,14 @@ try {
     return false;
   };
   if (!CONT) {
-    const done = await pollDone(() => {
+    const done = await pollDone(`() => {
       const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
       return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
-    }, LONG_WAIT, 600000);
+    }`, LONG_WAIT, 600000);
     assert.ok(done, '训练未在时限内完成（页面可能卡死）');
   } else {
     // 持续模式永不“完成”：达到轮数后手动停止
-    const done = await pollDone(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, LONG_WAIT, 600000);
+    const done = await pollDone(`() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13`, LONG_WAIT, 600000);
     assert.ok(done, '持续训练未在时限内达到目标轮数');
     await page.click('#btnStop');
     await page.waitForFunction(() => document.getElementById('tProg').textContent === '已停止', { timeout: 120000, polling: 1000 });
