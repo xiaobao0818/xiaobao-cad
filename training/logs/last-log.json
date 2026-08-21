@@ -2391,5 +2391,35 @@
     "fbRounds": 2,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787319819867,
+    "taskId": "threeview2d",
+    "taskName": "泵装配三视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 21,
+    "scoreAfter": 100,
+    "delta": 79,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787319824622,
+    "taskId": "pumpdrawing2d",
+    "taskName": "水泵总装剖视图·图纸（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 45,
+    "scoreAfter": 100,
+    "delta": 55,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]

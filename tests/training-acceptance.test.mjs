@@ -242,7 +242,7 @@ function goodFlange2d() {
     { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
     { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
     { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
-    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90, layer: '中心线' },
   ];
   assert.equal(evaluate(task, ents).score, 100, '水泵剖视图应 100 分');
   const missing = ents.filter((e) => e.id !== 'c3');
@@ -427,7 +427,7 @@ function goodFlange2d() {
     { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
     { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
     { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
-    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90, layer: '中心线' },
     { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 70, py: 0, tx: 30, ty: 30 },
     { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 40, py: 0, tx: -30, ty: -30 },
     { id: 'd3', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 12, py: 0, tx: 50, ty: -40 },
@@ -557,7 +557,7 @@ function goodFlange2d() {
     { id: 'c2', type: 'circle', cx: 50, cy: 175, r: 10 },
     { id: 'c3', type: 'circle', cx: 50, cy: 175, r: 8 },
     { id: 'p1', type: 'polyline', closed: true, points: [P(5, -110), P(95, -110), P(95, -30), P(5, -30)] },
-    { id: 'l1', type: 'line', x1: 50, y1: -115, x2: 50, y2: -25 },
+    { id: 'l1', type: 'line', x1: 50, y1: -115, x2: 50, y2: -25, layer: '中心线' },
     { id: 'p2', type: 'polyline', closed: true, points: [P(130, 145), P(210, 145), P(210, 225), P(130, 225)] },
     { id: 'c4', type: 'circle', cx: 170, cy: 185, r: 30 },
   ];
@@ -750,7 +750,7 @@ function goodFlange2d() {
     { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
     { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
     { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
-    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90, layer: '中心线' },
     { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 70, py: 0, tx: 30, ty: 30 },
     { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 40, py: 0, tx: -30, ty: -30 },
     { id: 'd3', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 12, py: 0, tx: 50, ty: -40 },

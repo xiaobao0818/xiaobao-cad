@@ -286,6 +286,7 @@ export const TRAIN_TASKS = [
       { type: 'countInBand', kind: 'circle', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 3 },
       { type: 'count', kind: 'circle', min: 4, weight: 2 },
       { type: 'linesThrough', cx: 50, cy: -70, min: 1, tol: 2, weight: 2 },
+      { type: 'layerHas', kind: 'line', layer: '中心线', min: 1, weight: 2 },
     ],
   },
   {
@@ -300,6 +301,7 @@ export const TRAIN_TASKS = [
       { type: 'circleAt', cx: 0, cy: 0, r: 40, tol: 1, weight: 2 },
       { type: 'circleAt', cx: 0, cy: 0, r: 12, tol: 1, weight: 2 },
       { type: 'linesThrough', cx: 0, cy: 0, min: 1, tol: 2, weight: 2 },
+      { type: 'layerHas', kind: 'line', layer: '中心线', min: 1, weight: 2 },
       { type: 'dimensionCount', min: 4, weight: 2 },
       { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
       { type: 'dimensionCount', subtype: 'linear', min: 1, weight: 2 },

@@ -134,6 +134,13 @@ function check2d(check, ents) {
       const pass = hit.length >= (check.min ?? 1);
       return { pass, detail: `文字含「${needle}」：${hit.length}/${check.min ?? 1}${pass ? ' ✓' : ' ✗'}` };
     }
+    case 'layerHas': {
+      // 图纸规范：指定类型的实体应位于指定图层（如中心线在「中心线」层、标注在「标注」层）
+      const { kind, layer, min } = check;
+      const hit = pick(kind).filter((e) => String(e.layer || '') === layer);
+      const pass = hit.length >= (min ?? 1);
+      return { pass, detail: `${kind} 在「${layer}」层：${hit.length}（期望≥${min ?? 1}）${pass ? ' ✓' : ' ✗（图层缺失或实体画在了别的层）'}` };
+    }
     case 'dimensionValue': {
       // 标注数值正确性：直径/半径/线性标注的测量值必须≈目标值（图纸"标得对"）
       const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);
