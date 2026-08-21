@@ -27,7 +27,7 @@ const browser = await puppeteer.launch({
   headless: true,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--disable-dev-shm-usage'],
   timeout: 60000,
-  protocolTimeout: 1800000,
+  protocolTimeout: 600000,
 });
 
 try {
@@ -58,14 +58,39 @@ try {
   await page.click('#btnStart');
 
   // 等待训练日志出现（画图 → 审阅 → 再打分 完成）
+  // 韧性轮询：页面主线程可能被重渲染/布尔运算长时间占用导致 CDP 调用超时，
+  // 捕获异常继续等，靠页面心跳区分「还在跑」与「已卡死」
+  const pollDone = async (pred, timeoutMs, hbGap) => {
+    const t0 = Date.now();
+    let lastHb = 0, hbStall = 0;
+    while (Date.now() - t0 < timeoutMs) {
+      try {
+        const r = await page.evaluate((p, gap) => {
+          const hb = window.__hb || 0;
+          if (gap && hb) { const since = Date.now() - hb; if (since > gap) return { done: false, hb: hb, hbStall: since }; }
+          return { done: p(), hb: hb, hbStall: 0 };
+        }, pred, hbGap || 0);
+        if (r.hb) { lastHb = r.hb; hbStall = 0; }
+        if (r.done) return true;
+        if (r.hbStall > 0) console.log(`  [warn] 页面心跳停滞 ${(r.hbStall / 1000).toFixed(0)}s（渲染/布尔运算占用主线程）`);
+      } catch (e) {
+        console.log('  [warn] CDP 轮询中断（主线程繁忙），重试: ' + String(e.message || e).slice(0, 90));
+        await new Promise((r) => setTimeout(r, 5000));
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+    return false;
+  };
   if (!CONT) {
-    await page.waitForFunction(() => {
+    const done = await pollDone(() => {
       const log = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
       return log.length >= 1 && document.getElementById('tProg').textContent === '训练完成';
-    }, { timeout: LONG_WAIT, polling: 1000 });
+    }, LONG_WAIT, 600000);
+    assert.ok(done, '训练未在时限内完成（页面可能卡死）');
   } else {
     // 持续模式永不“完成”：达到轮数后手动停止
-    await page.waitForFunction(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, { timeout: LONG_WAIT, polling: 1000 });
+    const done = await pollDone(() => JSON.parse(localStorage.getItem('xbcad:training-log') || '[]').length >= 13, LONG_WAIT, 600000);
+    assert.ok(done, '持续训练未在时限内达到目标轮数');
     await page.click('#btnStop');
     await page.waitForFunction(() => document.getElementById('tProg').textContent === '已停止', { timeout: 120000, polling: 1000 });
   }

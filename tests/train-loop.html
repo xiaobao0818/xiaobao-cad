@@ -119,6 +119,9 @@ const results = [];
 const out = () => { document.getElementById('results').textContent = results.join('\n'); };
 const log = (x) => { results.push(x); out(); console.log('[训练]', x); };
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+// 页面心跳：让 E2E 区分「模型还在跑/主线程繁忙」与「页面已卡死」
+window.__hb = Date.now();
+setInterval(() => { window.__hb = Date.now(); }, 3000);
 
 const sel = document.getElementById('taskSel');
 sel.innerHTML = '<option value="all">全部任务</option>' +
@@ -193,6 +196,8 @@ async function runTask(task, round) {
     : { bodies: CAD.app3d.model.serialize().bodies });
   const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
+  const _dbgLast = newMsgs().filter((m) => m.role === 'assistant').pop();
+  if (_dbgLast) log('🩺 最后助手回复: ' + JSON.stringify(_dbgLast).slice(0, 600));
 
   // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
   // 质量回退保护：审阅/反馈可能把好模型改差，先存快照，最终分数低于审阅前则回滚
