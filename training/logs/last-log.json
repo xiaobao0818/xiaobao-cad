@@ -2571,5 +2571,20 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787332886197,
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 48,
+    "scoreAfter": 100,
+    "delta": 52,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
   }
 ]
