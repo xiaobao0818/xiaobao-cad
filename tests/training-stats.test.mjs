@@ -1,6 +1,6 @@
 /* 小宝CAD 训练日志统计分析测试（node tests/training-stats.test.mjs） */
 import { strict as assert } from 'node:assert';
-import { summarize, qualityTrend, recentScore, convergence, firstAttemptTrend } from '../training/stats.mjs';
+import { summarize, qualityTrend, recentScore, convergence, firstAttemptTrend, bareFirstDrawMedian, dutyDrop } from '../training/stats.mjs';
 import { entriesToMarkdown } from '../training/report.mjs';
 import { logEntry } from '../training/acceptance.mjs';
 
@@ -90,6 +90,24 @@ const entries = [
   const rising = firstAttemptTrend([...entries, logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 3, ws: '2d', scoreBefore: 96, scoreAfter: 100, reviewOutcome: '已满意' })]);
   assert(rising[4].avg5 >= rising[0].avg5, '训练越多首绘趋势应上升（或不降）');
   ok('首绘质量趋势：滑动平均随训练轮次上升');
+}
+
+{
+  // 裸需求北极星：首绘中位数（指标1）与换工况跌幅（指标3）
+  const bare = [
+    logEntry({ taskId: 'pumpduty3d-bare', taskName: '裸需求', round: 1, ws: '3d', scoreBefore: 93, scoreAfter: 100, reviewOutcome: '已满意' }),
+    logEntry({ taskId: 'pumpduty3d-bare', taskName: '裸需求', round: 2, ws: '3d', scoreBefore: 89, scoreAfter: 100, reviewOutcome: '已满意' }),
+    logEntry({ taskId: 'pumpduty3d-bare', taskName: '裸需求', round: 3, ws: '3d', scoreBefore: 74, scoreAfter: 100, reviewOutcome: '已满意', duty: { Q: 200, H: 50, n: 1450 } }),
+    logEntry({ taskId: 'conversation3d', taskName: '裸对话', round: 1, ws: '3d', scoreBefore: 93, scoreAfter: 100, reviewOutcome: '已满意' }),
+    logEntry({ taskId: 'pumpduty3d', taskName: '非裸需求', round: 1, ws: '3d', scoreBefore: 100, scoreAfter: 100, reviewOutcome: '已满意' }),
+  ];
+  const m = bareFirstDrawMedian(bare);
+  assert.equal(m.n, 4, '中位数只统计裸需求任务（排除 pumpduty3d）');
+  assert(m.median >= 90, `裸需求首绘中位数应≥90（实际 ${m.median}）`);
+  const drop = dutyDrop(bare);
+  assert.equal(drop.baseMedian, 91, `基准工况首绘中位数应为 91（实际 ${drop.baseMedian}）`);
+  assert(drop.dutyRuns.length === 1 && drop.dutyRuns[0].drop === 17, '换工况跌幅应可计算');
+  ok(`裸需求北极星：首绘中位数 ${m.median}（n=${m.n}）/ 换工况跌幅 ${drop.dutyRuns[0].drop}`);
 }
 
 console.log(`全部通过：${n} 项`);

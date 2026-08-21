@@ -93,3 +93,42 @@ export function recentScore(entries, n = 10) {
   const score = Math.round(list.reduce((s, e) => s + (e.scoreAfter ?? e.scoreBefore ?? 0), 0) / list.length);
   return { score, rounds: list.length, mastered: score >= 90 };
 }
+
+/**
+ * 裸需求北极星指标：首绘分中位数（只统计 -bare / conversation 类裸需求任务）
+ * 指标1：中位数 ≥ 90
+ */
+export function bareFirstDrawMedian(entries) {
+  const list = (Array.isArray(entries) ? entries : [])
+    .filter((e) => e && /(-bare$|conversation3d)/.test(e.taskId || ''))
+    .map((e) => e.scoreBefore)
+    .filter((v) => Number.isFinite(v))
+    .sort((a, b) => a - b);
+  if (!list.length) return { median: 0, n: 0 };
+  const mid = Math.floor(list.length / 2);
+  const median = list.length % 2 ? list[mid] : Math.round((list[mid - 1] + list[mid]) / 2);
+  return { median, n: list.length, min: list[0], max: list[list.length - 1] };
+}
+
+/**
+ * 换工况跌幅（指标3）：同一裸需求任务，基准工况首绘分 vs 换工况首绘分
+ * 跌幅 = 基准中位首绘 − 换工况首绘；要求 ≤ 10
+ * @param entries 日志条目（换工况条目带 duty 字段）
+ * @param taskId 如 'pumpduty3d-bare'；缺省时按带 duty 条目的任务自动分组
+ */
+export function dutyDrop(entries, taskId = null) {
+  const list = (Array.isArray(entries) ? entries : []).filter((e) => e && (!taskId || e.taskId === taskId));
+  const withDuty = list.filter((e) => e.duty);
+  const tid = taskId || withDuty[0]?.taskId || null;
+  const base = list
+    .filter((e) => !e.duty && (!tid || e.taskId === tid))
+    .map((e) => e.scoreBefore)
+    .filter((v) => Number.isFinite(v))
+    .sort((a, b) => a - b);
+  if (!base.length || !withDuty.length) return null;
+  const mid = Math.floor(base.length / 2);
+  const baseMedian = base.length % 2 ? base[mid] : Math.round((base[mid - 1] + base[mid]) / 2);
+  const dutyRuns = withDuty.map((e) => ({ duty: e.duty, first: e.scoreBefore }));
+  const drops = dutyRuns.map((d) => ({ ...d, drop: baseMedian - d.first }));
+  return { taskId: tid, baseMedian, nBase: base.length, dutyRuns: drops };
+}

@@ -334,8 +334,11 @@ export function evaluate(task, input) {
 }
 
 /** 训练日志条目序列化（页面与 Node 共用） */
-export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, fails = [], ts = Date.now(), note = '' }) {
-  return { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, fails, note };
+export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, fails = [], ts = Date.now(), note = '', duty, failsBefore = [] }) {
+  const e = { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, fails, note };
+  if (duty) e.duty = duty;
+  if (failsBefore.length) e.failsBefore = failsBefore;
+  return e;
 }
 
 /** 验收反馈提示：把未通过的检查明细转成给模型的修复指令（训练闭环的"梯度"） */
