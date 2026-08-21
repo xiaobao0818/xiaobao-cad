@@ -2406,5 +2406,48 @@
       "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
     ],
     "note": "绘制未完成"
+  },
+  {
+    "ts": 1787309632764,
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 0,
+    "scoreAfter": 0,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 3,
+    "fails": [
+      "特征数=0（期望 12~22）",
+      "cylinder 数量=0（期望 ≥5）",
+      "box 数量=0（期望 ≥5）",
+      "boolean 数量=0（期望 ≥3）",
+      "cylinder.r≈98 命中 0/1",
+      "cylinder.r≈92.5 命中 0/1",
+      "box 圆心距 []，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个",
+      "cylinder 偏心量 []，同轴于(0,0)：0/3",
+      "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
+    ],
+    "note": "绘制未完成"
+  },
+  {
+    "ts": 1787310913692,
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 52,
+    "scoreAfter": 93,
+    "delta": 41,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [
+      "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
+    ],
+    "note": ""
   }
 ]

@@ -200,8 +200,10 @@ async function runTask(task, round) {
   if (_dbgLast) log('🩺 最后助手回复: ' + JSON.stringify(_dbgLast).slice(0, 600));
   else {
     const _dbgAny = newMsgs().slice(-3);
-    if (_dbgAny.length) log('🩺 无助手回复，最近消息: ' + JSON.stringify(_dbgAny).slice(0, 400));
-    else log('🩺 无助手回复且无新消息（API 请求可能失败）');
+    const _st = `ws=${CAD.workspace} app3d=${!!CAD.app3d} ready=${!!CAD.app3d?.ready} key=${!!window.__aiPanel?.settings?.key}`;
+    const _lastDom = [...(window.__aiPanel?.messagesEl?.children || [])].slice(-2).map((el) => (el.textContent || '').slice(0, 120));
+    if (_dbgAny.length) log(`🩺 无助手回复（${_st}），最近消息: ` + JSON.stringify(_dbgAny).slice(0, 400) + ' DOM尾部: ' + JSON.stringify(_lastDom));
+    else log(`🩺 无助手回复且无新消息（${_st}） DOM尾部: ` + JSON.stringify(_lastDom));
   }
 
   // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
