@@ -2466,5 +2466,35 @@
     "fbRounds": 1,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787324560685,
+    "taskId": "axialflow3d",
+    "taskName": "轴流泵（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 4,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787325287829,
+    "taskId": "sleeve3d",
+    "taskName": "轴套（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 86,
+    "scoreAfter": 100,
+    "delta": 14,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
   }
 ]
