@@ -385,6 +385,27 @@ export function feedbackPrompt(task, result) {
     if (fc?.max) hints.push(`特征总数应 ≤${fc.max}（当前超出）。请删除任务要求之外的冗余零件（重复/多余的圆柱、盒体），只保留任务清单中的零件。`);
     else hints.push('实体数量超出要求（冗余）。请删除重复/多余的实体，只保留任务清单中的图元（按任务描述的数量和位置）。');
   }
+  // 6) 种类数量不足：给出应创建的具体特征与数量（boolean/cylinder/box…）
+  for (const c of (task.checks || [])) {
+    if (c.type === 'kindCount') {
+      const f = fails.find((x) => String(x.detail).includes(`${c.kind} 数量`));
+      if (f) {
+        const m = String(f.detail).match(/数量=(\d+)/);
+        const now = m ? Number(m[1]) : 0;
+        const need = Math.max(1, (c.min ?? 1) - now);
+        const action = c.kind === 'boolean'
+          ? `请再执行布尔运算（如把叶片与轮盘 union 合并、切割轮毂孔/泵腔内腔 cut），使布尔特征总数达到 ≥${c.min}`
+          : `请再创建 ${need} 个 ${c.kind} 特征（尺寸/位置按任务要求），使总数达到 ≥${c.min}`;
+        hints.push(`${c.kind} 特征数量不足（当前 ${now}，期望 ≥${c.min}）。${action}。`);
+      }
+    }
+  }
+  // 7) 关键尺寸缺失：指明应创建的实体尺寸
+  for (const c of (task.checks || [])) {
+    if (c.type === 'primParam' && fails.some((f) => String(f.detail).includes(`r≈${c.approx}`))) {
+      hints.push(`缺少 ${c.kind} 且 ${c.field}≈${c.approx}（±${c.tol}）的实体（至少 ${c.minCount} 个）——请按任务尺寸创建对应零件（半径 = 直径/2）。`);
+    }
+  }
   const guide = hints.length ? `\n【修复指引】${hints.join('；')}` : '';
   return `[训练任务:${task.id}] [验收反馈] 当前图纸验收 ${result.score} 分，以下检查项未通过，请直接修复（只做修复，不要重复说明）：\n${lines.join('\n')}${guide}`;
 }

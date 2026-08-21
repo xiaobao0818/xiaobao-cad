@@ -484,6 +484,24 @@ function goodFlange2d() {
   assert(p.includes('修复指引'), '应有修复指引段落');
   ok('修复指引推广：同轴度/配合失败同样给精确指引');
 }
+
+{
+  // 修复指引推广 2：种类数量不足（boolean/cylinder）给出应补的数量与操作
+  const task = taskById('conversation3d');
+  const bodies = [
+    { id: 'a', kind: 'cylinder', params: { x: 0, y: 0, r: 98, h: 80 } },
+    { id: 'b', kind: 'cylinder', params: { x: 0, y: 0, r: 92.5, h: 8 } },
+    { id: 'c', kind: 'box', params: { x: 65, y: 0, dx: 30, dy: 6, dz: 10 } },
+    { id: 'd', kind: 'boolean', params: { op: 'cut', a: 'a', b: ['b'] } },
+    { id: 'e', kind: 'boolean', params: { op: 'cut', a: 'b', b: ['c'] } },
+  ];
+  const r = evaluate(task, { bodies });
+  const p = feedbackPrompt(task, r);
+  assert(p.includes('boolean 特征数量不足'), 'boolean 不足应有具体指引');
+  assert(p.includes('再执行布尔运算'), '应提示再执行布尔运算（union/cut）');
+  assert(p.includes('再创建 4 个 cylinder') || p.includes('再创建'), 'cylinder 不足应有补建指引');
+  ok('修复指引推广 2：种类数量不足（boolean/cylinder）给出补建操作');
+}
 {
   // 知识库扩充：双吸/自吸/多级文档
   assert(searchKnowledge('双吸泵')[0].title.includes('双吸'), '双吸泵文档可检索');
