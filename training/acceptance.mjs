@@ -378,11 +378,16 @@ export function feedbackPrompt(task, result) {
       hints.push(`轴半径应为 ${fit.outerR}（圆柱），孔半径应为 ${fit.boreR}（孔与轴同心），间隙 ${Math.round((fit.boreR - fit.outerR) * 100) / 100}。`);
     }
   }
-  // 5) 特征冗余：删除多余零件
+  // 5) 特征冗余：删除多余零件（给出精确应删数量）
   const over = fails.find((c) => String(c.detail).includes('冗余'));
   if (over) {
     const fc = (task.checks || []).find((c) => c.type === 'featureCount');
-    if (fc?.max) hints.push(`特征总数应 ≤${fc.max}（当前超出）。请删除任务要求之外的冗余零件（重复/多余的圆柱、盒体），只保留任务清单中的零件。`);
+    if (fc?.max) {
+      const m = String(over.detail).match(/=(\d+)（期望/);
+      const now = m ? Number(m[1]) : 0;
+      const excess = Math.max(1, now - fc.max);
+      hints.push(`特征总数应 ≤${fc.max}（当前 ${now}，超 ${excess} 个）。请立即删除 ${excess} 个以上多余特征（重复/多余的圆柱、盒体、布尔），只保留任务清单中的零件（删除后可用 list_3d 复查数量）。`);
+    }
     else hints.push('实体数量超出要求（冗余）。请删除重复/多余的实体，只保留任务清单中的图元（按任务描述的数量和位置）。');
   }
   // 6) 种类数量不足：给出应创建的具体特征与数量（boolean/cylinder/box…）
