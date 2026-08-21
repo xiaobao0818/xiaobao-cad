@@ -2314,5 +2314,50 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787314806202,
+    "taskId": "bom2d",
+    "taskName": "装配图明细栏（BOM）（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 88,
+    "scoreAfter": 100,
+    "delta": 12,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787315695292,
+    "taskId": "threeview2d",
+    "taskName": "泵装配三视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787316702900,
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 59,
+    "scoreAfter": 100,
+    "delta": 41,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
   }
 ]
