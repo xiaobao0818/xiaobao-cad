@@ -4187,5 +4187,37 @@
       "box 角度均布：实体不足 2 个"
     ],
     "note": ""
+  },
+  {
+    "ts": 1787341503739,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 63,
+    "scoreAfter": 100,
+    "delta": 37,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787342383368,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 33,
+    "scoreAfter": 93,
+    "delta": 60,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [
+      "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 60.0°（≤4°✗）"
+    ],
+    "note": ""
   }
 ]

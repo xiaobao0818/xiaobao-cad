@@ -739,7 +739,7 @@ export class App3D {
         },
       },
     ];
-    const promptLine = '三维实体建模可用（工具 create_primitive_3d/boolean_3d/list_3d/transform_3d/remove_3d/fillet_3d/chamfer_3d/undo_3d 等）：基本体 box(长宽高 dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，中心坐标 x,y,z；布尔 op: fuse 并集/cut 差集/common 交集，先 list_3d 查 id 再 boolean_3d。';
+    const promptLine = '三维实体建模可用（工具 create_primitive_3d/boolean_3d/list_3d/transform_3d/remove_3d/fillet_3d/chamfer_3d/undo_3d 等）：基本体 box(长宽高 dx,dy,dz)/cylinder(r,h)/sphere(r)/cone(r1,r2,h)/torus(r1,r2)，中心坐标 x,y,z；布尔 op: fuse 并集/cut 差集/common 交集，先 list_3d 查 id 再 boolean_3d。**圆周均布多个零件（如叶片/螺栓孔）时，每个零件的中心坐标必须各不相同**：第 k 个 = (R·cos(360°·k/N), R·sin(360°·k/N))，k=0..N-1；严禁把 N 个零件全部放在同一个坐标（那样只有 1 个位置，不构成均布）。';
     if (CAD.aiRegisterTools) {
       CAD.aiRegisterTools(toolDefs, promptLine);
     }

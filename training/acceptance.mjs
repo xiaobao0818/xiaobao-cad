@@ -363,7 +363,7 @@ export function feedbackPrompt(task, result) {
     const coax = (task.checks || []).find((c) => c.type === 'coaxial');
     if (coax) hints.push(`所有 ${coax.kind} 的中心 x,y 都必须设为 (${coax.cx}, ${coax.cy})（偏心量≈0）。请把偏离的实体位置改正。`);
   }
-  // 3) 角度均布：期望角度列表
+  // 3) 角度均布：期望角度列表（并指出重复放置问题）
   if (fails.some((c) => String(c.detail).includes('角差'))) {
     const ang = (task.checks || []).find((c) => c.type === 'angularEven');
     if (ang) {
@@ -375,7 +375,9 @@ export function feedbackPrompt(task, result) {
         const a = (k * 2 * Math.PI) / n;
         pos.push(`(${(r * Math.cos(a)).toFixed(1)}, ${(r * Math.sin(a)).toFixed(1)})`);
       }
-      hints.push(`圆周上 ${n} 个实体角度应等分（相邻 ${Math.round(360 / n)}°），建议坐标：${pos.join('、')}。`);
+      const dup = fails.find((c) => String(c.detail).includes('角差'));
+      const samePos = dup && /\[[\d.,\s-]+\]/.test(String(dup.detail)) && String(dup.detail).match(/\[([\d.,\s-]+)\]/)?.[1]?.split(',').every((v) => v.trim() === '0.0' || v.trim() === '0');
+      hints.push(`圆周上 ${n} 个实体角度应等分（相邻 ${Math.round(360 / n)}°）。检测到多个实体中心相同（可能全部堆在同一个坐标），必须改为分别放置：${pos.join('、')}。`);
     }
   }
   // 4) 轴孔配合：给出精确半径
