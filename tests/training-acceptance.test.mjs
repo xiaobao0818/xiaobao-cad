@@ -506,7 +506,7 @@ function goodFlange2d() {
   const r = evaluate(task, ents);
   assert.equal(r.score, 100, `图框任务应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
   const noTitle = evaluate(task, ents.filter((e) => e.id !== 'f2'));
-  assert(noTitle.score < 80, `缺标题栏应扣分（实际 ${noTitle.score}）`);
+  assert(noTitle.score < 90, `缺标题栏应扣分（实际 ${noTitle.score}）`);
   ok(`图框·标题栏任务（完整 100 / 缺标题栏 ${noTitle.score}）`);
 }
 {
@@ -653,7 +653,7 @@ function goodFlange2d() {
   const r = evaluate(task, ents);
   assert.equal(r.score, 100, `图纸集应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
   const noDim = evaluate(task, ents.filter((e) => e.type !== 'dimension'));
-  assert(noDim.score < 85, `缺标注应扣分（实际 ${noDim.score}）`);
+  assert(noDim.score < 92, `缺标注应扣分（实际 ${noDim.score}）`);
   ok(`图纸集任务（完整 100 / 缺标注 ${noDim.score}）`);
 }
 
@@ -742,6 +742,24 @@ function goodFlange2d() {
   const v = rw.checks.find((c) => c.detail && c.detail.includes('标注数值'));
   assert(v && !v.pass, '数值错误的标注应被扣分');
   ok(`标注数值正确性（正确 100 / Φ标错 ${rw.score}）`);
+}
+
+{
+  // 图纸完整性：标题栏文字内容核对（图名/比例/图号）
+  const task = taskById('drawingframe2d');
+  const ents = [
+    { id: 'f1', type: 'polyline', closed: true, points: [P(0, 0), P(420, 0), P(420, 297), P(0, 297)] },
+    { id: 'f2', type: 'polyline', closed: true, points: [P(240, 0), P(420, 0), P(420, 56), P(240, 56)] },
+    { id: 't1', type: 'text', x: 250, y: 40, text: '离心泵总装图', height: 10 },
+    { id: 't2', type: 'text', x: 250, y: 28, text: '比例 1:2', height: 7 },
+    { id: 't3', type: 'text', x: 250, y: 16, text: '材料 HT200', height: 7 },
+    { id: 't4', type: 'text', x: 330, y: 8, text: '图号 XBC-001', height: 7 },
+  ];
+  assert.equal(evaluate(task, ents).score, 100, '标题栏内容完整应 100 分');
+  const wrongName = evaluate(task, ents.map((e) => (e.id === 't1' ? { ...e, text: '随便写的标题' } : e)));
+  const tc = wrongName.checks.find((c) => c.detail && c.detail.includes('离心泵总装图'));
+  assert(tc && !tc.pass, '图名写错应被 textContains 扣分');
+  ok(`图纸完整性：标题栏文字内容核对（图名错 ${wrongName.score} 分）`);
 }
 
 console.log(`全部通过：${n} 项`);

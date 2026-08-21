@@ -2217,5 +2217,35 @@
     "fbRounds": 2,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787305616930,
+    "taskId": "flange2d",
+    "taskName": "法兰盘俯视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 54,
+    "scoreAfter": 100,
+    "delta": 46,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787305747663,
+    "taskId": "drawingframe2d",
+    "taskName": "图纸图框·标题栏（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 47,
+    "scoreAfter": 100,
+    "delta": 53,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]

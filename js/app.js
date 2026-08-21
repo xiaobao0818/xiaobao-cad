@@ -192,7 +192,7 @@ class App {
   loadScene(s) {
     this.scene = s;
     this.viewport.scene = s;
-    window.CAD.scene = s;
+    // window.CAD.scene 是只读 getter（返回 app.scene），赋值会在严格模式下抛错，此处无需同步
     this._wireScene();
     s.emit('layers');
     s.emit('change');

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><title>小宝CAD 画图训练 · MiniMax 多模态验收循环</title>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "/node_modules/three/build/three.module.js",
+      "three/addons/": "/node_modules/three/examples/jsm/"
+    }
+  }
+</script>
+<script>
+  /* ?mock=1 → 使用本地 mock 服务器（训练剧本：故意留缺陷→审阅补上）；否则使用你在 AI 设置里配置的真实 MiniMax 模型 */
+  if (location.search.includes('mock')) {
+    localStorage.setItem('xbcad:ai-settings', JSON.stringify({
+      base: 'http://localhost:8898', model: 'mock-train', key: 'test-key-123',
+      temperature: 0.2, maxTokens: 4000, useTools: true, autoReview: false,
+      visionBase: 'http://localhost:8898', visionModel: 'MiniMax-M3', visionKey: '',
+      reviewRounds: 0, deepThink: false,
+    }));
+  }
+</script>
+</head>
+<body>
+<div id="trainBar" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:rgba(20,24,32,.94);color:#e8e8e8;font-family:monospace;font-size:12px;padding:8px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #333;">
+  <b style="color:#7ee08a">🎓 画图训练循环</b>
+  <span id="modeTag">模式：—</span>
+  <label>任务
+    <select id="taskSel"></select>
+  </label>
+  <label>每任务轮数 <input id="rounds" type="number" value="2" min="1" max="20" style="width:48px"></label>
+  <button id="btnStart" class="mini-btn primary">▶ 开始训练</button>
+  <button id="btnStop" class="mini-btn">⏹ 停止</button>
+  <button id="btnExport" class="mini-btn">⬇ 导出训练日志</button>
+  <span id="tProg" style="color:#5db3ff"></span>
+</div>
+<pre id="results" style="position:fixed;top:44px;left:0;z-index:9999;background:rgba(0,0,0,.85);color:#7ee08a;font-family:monospace;font-size:11px;padding:8px;max-width:560px;max-height:45vh;overflow:auto;pointer-events:none">等待加载…</pre>
+
+  <div id="app" style="margin-top:44px">
+    <header id="topbar">
+      <div class="logo" title="小宝CAD">
+        <span class="logo-icon">
+          <svg viewBox="0 0 32 32"><rect x="3" y="3" width="26" height="26" rx="6" fill="#ff8c42"/><path d="M9 12 L15 7 L23 12 M15 7 V24 M11 17 L21 17" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="logo-text">小宝<em>CAD</em></span>
+      </div>
+      <nav id="menubar"></nav>
+      <div id="wsSwitch" class="ws-switch">
+        <button class="ws-btn active" data-ws="2d" title="二维制图工作区">📐 2D 制图</button>
+        <button class="ws-btn" data-ws="3d" title="三维实体建模工作区">🧊 3D 建模</button>
+      </div>
+      <div class="topbar-right">
+        <span id="aiStatus" class="ai-status" title="AI 助手状态">🤖 AI 未配置</span>
+        <span id="docTitle" class="doc-title">未命名图纸</span>
+      </div>
+    </header>
+
+    <div id="toolbar"></div>
+    <div id="toolbar3d" style="display:none"></div>
+
+    <main id="main">
+      <div id="canvasWrap">
+        <canvas id="canvas"></canvas>
+        <div id="viewHint" class="view-hint">滚轮缩放 · 按住中键/右键拖动平移 · 命令行输入 L 画线 · 点击右侧 🤖 与 AI 对话创作</div>
+      </div>
+      <div id="canvas3dWrap" style="display:none">
+        <div id="canvas3d"></div>
+        <div id="kernelLoading" class="kernel-loading">
+          <div class="kl-spinner"></div>
+          <div class="kl-text">正在加载三维实体内核 OpenCASCADE（约 63MB，仅首次加载）…</div>
+        </div>
+      </div>
+      <aside id="sidePanel">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="ai">🤖 AI 助手</button>
+          <button class="tab-btn" data-tab="layers">图层</button>
+          <button class="tab-btn" data-tab="props">属性</button>
+        </div>
+        <div id="tab-ai" class="tab-pane active"></div>
+        <div id="tab-layers" class="tab-pane"></div>
+        <div id="tab-props" class="tab-pane"></div>
+      </aside>
+    </main>
+
+    <div id="cmdbar">
+      <span id="cmdPrompt">命令:</span>
+      <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="输入命令，如 L、C、REC；输入坐标如 100,50 或 @50&lt;45 …" />
+      <button id="cmdOk" title="执行命令">⏎</button>
+    </div>
+    <div id="statusbar3d" style="display:none">
+      <span id="st3dInfo" class="st-item">3D 建模工作区：鼠标左键旋转 · 滚轮缩放 · 右键平移 · 点击实体选择</span>
+    </div>
+    <footer id="statusbar">
+      <span id="stCoords" class="st-item">0.000, 0.000</span>
+      <span id="stSnapInfo" class="st-item dim"></span>
+      <span class="spacer"></span>
+      <span class="st-toggle" id="stOsnap" data-toggle="osnap" title="对象捕捉 (点击切换)">捕捉</span>
+      <span class="st-toggle" id="stOrtho" data-toggle="ortho" title="正交模式 F8">正交</span>
+      <span class="st-toggle" id="stGrid" data-toggle="grid" title="显示栅格 F7">栅格</span>
+      <span class="st-toggle" id="stSnap" data-toggle="gridsnap" title="栅格捕捉">栅格捕捉</span>
+      <span id="stLayer" class="st-item" title="当前图层">图层: 0</span>
+      <span id="stZoom" class="st-item" title="缩放比例">100%</span>
+    </footer>
+
+    <div id="dialogs"></div>
+    <div id="toast"></div>
+  </div>
+  <script type="module" src="/js/app.js"></script>
+
+<script type="module">
+import { Scene } from '/js/scene.js';
+import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
+import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
+import { promptWithSpecs } from '/training/specs.mjs';
+import { memoryNotes } from '/training/memory.mjs';
+import { knowledgeForTask, knowledgeHintForFails } from '/training/knowledge.mjs';
+
+const results = [];
+const out = () => { document.getElementById('results').textContent = results.join('\n'); };
+const log = (x) => { results.push(x); out(); console.log('[训练]', x); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const sel = document.getElementById('taskSel');
+sel.innerHTML = '<option value="all">全部任务</option>' +
+  TRAIN_TASKS.map((t) => `<option value="${t.id}">${t.ws.toUpperCase()} · ${t.name}</option>`).join('');
+document.getElementById('modeTag').textContent = location.search.includes('mock') ? '模式：本地 Mock 验收' : '模式：真实 MiniMax M3（使用浏览器设置中的 Key）';
+
+const entries = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
+let stopFlag = false;
+const NO_REVIEW = location.search.includes('noreview');
+const REAL = location.search.includes('real'); // 真实模型：不带 mock 训练标记、放宽完成判定
+const CONTINUOUS = location.search.includes('continuous');
+const FB_MAX = Math.max(0, Math.min(10, parseInt(new URLSearchParams(location.search).get('fbmax') || '3', 10)));
+
+function renderStats() {
+  const done = entries.filter((e) => e.reviewOutcome);
+  const avgBefore = done.length ? Math.round(done.reduce((s, e) => s + e.scoreBefore, 0) / done.length) : 0;
+  const avgAfter = done.length ? Math.round(done.reduce((s, e) => s + e.scoreAfter, 0) / done.length) : 0;
+  log(`—— 累计 ${entries.length} 轮 · 平均验收 ${avgBefore} → ${avgAfter}（Δ${avgAfter - avgBefore}）——`);
+  for (const e of entries.slice(-12)) {
+    log(`#${e.round} ${e.ws.toUpperCase()} ${e.taskName}: ${e.scoreBefore} → ${e.scoreAfter} (Δ${e.delta >= 0 ? '+' : ''}${e.delta}) · ${e.reviewOutcome}${e.note ? ' · ' + e.note : ''}`);
+  }
+}
+
+/** 等一次 AI 工作循环结束（先 busy 起来，再落回空闲） */
+async function waitSettled(panel, timeoutMs) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < 6000 && !panel._busy) await wait(60);
+  while (Date.now() - t0 < timeoutMs) {
+    if (!panel._busy) return true;
+    if (stopFlag) return false;
+    await wait(100);
+  }
+  return false;
+}
+
+async function runTask(task, round) {
+  const CAD = window.CAD;
+  CAD.app.showWorkspace(task.ws);
+  await wait(200);
+  // 重置图纸/模型（both=双侧任务全清）
+  const is3d = task.ws !== '2d';
+  CAD.scene.singleOp('清空', () => CAD.scene.removeEntities([...CAD.scene.entities.keys()]));
+  CAD.scene.clearUndo();
+  CAD.scene.dirty = false;
+  if (is3d) {
+    if (!CAD.app3d?.ready) {
+      CAD.app3d?.ensureLoaded();
+      try { await CAD.app3d?.readyPromise; } catch (e) { log('3D 内核加载失败: ' + (e?.message || e)); return null; }
+    }
+    CAD.app3d.model.clear();
+  }
+  if (task.ws === 'both') CAD.app.showWorkspace('3d');
+  await wait(200);
+  const panel = window.__aiPanel;
+  if (!panel) { log('AI 面板未就绪'); return null; }
+  const beforeLen = panel.messages.length;
+  const mem = memoryNotes(entries, task.id);
+  if (mem) log(`🧠 已注入历史薄弱点记忆（${task.id}）`);
+  const kb = knowledgeForTask(task.id);
+  if (kb.length) log(`📚 已注入知识库条目（${task.id}，${kb.length} 条）`);
+  const histFails = entries.filter((e) => e.taskId === task.id && Array.isArray(e.fails)).flatMap((e) => e.fails);
+  const kbHint = knowledgeHintForFails(histFails);
+  if (kbHint) log(`💡 已注入知识库补救提醒（${task.id}）`);
+  const baseAsk = promptWithSpecs(task) + (kb.length ? '\n\n' + kb.join('\n') : '') + (kbHint ? '\n\n' + kbHint : '') + (mem ? '\n\n' + mem : '');
+  panel.ask(REAL ? baseAsk : `[训练任务:${task.id}] ${baseAsk}`);
+  const okDraw = await waitSettled(panel, REAL ? 900000 : 150000);
+  if (stopFlag) return null;
+  const newMsgs = () => panel.messages.slice(beforeLen);
+  const drawn = newMsgs().some((m) => m.role === 'assistant' && (REAL ? (m.content || '').length > 0 : /(已绘制完成|已创建|已完成|已装配完成)/.test(m.content || '')));
+  const inputOf = () => (task.ws === '2d' ? CAD.scene.all()
+    : task.ws === 'both' ? { bodies: CAD.app3d.model.serialize().bodies, entities: CAD.scene.all() }
+    : { bodies: CAD.app3d.model.serialize().bodies });
+  const scoreBefore = okDraw ? evaluate(task, inputOf()).score : 0;
+  log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${okDraw && drawn ? '完成' : '未完成'}，验收 ${scoreBefore} 分`);
+
+  // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
+  // 质量回退保护：审阅/反馈可能把好模型改差，先存快照，最终分数低于审阅前则回滚
+  // both 任务同时改 2D 图纸与 3D 模型，两侧都要存/还原，否则回滚出来是半新半旧的混合态
+  const snapOf = () => ({
+    scene: task.ws === '3d' ? null : JSON.stringify(CAD.scene.serialize()),
+    model: task.ws === '2d' ? null : JSON.stringify(CAD.app3d.model.serialize()),
+  });
+  const restoreSnap = (snap) => {
+    // 先 2D 后 3D：loadScene 会用图纸里的 bodies3d 覆盖 3D 模型，须让模型快照最后生效
+    if (snap.scene != null) CAD.app.loadScene(Scene.load(JSON.parse(snap.scene)));
+    if (snap.model != null) { CAD.app3d.model.load(JSON.parse(snap.model)); CAD.app3d.refresh(true); }
+  };
+  const snapBefore = snapOf();
+  let reviewOutcome = '未执行', reviewRounds = 0, scoreAfter = scoreBefore;
+  if (okDraw && drawn && !stopFlag && !NO_REVIEW) {
+    panel._manualReview();
+    const okReview = await waitSettled(panel, REAL ? 1200000 : 240000);
+    if (stopFlag) return null;
+    const msgs = newMsgs();
+    reviewRounds = msgs.filter((m) => m.role === 'user' && (
+      typeof m.content === 'string'
+        ? m.content.includes('[多模态审阅]')
+        : Array.isArray(m.content) && m.content.some((c) => c.type === 'image_url' || (c.type === 'text' && String(c.text || '').includes('[多模态审阅]')))
+    )).length;
+    reviewOutcome = msgs.some((m) => /已满意/.test(m.content || '')) ? '已满意' : (okReview ? '审阅完成' : '审阅超时');
+    scoreAfter = evaluate(task, inputOf()).score;
+    log(`👁 多模态审阅（${reviewRounds} 轮）：${reviewOutcome}，复审验收 ${scoreAfter} 分${scoreAfter > scoreBefore ? ' ↑ 质量提升' : scoreAfter === scoreBefore ? '' : ' ↓ 需继续训练'}`);
+  }
+  // 验收反馈闭环：分数未满 → 把失败明细发给模型修复 → 再验收（最多 3 轮）
+  let fbRounds = 0;
+  while (scoreAfter < 100 && fbRounds < FB_MAX && !stopFlag) {
+    const prompt = feedbackPrompt(task, evaluate(task, inputOf()));
+    if (!prompt) break;
+    fbRounds++;
+    panel.ask(prompt);
+    await waitSettled(panel, REAL ? 900000 : 150000);
+    if (stopFlag) return null;
+    scoreAfter = evaluate(task, inputOf()).score;
+    log(`🔄 验收反馈第 ${fbRounds} 轮：修复后 ${scoreAfter} 分`);
+  }
+  let note = drawn ? '' : '绘制未完成';
+  // 回退保护：审阅+反馈后分数不升反降 → 恢复审阅前快照（保证训练单调不降）
+  if (true) { // [临时验证] 强制走回滚分支
+    const dropped = scoreAfter;
+    try {
+      restoreSnap(snapBefore);
+      scoreAfter = evaluate(task, inputOf()).score;
+      note = '↩️ 审阅导致分数下降（' + scoreBefore + '→' + dropped + '），已回滚到审阅前快照';
+      log(note + '，恢复后 ' + scoreAfter + ' 分');
+    } catch (e) {
+      note = '审阅回滚失败: ' + (e?.message || e);
+      log('⚠️ ' + note);
+    }
+  }
+  const finalEval = evaluate(task, inputOf());
+  const fails = finalEval.checks.filter((c) => !c.pass).map((c) => c.detail);
+  return logEntry({
+    taskId: task.id, taskName: task.name, round, ws: task.ws,
+    scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds, fails,
+    note,
+  });
+}
+
+const chooseWeakest = () => {
+  // 弱项优先：先保证每个任务都练过（按训练次数最少优先），同层级内按均分弱项加权随机
+  const roundsCount = new Map();
+  const stats = new Map();
+  for (const e of entries) {
+    roundsCount.set(e.taskId, (roundsCount.get(e.taskId) || 0) + 1);
+    if (!stats.has(e.taskId)) stats.set(e.taskId, []);
+    stats.get(e.taskId).push(e.scoreAfter ?? e.scoreBefore ?? 0);
+  }
+  const min = Math.min(...TRAIN_TASKS.map((t) => roundsCount.get(t.id) || 0));
+  const candidates = TRAIN_TASKS.filter((t) => (roundsCount.get(t.id) || 0) === min);
+  const pool = candidates.map((t) => {
+    const scores = stats.get(t.id) || [];
+    const avg = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    return { t, w: (100 - avg) + 10 };
+  });
+  const total = pool.reduce((s, p) => s + p.w, 0);
+  let r = Math.random() * total;
+  for (const p of pool) { r -= p.w; if (r <= 0) return p.t; }
+  return pool[0].t;
+};
+document.getElementById('btnStart').addEventListener('click', async () => {
+  if (stopFlag === false && document.getElementById('btnStart').dataset.run) return;
+  stopFlag = false;
+  document.getElementById('btnStart').dataset.run = '1';
+  const taskSelVal = sel.value;
+  const tasks = taskSelVal === 'all' ? TRAIN_TASKS : [taskById(taskSelVal)];
+  const rounds = CONTINUOUS ? Infinity : Math.max(1, Math.min(20, parseInt(document.getElementById('rounds').value, 10) || 2));
+  const prog = document.getElementById('tProg');
+  log(`▶ 开始训练${CONTINUOUS ? '（持续模式·弱项优先，点「停止」结束）' : ''}：${tasks.map((t) => t.name).join(' / ')}，每任务 ${CONTINUOUS ? '∞' : rounds} 轮`);
+  for (let r = 1; r <= rounds && !stopFlag; r++) {
+    for (const task of tasks) {
+      if (stopFlag) break;
+      const pick = CONTINUOUS ? chooseWeakest() : task;
+      prog.textContent = `第 ${r} 轮 · ${pick.name}`;
+      const e = await runTask(pick, r);
+      if (e) { entries.push(e); localStorage.setItem('xbcad:training-log', JSON.stringify(entries)); renderStats(); }
+      window.__aiPanel?.clear(); // 每轮任务独立上下文：避免历史里的旧实体 id 污染下一任务的工具调用
+      if (!stopFlag) await wait(800);
+    }
+  }
+  prog.textContent = stopFlag ? '已停止' : '训练完成';
+  delete document.getElementById('btnStart').dataset.run;
+  renderStats();
+});
+document.getElementById('btnStop').addEventListener('click', () => { stopFlag = true; window.__aiPanel?._stop?.(); });
+document.getElementById('btnExport').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `xbcad-training-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+});
+
+(async () => {
+  for (let i = 0; i < 400 && !(window.CAD && window.CAD.scene); i++) await wait(50);
+  const CAD = window.CAD;
+  if (!CAD) { log('APP_FAIL'); return; }
+  log('app: OK · AI 面板: ' + (window.__aiPanel ? 'OK' : '等待…'));
+  for (let i = 0; i < 200 && !window.__aiPanel; i++) await wait(50);
+  if (CAD.app._autosaveTimer) clearInterval(CAD.app._autosaveTimer);
+  // 预热 3D 内核（懒加载一次，避免训练中途等待）；?skip3d=1 跳过（纯 2D 训练/无头测试加速）
+  if (!location.search.includes('skip3d')) {
+    CAD.app.showWorkspace('3d');
+    for (let i = 0; i < 200 && !CAD.app3d; i++) await wait(50);
+    CAD.app3d?.ensureLoaded();
+    CAD.app.showWorkspace('2d');
+  }
+  log('就绪。历史训练日志: ' + entries.length + ' 轮');
+  renderStats();
+})();
+</script>
+</body>
+</html>

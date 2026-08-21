@@ -127,6 +127,13 @@ function check2d(check, ents) {
       const pass = ents.length >= (check.min ?? 1);
       return { pass, detail: `${check.kind} 在区域(${check.x1},${check.y1})-(${check.x2},${check.y2})：${ents.length}（期望≥${check.min ?? 1}）` };
     }
+    case 'textContains': {
+      // 图纸完整性：必须出现包含指定内容的文字（图名/比例/图号/材料）
+      const needle = check.value ?? check.needle;
+      const hit = pick('text').filter((e) => String(e.text || '').includes(needle));
+      const pass = hit.length >= (check.min ?? 1);
+      return { pass, detail: `文字含「${needle}」：${hit.length}/${check.min ?? 1}${pass ? ' ✓' : ' ✗'}` };
+    }
     case 'dimensionValue': {
       // 标注数值正确性：直径/半径/线性标注的测量值必须≈目标值（图纸"标得对"）
       const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);

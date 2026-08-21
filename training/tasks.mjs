@@ -177,7 +177,10 @@ export const TRAIN_TASKS = [
     checks: [
       { type: 'polylineBboxAt', x1: 0, y1: 0, x2: 420, y2: 297, tol: 2, weight: 4 },
       { type: 'polylineBboxAt', x1: 240, y1: 0, x2: 420, y2: 56, tol: 2, weight: 4 },
-      { type: 'count', kind: 'text', min: 4, weight: 3 },
+      { type: 'count', kind: 'text', min: 4, weight: 2 },
+      { type: 'textContains', value: '离心泵总装图', weight: 3 },
+      { type: 'textContains', value: '比例', weight: 2 },
+      { type: 'textContains', value: '图号', weight: 2 },
     ],
   },
   {
@@ -246,9 +249,13 @@ export const TRAIN_TASKS = [
       { type: 'countInBand', kind: 'circle', x1: 120, y1: 100, x2: 220, y2: 250, min: 1, weight: 2 },
       { type: 'dimensionCount', min: 3, weight: 3 },
       { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
-      { type: 'count', kind: 'text', min: 8, max: 60, weight: 3 },
+      { type: 'count', kind: 'text', min: 8, max: 60, weight: 2 },
       { type: 'count', kind: 'polyline', min: 4, max: 30, weight: 2 },
       { type: 'count', kind: 'circle', min: 4, max: 40, weight: 2 },
+      { type: 'textContains', needle: '离心泵总装图', weight: 3 },
+      { type: 'textContains', needle: '图号', weight: 2 },
+      { type: 'textContains', needle: 'HT200', weight: 2 },
+      { type: 'textContains', needle: '机械密封', weight: 2 },
     ],
   },
   {
