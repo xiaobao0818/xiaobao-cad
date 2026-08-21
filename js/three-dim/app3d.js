@@ -641,7 +641,7 @@ export class App3D {
             type: 'object',
             properties: {
               kind: { type: 'string', enum: ['box', 'cylinder', 'sphere', 'cone', 'torus'], description: '基本体类型' },
-              x: { type: 'number', description: '中心 X（默认 0）' }, y: { type: 'number', description: '中心 Y（默认 0）' }, z: { type: 'number', description: '中心 Z（默认 0）' },
+              x: { type: 'number', description: '中心 X（默认 0）。创建多个圆周均布零件（叶片/孔）时必须逐个传入不同坐标（如 65、20、-53…），禁止全部传 0' }, y: { type: 'number', description: '中心 Y（默认 0）' }, z: { type: 'number', description: '中心 Z（默认 0）' },
               dx: { type: 'number', description: 'box 长' }, dy: { type: 'number', description: 'box 宽' }, dz: { type: 'number', description: 'box 高' },
               r: { type: 'number', description: 'cylinder/sphere 半径' }, h: { type: 'number', description: 'cylinder/cone 高度' },
               r1: { type: 'number', description: 'cone 底面半径 / torus 主半径' }, r2: { type: 'number', description: 'cone 顶面半径 / torus 管半径' },
