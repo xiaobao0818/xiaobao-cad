@@ -780,6 +780,7 @@ export default class AIChatPanel {
   _renderError(e) {
     if (e && e.aborted) { this._addMessage('system', '⏹ 已停止生成'); return; }
     if (e && e.network) {
+      console.warn('[AI] 网络请求失败:', e);
       this._addMessage('error',
         '🌐 网络请求失败（Failed to fetch）。可能原因：\n' +
         '· API 地址错误或服务不可达（检查设置里的地址与域名拼写）\n' +
@@ -788,9 +789,10 @@ export default class AIChatPanel {
         '请打开浏览器控制台查看具体错误，或换一个支持 CORS 的接口（MiniMax 支持浏览器直连）。');
       return;
     }
-    if (e && (e.status === 401 || e.status === 403)) { this._addMessage('error', '🔑 API Key 无效，请在设置中检查并重新填写'); return; }
+    if (e && (e.status === 401 || e.status === 403)) { console.warn('[AI] API Key 无效（HTTP ' + e.status + '）:', e.message); this._addMessage('error', '🔑 API Key 无效，请在设置中检查并重新填写'); return; }
     if (e && e.status === 402) { this._addMessage('error', '💰 余额不足，请前往对应平台充值'); return; }
-    if (e && e.status === 429) { this._addMessage('error', '⏳ 请求过于频繁（429），请稍后再试'); return; }
+    if (e && e.status === 429) { console.warn('[AI] 请求过于频繁（429）:', e.message); this._addMessage('error', '⏳ 请求过于频繁（429），请稍后再试'); return; }
+    console.warn('[AI] 请求失败（HTTP ' + (e && e.status) + '）:', e && e.message);
     this._addMessage('error', `❌ 请求失败${e && e.status ? `（HTTP ${e.status}）` : ''}：${e && e.message ? e.message : ''}`);
   }
 
@@ -1129,23 +1131,32 @@ export default class AIChatPanel {
     else candidates = [base + '/v1/chat/completions', base + '/chat/completions'];
     let resp;
     let lastNetworkErr = null;
-    for (let i = 0; i < candidates.length; i++) {
-      const url = candidates[i];
-      try {
-        resp = await fetch(url, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${cfg.key || ''}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-          signal,
-        });
-        // 404 = 路径不存在，尝试下一个候选；其余状态直接使用
-        if (resp.status === 404 && i < candidates.length - 1) continue;
-        break;
-      } catch (e) {
-        if (e && e.name === 'AbortError') { const err = new Error('aborted'); err.aborted = true; throw err; }
-        lastNetworkErr = e;
-        // 网络层失败（CORS/断网）不会因路径不同而改变，直接抛出
-        break;
+    // 瞬时故障重试：网络层错误 / 401 / 429 / 5xx 在服务端可能是限流或抖动，重试 3 次（指数退避）
+    const RETRYABLE = [401, 429, 500, 502, 503, 504];
+    for (let attempt = 0; attempt < 3 && !resp; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 2000 * attempt));
+      for (let i = 0; i < candidates.length; i++) {
+        const url = candidates[i];
+        try {
+          resp = await fetch(url, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${cfg.key || ''}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            signal,
+          });
+          // 404 = 路径不存在，尝试下一个候选；其余状态直接使用
+          if (resp.status === 404 && i < candidates.length - 1) continue;
+          break;
+        } catch (e) {
+          if (e && e.name === 'AbortError') { const err = new Error('aborted'); err.aborted = true; throw err; }
+          lastNetworkErr = e;
+          // 网络层失败（CORS/断网）不会因路径不同而改变，直接跳出路径循环
+          break;
+        }
+      }
+      if (resp && RETRYABLE.includes(resp.status) && attempt < 2) {
+        console.warn(`[AI] API 瞬时故障 HTTP ${resp.status}，第 ${attempt + 1} 次重试`);
+        resp = null;
       }
     }
     if (!resp) {
