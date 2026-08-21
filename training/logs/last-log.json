@@ -4151,5 +4151,23 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787336255352,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 59,
+    "scoreAfter": 78,
+    "delta": 19,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [
+      "boolean 数量=0（期望 ≥3）",
+      "cylinder.r≈98 命中 0/1"
+    ],
+    "note": ""
   }
 ]
