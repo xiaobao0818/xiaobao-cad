@@ -2172,5 +2172,50 @@
     "fbRounds": 1,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787301602308,
+    "taskId": "impeller3d",
+    "taskName": "水泵叶轮（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 76,
+    "scoreAfter": 100,
+    "delta": 24,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787302743296,
+    "taskId": "minipump3d",
+    "taskName": "微型泵整机装配（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 91,
+    "scoreAfter": 100,
+    "delta": 9,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787303698767,
+    "taskId": "pumpduty3d",
+    "taskName": "商用泵·需求驱动设计（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 93,
+    "scoreAfter": 100,
+    "delta": 7,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
   }
 ]

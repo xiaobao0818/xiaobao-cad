@@ -108,6 +108,7 @@
   <script type="module" src="/js/app.js"></script>
 
 <script type="module">
+import { Scene } from '/js/scene.js';
 import { TRAIN_TASKS, taskById } from '/training/tasks.mjs';
 import { evaluate, logEntry, feedbackPrompt } from '/training/acceptance.mjs';
 import { promptWithSpecs } from '/training/specs.mjs';
@@ -195,16 +196,17 @@ async function runTask(task, round) {
 
   // MiniMax M3 多模态审阅（?noreview=1 跳过，用于单独验证验收反馈闭环）
   // 质量回退保护：审阅/反馈可能把好模型改差，先存快照，最终分数低于审阅前则回滚
-  const snapOf = () => (task.ws === '2d'
-    ? JSON.stringify(CAD.scene.serialize())
-    : JSON.stringify(CAD.app3d.model.serialize()));
+  // both 任务同时改 2D 图纸与 3D 模型，两侧都要存/还原，否则回滚出来是半新半旧的混合态
+  const snapOf = () => ({
+    scene: task.ws === '3d' ? null : JSON.stringify(CAD.scene.serialize()),
+    model: task.ws === '2d' ? null : JSON.stringify(CAD.app3d.model.serialize()),
+  });
   const restoreSnap = (snap) => {
-    if (task.ws === '2d') {
-      const s2 = JSON.parse(snap);
-      s2.entities = (s2.entities || []).map((e) => ({ ...e, id: e.id || Math.random().toString(36).slice(2) }));
-      CAD.app.loadScene(new CAD.scene.constructor ? (() => { const { Scene: Sc } = window.__xbcadSceneModule || {}; return null; })() : null);
-    }
+    // 先 2D 后 3D：loadScene 会用图纸里的 bodies3d 覆盖 3D 模型，须让模型快照最后生效
+    if (snap.scene != null) CAD.app.loadScene(Scene.load(JSON.parse(snap.scene)));
+    if (snap.model != null) { CAD.app3d.model.load(JSON.parse(snap.model)); CAD.app3d.refresh(true); }
   };
+  const snapBefore = snapOf();
   let reviewOutcome = '未执行', reviewRounds = 0, scoreAfter = scoreBefore;
   if (okDraw && drawn && !stopFlag && !NO_REVIEW) {
     panel._manualReview();
@@ -235,16 +237,11 @@ async function runTask(task, round) {
   let note = drawn ? '' : '绘制未完成';
   // 回退保护：审阅+反馈后分数不升反降 → 恢复审阅前快照（保证训练单调不降）
   if (scoreAfter < scoreBefore) {
+    const dropped = scoreAfter;
     try {
-      if (task.ws === '2d') {
-        const s2 = JSON.parse(snapBefore);
-        CAD.app.loadScene(Scene.load(s2));
-      } else {
-        CAD.app3d.model.load(JSON.parse(snapBefore));
-        CAD.app3d.refresh(true);
-      }
+      restoreSnap(snapBefore);
       scoreAfter = evaluate(task, inputOf()).score;
-      note = '↩️ 审阅导致分数下降（' + scoreBefore + '→' + scoreAfter + ' 前），已回滚到审阅前快照';
+      note = '↩️ 审阅导致分数下降（' + scoreBefore + '→' + dropped + '），已回滚到审阅前快照';
       log(note + '，恢复后 ' + scoreAfter + ' 分');
     } catch (e) {
       note = '审阅回滚失败: ' + (e?.message || e);
