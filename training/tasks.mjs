@@ -264,9 +264,14 @@ export const TRAIN_TASKS = [
     name: '装配图明细栏（BOM）（2D）',
     prompt: '请画商用装配图的明细栏（BOM）：标题行「序号 名称 数量 材料 备注」；5 行零件：1 泵壳 HT200、2 叶轮 ZG1Cr18Ni9Ti、3 泵轴 2Cr13、4 轴承 6206、5 机械密封 SiC-石墨；每行一个矩形单元格（宽 180 高 12），文字写在单元格内。',
     checks: [
-      { type: 'count', kind: 'text', min: 6, weight: 3 },
-      { type: 'countInBand', kind: 'text', x1: 0, y1: -80, x2: 200, y2: 20, min: 6, weight: 3 },
-      { type: 'count', kind: 'polyline', min: 5, weight: 3 },
+      { type: 'count', kind: 'text', min: 6, weight: 2 },
+      { type: 'countInBand', kind: 'text', x1: 0, y1: -80, x2: 200, y2: 20, min: 6, weight: 2 },
+      { type: 'count', kind: 'polyline', min: 5, weight: 2 },
+      { type: 'textContains', value: '泵壳', weight: 2 },
+      { type: 'textContains', value: 'HT200', weight: 2 },
+      { type: 'textContains', value: '叶轮', weight: 2 },
+      { type: 'textContains', value: '泵轴', weight: 2 },
+      { type: 'textContains', value: '机械密封', weight: 2 },
     ],
   },
   {

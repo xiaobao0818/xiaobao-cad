@@ -2299,5 +2299,20 @@
     "fbRounds": 1,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787313037696,
+    "taskId": "bom2d",
+    "taskName": "装配图明细栏（BOM）（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 13,
+    "scoreAfter": 100,
+    "delta": 87,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]

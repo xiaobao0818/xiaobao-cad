@@ -615,7 +615,11 @@ function goodFlange2d() {
   assert.equal(r.score, 100, `明细栏应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
   const noText = evaluate(task, ents.filter((e) => e.type !== 'text'));
   assert(noText.score < 70, `缺文字应扣分（实际 ${noText.score}）`);
-  ok(`明细栏任务（完整 100 / 缺文字 ${noText.score}）`);
+  // 材料写错（HT150 而非 HT200）应被 textContains 扣分
+  const wrongMat = ents.map((e) => (e.text && e.text.includes('HT200') ? { ...e, text: e.text.replace('HT200', 'HT150') } : e));
+  const rWrong = evaluate(task, wrongMat);
+  assert(rWrong.score < 100, `材料写错应扣分（实际 ${rWrong.score}）`);
+  ok(`明细栏任务（完整 100 / 缺文字 ${noText.score} / 材料写错 ${rWrong.score}）`);
 }
 
 {
