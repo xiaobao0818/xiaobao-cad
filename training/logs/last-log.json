@@ -4249,5 +4249,42 @@
     "fbRounds": 1,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787347025831,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 37,
+    "scoreAfter": 100,
+    "delta": 63,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 4,
+    "fbRounds": 2,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787347061117,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 30,
+    "scoreAfter": 37,
+    "delta": 7,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 3,
+    "fails": [
+      "box 数量=5（期望 ≥6）",
+      "cylinder.r≈259 命中 0/1",
+      "cylinder.r≈244 命中 0/1",
+      "box 圆心距 [65.0, 65.0, 65.0, 65.0, 65.0]，R=171±1.5 命中 0/6",
+      "box 角度均布：实体不足 2 个",
+      "轴 Φ58/孔 Φ59：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
+    ],
+    "note": ""
   }
 ]

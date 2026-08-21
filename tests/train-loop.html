@@ -142,11 +142,14 @@ const DUTY_OVERRIDE = (() => {
   const p = raw.split(',').map((x) => Number(x.trim()));
   return p.length === 3 && p.every((x) => x > 0) ? { Q: p[0], H: p[1], n: p[2] } : null;
 })();
-/** 应用工况覆盖：返回新任务对象（prompt 按新工况渲染、checks 由 dutyChecks 重建） */
+/** 应用工况覆盖：返回新任务对象（prompt 按新工况渲染并固化、duty 更新、checks 由 dutyChecks 重建） */
 function taskWithDuty(task, duty) {
   if (!duty) return task;
-  const t = { ...task };
-  if (typeof t.promptTpl === 'function') t.prompt = t.promptTpl(duty);
+  const t = { ...task, duty };
+  if (typeof t.promptTpl === 'function') {
+    t.prompt = t.promptTpl(duty);
+    delete t.promptTpl; // 固化 prompt，防止 promptWithSpecs 用旧 duty 重渲染
+  }
   const { dutyChecks: dc } = window.__dutyChecks || {};
   if (dc && task.id.startsWith('pumpduty3d')) t.checks = dc(duty);
   return t;
