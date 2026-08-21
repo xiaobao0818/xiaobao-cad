@@ -127,6 +127,20 @@ function check2d(check, ents) {
       const pass = ents.length >= (check.min ?? 1);
       return { pass, detail: `${check.kind} 在区域(${check.x1},${check.y1})-(${check.x2},${check.y2})：${ents.length}（期望≥${check.min ?? 1}）` };
     }
+    case 'dimensionValue': {
+      // 标注数值正确性：直径/半径/线性标注的测量值必须≈目标值（图纸"标得对"）
+      const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);
+      const found = dims.find((e) => {
+        let v = NaN;
+        if (e.subtype === 'diametric') v = 2 * dist(e.cx, e.cy, e.px, e.py);
+        else if (e.subtype === 'radial') v = dist(e.cx, e.cy, e.px, e.py);
+        else if (e.subtype === 'linear') v = dist(e.x1, e.y1, e.x2, e.y2);
+        return approx(v, check.target, check.tol);
+      });
+      return { pass: !!found, detail: found
+        ? `标注数值≈${check.target}（±${check.tol}）✓（实测 ${check.subtype === 'linear' ? dist(found.x1, found.y1, found.x2, found.y2).toFixed(1) : (check.subtype === 'radial' ? dist(found.cx, found.cy, found.px, found.py).toFixed(1) : (2 * dist(found.cx, found.cy, found.px, found.py)).toFixed(1))}）`
+        : `${check.subtype || ''}标注数值≈${check.target}（±${check.tol}）✗ 未找到` };
+    }
     case 'dimensionCount': {
       // 图纸验收：尺寸标注数量（商用图纸必须带标注）
       const dims = pick('dimension').filter((e) => !check.subtype || e.subtype === check.subtype);

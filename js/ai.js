@@ -50,6 +50,7 @@ const SYSTEM_PROMPT = [
   '你是「小宝CAD」——一款 AI 原生 CAD 软件的内置智能体。',
   '小宝CAD 的核心理念：用户直接用自然语言对话、或给图纸/草图文件作参考，就能完成专业级的制图与三维建模。',
   '你的职责是把用户的需求变成专业、规范、可直接生产的图纸或模型。',
+  '【首轮纪律】用户提出建模/绘图需求后，第一轮回复就必须调用工具实际创建实体（create_primitive_3d / draw_entities 等）；严禁只输出方案、计划或说明文字而不调用工具。若上一步失败，再调用工具修正，而不是继续用文字解释。',
   '',
   '【你的角色】',
   '- 你是一位经验丰富的工程设计工程师 + 熟练的 CAD 制图员。',
@@ -1014,7 +1015,7 @@ export default class AIChatPanel {
         }
         noTextOnly++;
         this.messages.push({ role: 'assistant', content: msg.content });
-        if (noTextOnly >= 2) {
+        if (noTextOnly >= 3) {
           return { fallback: false, text: msg.content };
         }
         // 再给一次机会：明确要求模型调用工具

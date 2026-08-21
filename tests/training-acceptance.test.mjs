@@ -720,4 +720,28 @@ function goodFlange2d() {
   ok(`联合任务双侧验收（完整 100 / 缺3D ${no3d.score} / 缺2D ${no2d.score}）`);
 }
 
+{
+  // 标注数值正确性：直径标注必须与实际圆径一致
+  const task = taskById('pumpdrawing2d');
+  const ents = [
+    { id: 'c1', type: 'circle', cx: 0, cy: 0, r: 70 },
+    { id: 'c2', type: 'circle', cx: 18, cy: 0, r: 45 },
+    { id: 'c3', type: 'circle', cx: 0, cy: 0, r: 40 },
+    { id: 'c4', type: 'circle', cx: 0, cy: 0, r: 12 },
+    { id: 'l1', type: 'line', x1: 0, y1: -90, x2: 0, y2: 90 },
+    { id: 'd1', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 70, py: 0, tx: 30, ty: 30 },
+    { id: 'd2', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 40, py: 0, tx: -30, ty: -30 },
+    { id: 'd3', type: 'dimension', subtype: 'diametric', cx: 0, cy: 0, px: 12, py: 0, tx: 50, ty: -40 },
+    { id: 'd4', type: 'dimension', subtype: 'linear', x1: -90, y1: 100, x2: 90, y2: 100, x3: 0, y3: 115 },
+  ];
+  const r = evaluate(task, ents);
+  assert.equal(r.score, 100, `标注数值正确应 100 分，实际 ${r.score}（${r.checks.filter((c) => !c.pass).map((c) => c.detail).join('；')}）`);
+  // 标注数值错误（Φ140 标成 Φ100）→ 扣分
+  const wrong = ents.map((e) => (e.id === 'd1' ? { ...e, px: 50, py: 0 } : e));
+  const rw = evaluate(task, wrong);
+  const v = rw.checks.find((c) => c.detail && c.detail.includes('标注数值'));
+  assert(v && !v.pass, '数值错误的标注应被扣分');
+  ok(`标注数值正确性（正确 100 / Φ标错 ${rw.score}）`);
+}
+
 console.log(`全部通过：${n} 项`);

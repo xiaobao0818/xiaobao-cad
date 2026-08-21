@@ -2127,5 +2127,50 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1787300005712,
+    "taskId": "pumpdrawing2d",
+    "taskName": "水泵总装剖视图·图纸（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 41,
+    "scoreAfter": 100,
+    "delta": 59,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787301126550,
+    "taskId": "impeller3d",
+    "taskName": "水泵叶轮（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1787301527927,
+    "taskId": "minipump3d",
+    "taskName": "微型泵整机装配（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 0,
+    "scoreAfter": 100,
+    "delta": 100,
+    "reviewOutcome": "审阅完成",
+    "reviewRounds": 0,
+    "fbRounds": 1,
+    "fails": [],
+    "note": ""
   }
 ]
