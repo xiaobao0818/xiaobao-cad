@@ -4472,5 +4472,66 @@
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 91.0, 95.5]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
     ]
+  },
+  {
+    "ts": 1787363049780,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 81,
+    "scoreAfter": 100,
+    "delta": 19,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 5,
+    "fbRounds": 1,
+    "fails": [],
+    "note": "",
+    "failsBefore": [
+      "特征数=23（期望 12~22，零件冗余，请删除多余零件）",
+      "cylinder 偏心量 [0.00, 5.50, 5.50, 5.50, 5.50, 5.50, 5.50, 142.00, 142.00]，同轴于(0,0)：1/3"
+    ]
+  },
+  {
+    "ts": 1787363606895,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 81,
+    "scoreAfter": 100,
+    "delta": 19,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [],
+    "note": "",
+    "duty": {
+      "Q": 200,
+      "H": 50,
+      "n": 1450
+    },
+    "failsBefore": [
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，R=171±1.5 命中 0/6",
+      "box 角度均布：实体不足 2 个"
+    ]
+  },
+  {
+    "ts": 1787363656754,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 93,
+    "scoreAfter": 100,
+    "delta": 7,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "failsBefore": [
+      "cylinder 数量=4（期望 ≥5）"
+    ]
   }
 ]

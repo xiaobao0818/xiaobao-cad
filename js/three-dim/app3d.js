@@ -647,6 +647,7 @@ export class App3D {
               r1: { type: 'number', description: 'cone 底面半径 / torus 主半径' }, r2: { type: 'number', description: 'cone 顶面半径 / torus 管半径' },
               color: { type: 'string', description: '颜色 #rrggbb（可选）' },
             },
+            required: ['kind', 'x', 'y'],
           },
         },
       },
