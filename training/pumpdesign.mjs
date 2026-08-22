@@ -75,6 +75,10 @@ export function sizingText(p) {
     bladePos.push(`(${Math.round(ringR * Math.cos(a))}, ${Math.round(ringR * Math.sin(a))})`);
   }
   const perBlade = bladePos.map((pos, k) => `叶片${k + 1}：x=${pos.slice(1, pos.indexOf(','))}，y=${pos.slice(pos.indexOf(',') + 1, -1).trim()}`).join('；');
+  const bladeCalls = bladePos.map((pos, k) => {
+    const [x, y] = [pos.slice(1, pos.indexOf(',')).trim(), pos.slice(pos.indexOf(',') + 1, -1).trim()];
+    return `叶片${k + 1} → create_primitive_3d({"kind":"box","x":${x},"y":${y},"z":0,"dx":40,"dy":6,"dz":12})`;
+  }).join('\n');
   return [
     `离心泵设计参数（Q=${p.Q}m³/h，H=${p.H}m，n=${p.n}rpm）：`,
     `· 比转速 ns=${p.ns}（${p.ns <= 60 ? '低比转速' : p.ns <= 120 ? '中比转速' : '高比转速'}，扬程系数 ψ=${p.psi}）`,
@@ -84,6 +88,7 @@ export function sizingText(p) {
     `· 轴径 d=${p.shaftDmm}mm（轴功率≈${p.powerKW}kW，间隙配合轮毂孔=轴径+0.5mm）`,
     `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}。`,
     `· 逐片创建指令（x、y 两个值都必须照抄）：${perBlade}。创建每个叶片盒体时 x 与 y 分别填上面给的数值，严禁 x、y 都填 0 或只填 x 不填 y。`,
+    `· 叶片创建调用模板（直接照抄调用即可）：\n${bladeCalls}`,
     '按上述尺寸精确建模（验收按这些精确值检查，不要自行改尺寸）：泵壳外圆柱半径=D3/2、叶轮轮盘半径=D2/2、泵轴半径=轴径/2、轮毂孔半径=轴径/2+0.5、叶片盒体中心=上面的分布圆坐标。',
     '零件清单只含：泵壳（外圆柱+偏心内腔差集）、叶轮（轮盘+叶片+轮毂孔差集）、泵轴。不要额外添加法兰、底座、隔舌、管嘴、密封、轴承座等零件（会判冗余扣分）。',
   ].join('\n');
