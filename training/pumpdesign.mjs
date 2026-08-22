@@ -81,7 +81,7 @@ export function sizingText(p) {
     `· 进口直径 D1=${p.D1mm}mm，出口直径=${p.outletDmm}mm`,
     `· 蜗壳基圆 D3=${p.D3mm}mm（隔舌间隙≈5%D2），蜗壳宽度 b3=${p.b3mm}mm`,
     `· 轴径 d=${p.shaftDmm}mm（轴功率≈${p.powerKW}kW，间隙配合轮毂孔=轴径+0.5mm）`,
-    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}（第 k 片 = (${ringR}·cos(360°·k/${p.Z}), ${ringR}·sin(360°·k/${p.Z}))）`,
+    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}（第 k 片 = (${ringR}·cos(360°·k/${p.Z}), ${ringR}·sin(360°·k/${p.Z}))）。创建时必须逐片使用上面列出的不同坐标（x,y 各不相同），严禁全部使用同一个坐标。`,
     '按上述尺寸建模：泵壳外圆柱半径=D3/2、叶轮轮盘半径=D2/2、泵轴半径=轴径/2、轮毂孔半径=轴径/2+0.5。',
   ].join('\n');
 }
