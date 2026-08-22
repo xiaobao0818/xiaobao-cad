@@ -4533,5 +4533,27 @@
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）"
     ]
+  },
+  {
+    "ts": 1787365060021,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 81,
+    "scoreAfter": 81,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [
+      "box 圆心距 [20.1, 20.1, 52.6, 52.6, 65.0]，R=65±1.5 命中 1/5",
+      "box 角度均布：实体不足 2 个"
+    ],
+    "note": "↩️ 审阅导致分数下降（81→70），已回滚到审阅前快照",
+    "failsBefore": [
+      "box 圆心距 [20.1, 20.1, 52.6, 52.6, 65.0]，R=65±1.5 命中 1/5",
+      "box 角度均布：实体不足 2 个"
+    ]
   }
 ]

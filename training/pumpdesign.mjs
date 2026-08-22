@@ -74,6 +74,7 @@ export function sizingText(p) {
     bladeAngles.push(Math.round((360 * k) / p.Z));
     bladePos.push(`(${Math.round(ringR * Math.cos(a))}, ${Math.round(ringR * Math.sin(a))})`);
   }
+  const perBlade = bladePos.map((pos, k) => `叶片${k + 1}：x=${pos.slice(1, pos.indexOf(','))}，y=${pos.slice(pos.indexOf(',') + 1, -1).trim()}`).join('；');
   return [
     `离心泵设计参数（Q=${p.Q}m³/h，H=${p.H}m，n=${p.n}rpm）：`,
     `· 比转速 ns=${p.ns}（${p.ns <= 60 ? '低比转速' : p.ns <= 120 ? '中比转速' : '高比转速'}，扬程系数 ψ=${p.psi}）`,
@@ -81,7 +82,8 @@ export function sizingText(p) {
     `· 进口直径 D1=${p.D1mm}mm，出口直径=${p.outletDmm}mm`,
     `· 蜗壳基圆 D3=${p.D3mm}mm（隔舌间隙≈5%D2），蜗壳宽度 b3=${p.b3mm}mm`,
     `· 轴径 d=${p.shaftDmm}mm（轴功率≈${p.powerKW}kW，间隙配合轮毂孔=轴径+0.5mm）`,
-    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}（第 k 片 = (${ringR}·cos(360°·k/${p.Z}), ${ringR}·sin(360°·k/${p.Z}))）。创建时必须逐片使用上面列出的不同坐标（x,y 各不相同），严禁全部使用同一个坐标。`,
+    `· ${p.Z} 片叶片中心均布在半径 ${ringR}mm 的分布圆上，各片中心坐标精确为：${bladePos.join('、')}。`,
+    `· 逐片创建指令（x、y 两个值都必须照抄）：${perBlade}。创建每个叶片盒体时 x 与 y 分别填上面给的数值，严禁 x、y 都填 0 或只填 x 不填 y。`,
     '按上述尺寸精确建模（验收按这些精确值检查，不要自行改尺寸）：泵壳外圆柱半径=D3/2、叶轮轮盘半径=D2/2、泵轴半径=轴径/2、轮毂孔半径=轴径/2+0.5、叶片盒体中心=上面的分布圆坐标。',
     '零件清单只含：泵壳（外圆柱+偏心内腔差集）、叶轮（轮盘+叶片+轮毂孔差集）、泵轴。不要额外添加法兰、底座、隔舌、管嘴、密封、轴承座等零件（会判冗余扣分）。',
   ].join('\n');
