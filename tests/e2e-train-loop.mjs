@@ -35,7 +35,7 @@ try {
   // 清空训练日志，只跑 2D 法兰盘 1 轮（skip3d 加速）
   const page = await browser.newPage();
   page.on('targetcrashed', () => console.log('  [目标崩溃] 页面进程崩溃（疑似 OOM/渲染器挂起）'));
-  page.on('console', (m) => { const t = m.text(); if (t.includes('[训练]') || t.includes('[3d]') || t.includes('[AI]') || m.type() === 'error') console.log('  [页]', t.slice(0, 200)); });
+  page.on('console', (m) => { const t = m.text(); if (t.includes('[训练]') || t.includes('[3d]') || t.includes('[AI]') || t.includes('🔧') || m.type() === 'error') console.log('  [页]', t.slice(0, 1800)); });
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   if (REAL) {
     // 真实 MiniMax M3：通过 evaluateOnNewDocument 注入设置（Key 只经环境变量，不落盘）

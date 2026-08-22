@@ -225,6 +225,11 @@ async function runTask(task, round) {
   const failsBefore = scoreBefore < 100 ? evaluate(task, inputOf()).checks.filter((c) => !c.pass).map((c) => c.detail) : [];
   log(`[${task.ws.toUpperCase()}] ${task.name} 绘制${drawn ? '完成' : '未完成'}（产出 ${prod0} → ${prodBefore()}），验收 ${scoreBefore} 分` + (failsBefore.length ? '\n  首绘扣分：' + failsBefore.join('；') : ''));
   const _dbgLast = newMsgs().filter((m) => m.role === 'assistant').pop();
+  const _dbgTools = newMsgs()
+    .filter((m) => m.role === 'assistant' && m.tool_calls?.length)
+    .map((m) => m.tool_calls.map((tc) => `${tc.function?.name}(${(tc.function?.arguments || '').slice(0, 90)})`).join(' | '))
+    .slice(-6);
+  if (_dbgTools.length) log('🔧 工具调用: ' + _dbgTools.join(' || '));
   if (_dbgLast) log('🩺 最后助手回复: ' + JSON.stringify(_dbgLast).slice(0, 600));
   else {
     const _dbgAny = newMsgs().slice(-3);

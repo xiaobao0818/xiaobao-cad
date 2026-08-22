@@ -4405,5 +4405,72 @@
     "failsBefore": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
     ]
+  },
+  {
+    "ts": 1787359545076,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 85,
+    "scoreAfter": 100,
+    "delta": 15,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 2,
+    "fails": [],
+    "note": "",
+    "failsBefore": [
+      "特征数=29（期望 12~22，零件冗余，请删除多余零件）",
+      "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
+    ]
+  },
+  {
+    "ts": 1787361294701,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 70,
+    "scoreAfter": 74,
+    "delta": 4,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [
+      "特征数=23（期望 12~22，零件冗余，请删除多余零件）",
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个"
+    ],
+    "note": "",
+    "failsBefore": [
+      "boolean 数量=0（期望 ≥3）",
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个"
+    ]
+  },
+  {
+    "ts": 1787362436805,
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 74,
+    "scoreAfter": 74,
+    "delta": 0,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 6,
+    "fbRounds": 1,
+    "fails": [
+      "特征数=28（期望 12~22，零件冗余，请删除多余零件）",
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 91.0, 95.5]，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个"
+    ],
+    "note": "↩️ 审阅导致分数下降（74→70），已回滚到审阅前快照",
+    "failsBefore": [
+      "特征数=28（期望 12~22，零件冗余，请删除多余零件）",
+      "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 91.0, 95.5]，R=65±1.5 命中 0/5",
+      "box 角度均布：实体不足 2 个"
+    ]
   }
 ]
