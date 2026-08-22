@@ -229,6 +229,8 @@ async function runTask(task, round) {
     .filter((m) => m.role === 'assistant' && m.tool_calls?.length)
     .map((m) => m.tool_calls.map((tc) => `${tc.function?.name}(${(tc.function?.arguments || '').slice(0, 90)})`).join(' | '))
     .slice(-6);
+  const _dbgFirst = newMsgs().find((m) => m.role === 'assistant' && m.tool_calls?.length);
+  if (_dbgFirst) log('🔧 首轮工具: ' + _dbgFirst.tool_calls.map((tc) => `${tc.function?.name}(${(tc.function?.arguments || '').slice(0, 120)})`).join(' | '));
   if (_dbgTools.length) log('🔧 工具调用: ' + _dbgTools.join(' || '));
   if (_dbgLast) log('🩺 最后助手回复: ' + JSON.stringify(_dbgLast).slice(0, 600));
   else {

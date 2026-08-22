@@ -158,8 +158,12 @@ try {
     assert.equal(entries.length, ROUNDS, `应完成 ${ROUNDS} 轮，实际 ${entries.length}`);
     assert(entries.every((x) => Array.isArray(x.fails)), '每轮都应落盘失败明细（fails）');
     if (ROUNDS >= 2) {
-      const memInjected = await page.evaluate(() => window.__aiPanel.messages.some((m) => m.role === 'user' && typeof m.content === 'string' && m.content.includes('【历史薄弱点')));
-      assert(memInjected, '第 2 轮起的提示应注入历史薄弱点记忆');
+      // 记忆注入的前提是此前有失败明细；若前几轮全满分则无薄弱点可记，属正常
+      const hadFails = entries.slice(0, -1).some((x) => Array.isArray(x.fails) && x.fails.length);
+      if (hadFails) {
+        const memInjected = await page.evaluate(() => window.__aiPanel.messages.some((m) => m.role === 'user' && typeof m.content === 'string' && m.content.includes('【历史薄弱点')));
+        assert(memInjected, '此前有失败时，后续轮次提示应注入历史薄弱点记忆');
+      }
       ok(`跨轮薄弱点记忆已注入（${entries.filter((x) => x.fails.length).length}/${ROUNDS} 轮带失败明细）`);
     }
     assert.equal(e.taskId, TASK);
