@@ -134,6 +134,7 @@ const entries = JSON.parse(localStorage.getItem('xbcad:training-log') || '[]');
 let stopFlag = false;
 const NO_REVIEW = location.search.includes('noreview');
 const REAL = location.search.includes('real'); // 真实模型：不带 mock 训练标记、放宽完成判定
+const MOCK = location.search.includes('mock'); // 本地剧本：分数固定，日志标记为 mock 以免混入指标
 const CONTINUOUS = location.search.includes('continuous');
 const FB_MAX = Math.max(0, Math.min(10, parseInt(new URLSearchParams(location.search).get('fbmax') || '3', 10)));
 // 换工况测试：?duty=Q,H,n 覆盖任务工况（promptTpl 重渲染 + dutyChecks 重建验收）
@@ -302,6 +303,8 @@ async function runTask(task, round) {
     duty: DUTY_OVERRIDE || undefined,
     scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds, fails,
     failsBefore,
+    mode: MOCK ? 'mock' : 'real',
+    outcome: !okDraw ? 'timeout' : (drawn ? 'ok' : 'noproduce'),
     note,
   });
 }

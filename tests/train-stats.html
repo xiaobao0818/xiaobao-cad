@@ -35,17 +35,23 @@
 <button id="btnLoad" class="ghost">📄 解析粘贴的 JSON</button>
 <button id="btnDemo" class="ghost">🧪 载入演示数据</button>
 <button id="btnReport">📄 导出 Markdown 训练报告</button>
+<label style="margin-left:12px"><input type="checkbox" id="chkReal" checked> 只统计真实模型轮次（排除 mock 剧本）</label>
 
 <script type="module">
-import { summarize, qualityTrend, recentScore, convergence } from '/training/stats.mjs';
+import { summarize, qualityTrend, recentScore, convergence, realOnly } from '/training/stats.mjs';
 import { entriesToMarkdown } from '/training/report.mjs';
 
 let entries = [];
+/** mock 剧本分数写死，混进统计会让趋势失真；默认只看真实轮次 */
+const view = () => (document.getElementById('chkReal').checked ? realOnly(entries) : entries);
 function render() {
-  const s = summarize(entries);
-  const recent = recentScore(entries, 10);
+  const list = view();
+  const excluded = entries.length - list.length;
+  const s = summarize(list);
+  const recent = recentScore(list, 10);
   document.getElementById('cards').innerHTML = `
-    <div class="card"><div class="k">总轮数</div><div class="v">${s.rounds}</div></div>
+    <div class="card"><div class="k">总轮数</div><div class="v">${s.rounds}${excluded ? `<span style="font-size:12px;color:#8a93a5"> /${entries.length}</span>` : ''}</div></div>
+    ${excluded ? `<div class="card"><div class="k">已排除 mock</div><div class="v" style="color:#8a93a5">${excluded}</div></div>` : ''}
     <div class="card"><div class="k">验收前均分</div><div class="v ${s.avgBefore >= 80 ? 'good' : 'bad'}">${s.avgBefore}</div></div>
     <div class="card"><div class="k">验收后均分</div><div class="v ${s.avgAfter >= 90 ? 'good' : 'bad'}">${s.avgAfter}</div></div>
     <div class="card"><div class="k">平均提升 Δ</div><div class="v ${s.avgDelta > 0 ? 'good' : ''}">${s.avgDelta > 0 ? '+' : ''}${s.avgDelta}</div></div>
@@ -61,7 +67,7 @@ function render() {
     </div>`).join('');
   document.querySelector('#taskTable tbody').innerHTML = s.tasks.map((t) => `
     <tr><td>${t.taskName}</td><td>${t.ws.toUpperCase()}</td><td>${t.rounds}</td><td>${t.avgBefore}</td><td>${t.avgAfter}</td><td>${t.avgDelta >= 0 ? '+' : ''}${t.avgDelta}</td><td>${t.reviewEffectiveness}%</td><td>${t.satisfactionRate}%</td></tr>`).join('');
-  const conv = convergence(entries);
+  const conv = convergence(list);
   const convHtml = conv.curve.length ? '<h3 style="font-size:15px">收敛趋势（按轮次，橙=首绘 / 绿=收敛）</h3>' + conv.curve.map((p) =>
     `<div class="bar-row"><span style="width:70px">第${p.round}轮</span><span style="width:44px;color:#e8a07f">${p.firstAttempt}</span><div class="bar-track"><div class="bar-before" style="width:${p.firstAttempt}%"></div><div class="bar-after" style="width:${p.converged}%"></div></div><span style="width:44px;color:#7ee08a">${p.converged}</span></div>`).join('') : '';
   document.getElementById('conv').innerHTML = convHtml;
@@ -76,16 +82,17 @@ document.getElementById('btnLoad').addEventListener('click', () => {
 });
 document.getElementById('btnDemo').addEventListener('click', () => {
   entries = [
-    { ts: 1000, taskId: 'flange2d', taskName: '法兰盘', round: 1, ws: '2d', scoreBefore: 54, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
-    { ts: 2000, taskId: 'impeller3d', taskName: '叶轮', round: 1, ws: '3d', scoreBefore: 33, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 2 },
-    { ts: 3000, taskId: 'shaft3d', taskName: '台阶轴', round: 1, ws: '3d', scoreBefore: 75, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
-    { ts: 4000, taskId: 'minipump3d', taskName: '微型泵整机', round: 1, ws: '3d', scoreBefore: 74, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1 },
-    { ts: 5000, taskId: 'minipump3d', taskName: '微型泵整机', round: 2, ws: '3d', scoreBefore: 83, scoreAfter: 91, reviewOutcome: '审阅完成', reviewRounds: 1 },
+    { ts: 1000, taskId: 'flange2d', taskName: '法兰盘', round: 1, ws: '2d', scoreBefore: 54, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1, mode: 'real', outcome: 'ok' },
+    { ts: 2000, taskId: 'impeller3d', taskName: '叶轮', round: 1, ws: '3d', scoreBefore: 33, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 2, mode: 'real', outcome: 'ok' },
+    { ts: 3000, taskId: 'shaft3d', taskName: '台阶轴', round: 1, ws: '3d', scoreBefore: 75, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1, mode: 'real', outcome: 'ok' },
+    { ts: 4000, taskId: 'minipump3d', taskName: '微型泵整机', round: 1, ws: '3d', scoreBefore: 74, scoreAfter: 100, reviewOutcome: '已满意', reviewRounds: 1, mode: 'real', outcome: 'ok' },
+    { ts: 5000, taskId: 'minipump3d', taskName: '微型泵整机', round: 2, ws: '3d', scoreBefore: 83, scoreAfter: 91, reviewOutcome: '审阅完成', reviewRounds: 1, mode: 'real', outcome: 'ok' },
   ];
   render();
 });
+document.getElementById('chkReal').addEventListener('change', render);
 document.getElementById('btnReport').addEventListener('click', () => {
-  const md = entriesToMarkdown(entries);
+  const md = entriesToMarkdown(view());
   const blob = new Blob([md], { type: 'text/markdown' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);

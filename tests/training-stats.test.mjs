@@ -1,6 +1,6 @@
 /* 小宝CAD 训练日志统计分析测试（node tests/training-stats.test.mjs） */
 import { strict as assert } from 'node:assert';
-import { summarize, qualityTrend, recentScore, convergence, firstAttemptTrend, bareFirstDrawMedian, dutyDrop } from '../training/stats.mjs';
+import { summarize, qualityTrend, recentScore, convergence, firstAttemptTrend, bareFirstDrawMedian, dutyDrop, realOnly, evaluable } from '../training/stats.mjs';
 import { entriesToMarkdown } from '../training/report.mjs';
 import { logEntry } from '../training/acceptance.mjs';
 
@@ -108,6 +108,36 @@ const entries = [
   assert.equal(drop.baseMedian, 91, `基准工况首绘中位数应为 91（实际 ${drop.baseMedian}）`);
   assert(drop.dutyRuns.length === 1 && drop.dutyRuns[0].drop === 17, '换工况跌幅应可计算');
   ok(`裸需求北极星：首绘中位数 ${m.median}（n=${m.n}）/ 换工况跌幅 ${drop.dutyRuns[0].drop}`);
+}
+
+{
+  // mock 隔离：mock 剧本分数写死，绝不能混进任何指标
+  const mixed = [
+    logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 1, ws: '2d', scoreBefore: 40, scoreAfter: 100, reviewOutcome: '已满意', mode: 'real' }),
+    logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 2, ws: '2d', scoreBefore: 100, scoreAfter: 100, reviewOutcome: '已满意', mode: 'mock' }),
+    logEntry({ taskId: 'flange2d', taskName: '法兰盘', round: 3, ws: '2d', scoreBefore: 100, scoreAfter: 100, reviewOutcome: '已满意', mode: 'mock' }),
+  ];
+  const r = realOnly(mixed);
+  assert.equal(r.length, 1, `realOnly 应只留真实轮次（实际 ${r.length}）`);
+  assert.equal(summarize(r).avgBefore, 40, 'mock 混入会把首绘均分从 40 抬到 80');
+  assert.equal(summarize(mixed).avgBefore, 80, '未过滤时确实被 mock 抬高（回归对照）');
+  assert.equal(realOnly([{ taskId: 'x', scoreBefore: 50 }]).length, 0, '无 mode 字段的条目不算真实轮次');
+  ok('mock 隔离：realOnly 过滤后首绘均分 40（未过滤为 80）');
+}
+
+{
+  // 失败轮不得静默丢弃：timeout 是跑测故障可剔除，noproduce 是能力问题必须计入
+  const runs = [
+    logEntry({ taskId: 'c3d', taskName: '裸对话', round: 1, ws: '3d', scoreBefore: 90, scoreAfter: 100, reviewOutcome: '已满意', mode: 'real', outcome: 'ok' }),
+    logEntry({ taskId: 'c3d', taskName: '裸对话', round: 2, ws: '3d', scoreBefore: 0, scoreAfter: 0, reviewOutcome: '未执行', mode: 'real', outcome: 'noproduce' }),
+    logEntry({ taskId: 'c3d', taskName: '裸对话', round: 3, ws: '3d', scoreBefore: 0, scoreAfter: 0, reviewOutcome: '未执行', mode: 'real', outcome: 'timeout' }),
+  ];
+  const ev = evaluable(runs);
+  assert.equal(ev.list.length, 2, `只剔除 timeout（实际保留 ${ev.list.length}）`);
+  assert.equal(ev.excluded, 1, '剔除数量必须可报告，否则又是幸存者偏差');
+  assert(ev.list.some((e) => e.outcome === 'noproduce'), 'noproduce 是模型没画出东西，必须计入指标');
+  assert.equal(summarize(ev.list).avgBefore, 45, `含 noproduce 的首绘均分应为 45（实际 ${summarize(ev.list).avgBefore}）`);
+  ok(`失败轮处理：noproduce 计入、timeout 剔除 ${ev.excluded} 条并可报告`);
 }
 
 console.log(`全部通过：${n} 项`);

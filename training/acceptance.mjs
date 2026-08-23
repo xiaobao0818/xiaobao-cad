@@ -333,9 +333,13 @@ export function evaluate(task, input) {
   };
 }
 
-/** 训练日志条目序列化（页面与 Node 共用） */
-export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, fails = [], ts = Date.now(), note = '', duty, failsBefore = [] }) {
-  const e = { ts, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, fails, note };
+/** 训练日志条目序列化（页面与 Node 共用）
+ *  mode：'real'=真实模型 / 'mock'=本地剧本。写入时确定，不要事后靠时间戳猜——
+ *        mock 剧本分数是固定的，混进指标会让任何结论失真。
+ *  outcome：'ok'=正常产出 / 'timeout'=等待超时 / 'noproduce'=模型没产出任何实体。
+ *        失败轮必须落盘并标明原因，不能静默丢弃，否则指标带幸存者偏差。 */
+export function logEntry({ taskId, taskName, round, ws, scoreBefore, scoreAfter, reviewOutcome, reviewRounds, fbRounds = 0, fails = [], ts = Date.now(), note = '', duty, failsBefore = [], mode = 'real', outcome = 'ok' }) {
+  const e = { ts, mode, outcome, taskId, taskName, round, ws, scoreBefore, scoreAfter, delta: scoreAfter - scoreBefore, reviewOutcome, reviewRounds, fbRounds, fails, note };
   if (duty) e.duty = duty;
   if (failsBefore.length) e.failsBefore = failsBefore;
   return e;

@@ -15,6 +15,10 @@ const CONT = process.env.CONT === '1';
 const REAL = process.env.REAL === '1';
 const ROUNDS = parseInt(process.env.ROUNDS || '1', 10);
 const KEEP = process.env.KEEP === '1'; // 保留既有训练日志（分轮续跑：记忆/知识联动跨轮生效）
+// EVAL=1：纯首绘评测——跳过多模态审阅与验收反馈，只测「模型第一次画成什么样」。
+// 指标只看 scoreBefore，而每轮耗时几乎全在审阅 6 轮 + 反馈 2 轮（都带图片）上，
+// 关掉后单轮从 15~30 分钟降到 2~4 分钟，用于快速铺满各任务的真实基线。
+const EVAL = process.env.EVAL === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 const DUTY = process.env.DUTY || ''; // 换工况测试：DUTY=Q,H,n 覆盖任务工况（prompt 重渲染 + dutyChecks 重建）
 
@@ -48,7 +52,7 @@ try {
       }));
     }, REAL_KEY);
   }
-  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB ? '&noreview=1' : ''}${process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : ''}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB || EVAL ? '&noreview=1' : ''}${EVAL ? '&fbmax=0' : (process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : '')}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
   if (!KEEP) await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮
@@ -136,7 +140,25 @@ try {
     } catch (e) { /* 首次运行 */ }
     writeFileSync('training/logs/last-log.json', JSON.stringify(merged, null, 2));
   } catch (e) { console.log('  [warn] 日志落盘失败:', e.message); }
-  if (CONT) {
+  if (EVAL) {
+    // 纯首绘评测：不做审阅/反馈，因此不断言收敛分，只校验「这一轮确实产生了可用的首绘读数」。
+    // 失败轮（超时/未产出）不算断言失败——它是要被记录进指标的真实结果，由 northstar 统一处理。
+    console.log(`  首绘评测：${entries.length} 轮`);
+    assert.equal(entries.length, ROUNDS, `应完成 ${ROUNDS} 轮，实际 ${entries.length}`);
+    for (const e of entries) {
+      assert(Number.isFinite(e.scoreBefore), `${e.taskId} 未产生首绘读数`);
+      assert.equal(e.reviewRounds, 0, `${e.taskId} 评测模式不应有多模态审阅（实际 ${e.reviewRounds} 轮）`);
+      assert.equal(e.fbRounds, 0, `${e.taskId} 评测模式不应有验收反馈（实际 ${e.fbRounds} 轮）`);
+      assert(e.mode === (REAL ? 'real' : 'mock'), `${e.taskId} 日志 mode 应为 ${REAL ? 'real' : 'mock'}，实际 ${e.mode}`);
+      assert(['ok', 'timeout', 'noproduce'].includes(e.outcome), `${e.taskId} outcome 字段缺失或非法：${e.outcome}`);
+    }
+    const okRuns = entries.filter((e) => e.outcome === 'ok');
+    const scores = okRuns.map((e) => e.scoreBefore).sort((a, b) => a - b);
+    const median = scores.length ? (scores.length % 2 ? scores[(scores.length - 1) / 2]
+      : Math.round((scores[scores.length / 2 - 1] + scores[scores.length / 2]) / 2)) : 0;
+    ok(`首绘评测完成：${okRuns.length}/${entries.length} 轮有效，首绘中位数 ${median}`
+      + (okRuns.length < entries.length ? `（${entries.length - okRuns.length} 轮 ${[...new Set(entries.filter((e) => e.outcome !== 'ok').map((e) => e.outcome))].join('/')}）` : ''));
+  } else if (CONT) {
     console.log(`  持续训练：${entries.length} 轮`);
     // 弱项优先特性：前 11 轮应覆盖全部 11 个任务（未练过优先）
     const first11 = entries.slice(0, 11).map((e) => e.taskId);

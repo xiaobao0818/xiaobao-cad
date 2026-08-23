@@ -12,7 +12,10 @@
     "reviewRounds": 5,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787245189715,
@@ -27,7 +30,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787245423132,
@@ -42,7 +48,10 @@
     "reviewRounds": 0,
     "fbRounds": 1,
     "fails": [],
-    "note": "绘制未完成"
+    "note": "绘制未完成",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "unknown-fail"
   },
   {
     "ts": 1787247109184,
@@ -57,7 +66,10 @@
     "reviewRounds": 3,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247151817,
@@ -72,7 +84,10 @@
     "reviewRounds": 1,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247241108,
@@ -87,7 +102,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247248472,
@@ -102,7 +120,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247256576,
@@ -117,7 +138,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247263005,
@@ -132,7 +156,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247276247,
@@ -147,7 +174,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247280826,
@@ -162,7 +192,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247285073,
@@ -177,7 +210,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247290523,
@@ -192,7 +228,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247294903,
@@ -207,7 +246,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787247299462,
@@ -222,7 +264,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787249246799,
@@ -239,7 +284,10 @@
     "fails": [
       "cylinder 数量=4（期望 ≥5）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787249273425,
@@ -254,7 +302,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787250715624,
@@ -269,7 +320,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251384316,
@@ -284,7 +338,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251492934,
@@ -299,7 +356,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251497671,
@@ -314,7 +374,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251503091,
@@ -329,7 +392,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251508741,
@@ -344,7 +410,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251514289,
@@ -359,7 +428,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251519814,
@@ -374,7 +446,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251524793,
@@ -389,7 +464,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251529382,
@@ -404,7 +482,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251536076,
@@ -419,7 +500,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251549197,
@@ -434,7 +518,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251553839,
@@ -449,7 +536,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251560388,
@@ -464,7 +554,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251567241,
@@ -479,7 +572,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251574621,
@@ -494,7 +590,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251582661,
@@ -509,7 +608,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251587191,
@@ -524,7 +626,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251592007,
@@ -539,7 +644,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251596842,
@@ -554,7 +662,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251601710,
@@ -569,7 +680,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787251606701,
@@ -584,7 +698,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253181034,
@@ -599,7 +716,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253258974,
@@ -614,7 +734,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253293615,
@@ -629,7 +752,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253295047,
@@ -644,7 +770,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253297324,
@@ -659,7 +788,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253299110,
@@ -674,7 +806,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253301622,
@@ -689,7 +824,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253303041,
@@ -704,7 +842,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253305464,
@@ -719,7 +860,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253307125,
@@ -734,7 +878,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253308647,
@@ -749,7 +896,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253311779,
@@ -764,7 +914,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253315417,
@@ -779,7 +932,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253316843,
@@ -794,7 +950,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253321598,
@@ -809,7 +968,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253325131,
@@ -824,7 +986,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253326610,
@@ -839,7 +1004,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253328026,
@@ -854,7 +1022,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253329442,
@@ -869,7 +1040,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253330874,
@@ -884,7 +1058,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253334048,
@@ -899,7 +1076,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253337164,
@@ -914,7 +1094,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253346878,
@@ -929,7 +1112,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253382318,
@@ -944,7 +1130,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253399661,
@@ -959,7 +1148,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253401102,
@@ -974,7 +1166,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253403344,
@@ -989,7 +1184,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253405138,
@@ -1004,7 +1202,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253407623,
@@ -1019,7 +1220,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253409089,
@@ -1034,7 +1238,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253411488,
@@ -1049,7 +1256,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253413151,
@@ -1064,7 +1274,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253414623,
@@ -1079,7 +1292,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253417819,
@@ -1094,7 +1310,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253421488,
@@ -1109,7 +1328,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253422956,
@@ -1124,7 +1346,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253427739,
@@ -1139,7 +1364,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253430046,
@@ -1154,7 +1382,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253433469,
@@ -1169,7 +1400,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253434937,
@@ -1184,7 +1418,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253436405,
@@ -1199,7 +1436,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253437872,
@@ -1214,7 +1454,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253439305,
@@ -1229,7 +1472,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253442515,
@@ -1244,7 +1490,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253445704,
@@ -1259,7 +1508,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787253455337,
@@ -1274,7 +1526,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254342863,
@@ -1289,7 +1544,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254398823,
@@ -1304,7 +1562,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254404740,
@@ -1319,7 +1580,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254411239,
@@ -1334,7 +1598,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254416492,
@@ -1349,7 +1616,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254421501,
@@ -1364,7 +1634,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254426380,
@@ -1379,7 +1652,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254431281,
@@ -1394,7 +1670,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254436183,
@@ -1409,7 +1688,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254441096,
@@ -1424,7 +1706,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254445988,
@@ -1439,7 +1724,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254450448,
@@ -1454,7 +1742,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254455297,
@@ -1469,7 +1760,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254460209,
@@ -1484,7 +1778,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254465198,
@@ -1499,7 +1796,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787254469724,
@@ -1514,7 +1814,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787256168232,
@@ -1529,7 +1832,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787256554629,
@@ -1544,7 +1850,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787257259283,
@@ -1559,7 +1868,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787257919823,
@@ -1574,7 +1886,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787258248163,
@@ -1589,7 +1904,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787258416626,
@@ -1604,7 +1922,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787258527640,
@@ -1619,7 +1940,10 @@
     "reviewRounds": 5,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787258916771,
@@ -1634,7 +1958,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260043739,
@@ -1649,7 +1976,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260100902,
@@ -1664,7 +1994,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260107601,
@@ -1679,7 +2012,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260112425,
@@ -1694,7 +2030,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260119047,
@@ -1709,7 +2048,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260129041,
@@ -1724,7 +2066,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260135816,
@@ -1739,7 +2084,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260140707,
@@ -1754,7 +2102,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260147454,
@@ -1769,7 +2120,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260289471,
@@ -1784,7 +2138,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260290907,
@@ -1799,7 +2156,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260293352,
@@ -1814,7 +2174,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260295184,
@@ -1829,7 +2192,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260297633,
@@ -1844,7 +2210,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260299051,
@@ -1859,7 +2228,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260301492,
@@ -1874,7 +2246,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260303151,
@@ -1889,7 +2264,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260304651,
@@ -1904,7 +2282,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260307818,
@@ -1919,7 +2300,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260311442,
@@ -1934,7 +2318,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260312865,
@@ -1949,7 +2336,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260317671,
@@ -1964,7 +2354,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260319974,
@@ -1979,7 +2372,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260323393,
@@ -1994,7 +2390,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260324853,
@@ -2009,7 +2408,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260326268,
@@ -2024,7 +2426,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260327728,
@@ -2039,7 +2444,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260329150,
@@ -2054,7 +2462,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260332332,
@@ -2069,7 +2480,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260335565,
@@ -2084,7 +2498,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787260345185,
@@ -2099,7 +2516,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787300005712,
@@ -2114,7 +2534,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787301126550,
@@ -2129,7 +2552,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787301527927,
@@ -2144,7 +2570,10 @@
     "reviewRounds": 0,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787301602308,
@@ -2159,7 +2588,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787302743296,
@@ -2174,7 +2606,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787303698767,
@@ -2189,7 +2624,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787305616930,
@@ -2204,7 +2642,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787305747663,
@@ -2219,7 +2660,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787305970459,
@@ -2234,7 +2678,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787309480826,
@@ -2251,7 +2698,10 @@
     "fails": [
       "boolean 数量=2（期望 ≥3）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787310913692,
@@ -2268,7 +2718,10 @@
     "fails": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787311900250,
@@ -2283,7 +2736,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787312838257,
@@ -2298,7 +2754,10 @@
     "reviewRounds": 2,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787313037696,
@@ -2313,7 +2772,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787314806202,
@@ -2328,7 +2790,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787315695292,
@@ -2343,7 +2808,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787316702900,
@@ -2358,7 +2826,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787318768376,
@@ -2375,7 +2846,10 @@
     "fails": [
       "特征数=26（期望 12~22，零件冗余，请删除多余零件）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787319667159,
@@ -2390,7 +2864,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787319819867,
@@ -2405,7 +2882,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787319824622,
@@ -2420,7 +2900,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787321336408,
@@ -2435,7 +2918,10 @@
     "reviewRounds": 5,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787322824519,
@@ -2450,7 +2936,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787323915961,
@@ -2465,7 +2954,10 @@
     "reviewRounds": 5,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787324560685,
@@ -2480,7 +2972,10 @@
     "reviewRounds": 4,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787325287829,
@@ -2495,7 +2990,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787327550059,
@@ -2510,7 +3008,10 @@
     "reviewRounds": 5,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787328636678,
@@ -2525,7 +3026,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787329190899,
@@ -2540,7 +3044,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787329898970,
@@ -2555,7 +3062,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787331062529,
@@ -2570,7 +3080,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332886197,
@@ -2585,7 +3098,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332942686,
@@ -2600,7 +3116,10 @@
     "reviewRounds": 0,
     "fbRounds": 1,
     "fails": [],
-    "note": "绘制未完成"
+    "note": "绘制未完成",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332948726,
@@ -2615,7 +3134,10 @@
     "reviewRounds": 0,
     "fbRounds": 1,
     "fails": [],
-    "note": "绘制未完成"
+    "note": "绘制未完成",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332967587,
@@ -2630,7 +3152,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332989678,
@@ -2645,7 +3170,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332991112,
@@ -2660,7 +3188,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332993413,
@@ -2675,7 +3206,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332995240,
@@ -2690,7 +3224,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332997820,
@@ -2705,7 +3242,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787332999481,
@@ -2720,7 +3260,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333001912,
@@ -2735,7 +3278,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333003614,
@@ -2750,7 +3296,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333005036,
@@ -2765,7 +3314,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333008307,
@@ -2780,7 +3332,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333012106,
@@ -2795,7 +3350,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333013575,
@@ -2810,7 +3368,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333018537,
@@ -2825,7 +3386,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333020874,
@@ -2840,7 +3404,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333024359,
@@ -2855,7 +3422,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333025783,
@@ -2870,7 +3440,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333027201,
@@ -2885,7 +3458,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333028616,
@@ -2900,7 +3476,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333030035,
@@ -2915,7 +3494,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333033327,
@@ -2930,7 +3512,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333036586,
@@ -2945,7 +3530,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333046653,
@@ -2960,7 +3548,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333478807,
@@ -2975,7 +3566,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333480247,
@@ -2990,7 +3584,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333482563,
@@ -3005,7 +3602,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333484387,
@@ -3020,7 +3620,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333486922,
@@ -3035,7 +3638,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333488391,
@@ -3050,7 +3656,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333490827,
@@ -3065,7 +3674,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333492528,
@@ -3080,7 +3692,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333493989,
@@ -3095,7 +3710,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333497229,
@@ -3110,7 +3728,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333500955,
@@ -3125,7 +3746,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333502425,
@@ -3140,7 +3764,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333507296,
@@ -3155,7 +3782,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333509626,
@@ -3170,7 +3800,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333513121,
@@ -3185,7 +3818,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333514595,
@@ -3200,7 +3836,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333516017,
@@ -3215,7 +3854,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333517488,
@@ -3230,7 +3872,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333518920,
@@ -3245,7 +3890,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333522163,
@@ -3260,7 +3908,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333525389,
@@ -3275,7 +3926,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333535195,
@@ -3290,7 +3944,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333538772,
@@ -3305,7 +3962,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333542609,
@@ -3327,7 +3987,10 @@
       "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）",
       "text 数量=0（期望 8~60）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333615334,
@@ -3342,7 +4005,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333616782,
@@ -3357,7 +4023,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333619084,
@@ -3372,7 +4041,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333620926,
@@ -3387,7 +4059,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333623456,
@@ -3402,7 +4077,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333624878,
@@ -3417,7 +4095,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333627387,
@@ -3432,7 +4113,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333629162,
@@ -3447,7 +4131,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333630644,
@@ -3462,7 +4149,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333633896,
@@ -3477,7 +4167,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333637649,
@@ -3492,7 +4185,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333639076,
@@ -3507,7 +4203,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333643992,
@@ -3522,7 +4221,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333646327,
@@ -3537,7 +4239,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333649862,
@@ -3552,7 +4257,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333651335,
@@ -3567,7 +4275,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333652859,
@@ -3582,7 +4293,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333654330,
@@ -3597,7 +4311,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333655775,
@@ -3612,7 +4329,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333659027,
@@ -3627,7 +4347,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333662259,
@@ -3642,7 +4365,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333672056,
@@ -3657,7 +4383,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333675642,
@@ -3672,7 +4401,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333679478,
@@ -3694,7 +4426,10 @@
       "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）",
       "text 数量=0（期望 8~60）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333728564,
@@ -3716,7 +4451,10 @@
       "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）",
       "text 数量=0（期望 8~60）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333750793,
@@ -3738,7 +4476,10 @@
       "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）",
       "text 数量=0（期望 8~60）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333791127,
@@ -3753,7 +4494,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333801456,
@@ -3768,7 +4512,82 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
+  },
+  {
+    "ts": 1787333809137,
+    "taskId": "flange2d",
+    "taskName": "法兰盘俯视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 54,
+    "scoreAfter": 100,
+    "delta": 46,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
+  },
+  {
+    "ts": 1787333810566,
+    "taskId": "bracket2d",
+    "taskName": "支架轮廓图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 27,
+    "scoreAfter": 100,
+    "delta": 73,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
+  },
+  {
+    "ts": 1787333812970,
+    "taskId": "plate3d",
+    "taskName": "四孔安装板（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 84,
+    "scoreAfter": 100,
+    "delta": 16,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
+  },
+  {
+    "ts": 1787333814809,
+    "taskId": "sleeve3d",
+    "taskName": "轴套（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 64,
+    "scoreAfter": 100,
+    "delta": 36,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333815131,
@@ -3790,67 +4609,10 @@
       "box 角度均布：实体不足 2 个",
       "轴 Φ58/孔 Φ59：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
     ],
-    "note": ""
-  },
-  {
-    "ts": 1787333809137,
-    "taskId": "flange2d",
-    "taskName": "法兰盘俯视图（2D）",
-    "round": 1,
-    "ws": "2d",
-    "scoreBefore": 54,
-    "scoreAfter": 100,
-    "delta": 46,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 2,
-    "fbRounds": 0,
-    "fails": [],
-    "note": ""
-  },
-  {
-    "ts": 1787333810566,
-    "taskId": "bracket2d",
-    "taskName": "支架轮廓图（2D）",
-    "round": 1,
-    "ws": "2d",
-    "scoreBefore": 27,
-    "scoreAfter": 100,
-    "delta": 73,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 2,
-    "fbRounds": 0,
-    "fails": [],
-    "note": ""
-  },
-  {
-    "ts": 1787333812970,
-    "taskId": "plate3d",
-    "taskName": "四孔安装板（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 84,
-    "scoreAfter": 100,
-    "delta": 16,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 2,
-    "fbRounds": 0,
-    "fails": [],
-    "note": ""
-  },
-  {
-    "ts": 1787333814809,
-    "taskId": "sleeve3d",
-    "taskName": "轴套（3D）",
-    "round": 1,
-    "ws": "3d",
-    "scoreBefore": 64,
-    "scoreAfter": 100,
-    "delta": 36,
-    "reviewOutcome": "已满意",
-    "reviewRounds": 2,
-    "fbRounds": 0,
-    "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333817393,
@@ -3865,7 +4627,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333818817,
@@ -3880,7 +4645,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333821267,
@@ -3895,7 +4663,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333822941,
@@ -3910,7 +4681,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333824369,
@@ -3925,7 +4699,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333827629,
@@ -3940,7 +4717,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333831389,
@@ -3955,7 +4735,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333832817,
@@ -3970,7 +4753,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333837743,
@@ -3985,7 +4771,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333840090,
@@ -4000,7 +4789,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333843659,
@@ -4015,7 +4807,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333845084,
@@ -4030,7 +4825,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333846500,
@@ -4045,7 +4843,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333847971,
@@ -4060,7 +4861,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333849398,
@@ -4075,7 +4879,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333852667,
@@ -4090,7 +4897,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333855932,
@@ -4105,7 +4915,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333865873,
@@ -4120,7 +4933,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333869493,
@@ -4135,7 +4951,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787333871859,
@@ -4150,7 +4969,10 @@
     "reviewRounds": 2,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787336255352,
@@ -4168,7 +4990,10 @@
       "boolean 数量=0（期望 ≥3）",
       "cylinder.r≈98 命中 0/1"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787339711226,
@@ -4186,7 +5011,10 @@
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787341503739,
@@ -4201,7 +5029,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787342383368,
@@ -4218,7 +5049,10 @@
     "fails": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 60.0°（≤4°✗）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787344141548,
@@ -4233,7 +5067,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787345367490,
@@ -4248,7 +5085,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787347025831,
@@ -4263,7 +5103,10 @@
     "reviewRounds": 4,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787347061117,
@@ -4285,7 +5128,10 @@
       "box 角度均布：实体不足 2 个",
       "轴 Φ58/孔 Φ59：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
     ],
-    "note": ""
+    "note": "",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787349215177,
@@ -4304,7 +5150,10 @@
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，R=171±1.5 命中 0/6",
       "box 角度均布：实体不足 2 个"
     ],
-    "note": "↩️ 审阅导致分数下降（74→59），已回滚到审阅前快照"
+    "note": "↩️ 审阅导致分数下降（74→59），已回滚到审阅前快照",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787350635487,
@@ -4319,7 +5168,10 @@
     "reviewRounds": 6,
     "fbRounds": 2,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787351616523,
@@ -4334,7 +5186,10 @@
     "reviewRounds": 6,
     "fbRounds": 3,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787353298985,
@@ -4349,7 +5204,10 @@
     "reviewRounds": 4,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787354400000,
@@ -4366,7 +5224,10 @@
     "fails": [
       "（E2E 等待超时未收尾，首绘 93 分实测）"
     ],
-    "note": "量具校准+泵工况铁律+精简原则后首绘 93"
+    "note": "量具校准+泵工况铁律+精简原则后首绘 93",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787357789219,
@@ -4386,7 +5247,10 @@
       "Q": 200,
       "H": 50,
       "n": 1450
-    }
+    },
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787358538267,
@@ -4404,7 +5268,10 @@
     "note": "",
     "failsBefore": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787359545076,
@@ -4423,7 +5290,10 @@
     "failsBefore": [
       "特征数=29（期望 12~22，零件冗余，请删除多余零件）",
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787361294701,
@@ -4447,7 +5317,10 @@
       "boolean 数量=0（期望 ≥3）",
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787362436805,
@@ -4471,7 +5344,10 @@
       "特征数=28（期望 12~22，零件冗余，请删除多余零件）",
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 91.0, 95.5]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787363049780,
@@ -4490,7 +5366,10 @@
     "failsBefore": [
       "特征数=23（期望 12~22，零件冗余，请删除多余零件）",
       "cylinder 偏心量 [0.00, 5.50, 5.50, 5.50, 5.50, 5.50, 5.50, 142.00, 142.00]，同轴于(0,0)：1/3"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787363606895,
@@ -4514,7 +5393,10 @@
     "failsBefore": [
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]，R=171±1.5 命中 0/6",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787363656754,
@@ -4532,7 +5414,10 @@
     "note": "",
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787365060021,
@@ -4554,7 +5439,10 @@
     "failsBefore": [
       "box 圆心距 [20.1, 20.1, 52.6, 52.6, 65.0]，R=65±1.5 命中 1/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787366005648,
@@ -4569,7 +5457,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787366516791,
@@ -4589,7 +5480,10 @@
       "Q": 200,
       "H": 50,
       "n": 1450
-    }
+    },
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787367495013,
@@ -4608,7 +5502,10 @@
     "failsBefore": [
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787368158878,
@@ -4623,7 +5520,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787369557281,
@@ -4641,7 +5541,10 @@
     "note": "",
     "failsBefore": [
       "box 角度 [0.0, 0.0, 0.0, 0.0, 0.0]，最大角差偏差 72.0°（≤4°✗）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787370429666,
@@ -4656,7 +5559,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787370909381,
@@ -4671,7 +5577,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787371461063,
@@ -4690,7 +5599,10 @@
     "failsBefore": [
       "特征数=11（期望 12~22）",
       "boolean 数量=1（期望 ≥3）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787378000000,
@@ -4708,7 +5620,10 @@
     "failsBefore": [
       "特征数=9（期望 12~22）"
     ],
-    "note": "KEEP3c r1（页面卡死未收尾，首绘实测）"
+    "note": "KEEP3c r1（页面卡死未收尾，首绘实测）",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787378000001,
@@ -4724,7 +5639,10 @@
     "fbRounds": 0,
     "fails": [],
     "failsBefore": [],
-    "note": "KEEP3c r2（页面卡死未收尾，首绘实测）"
+    "note": "KEEP3c r2（页面卡死未收尾，首绘实测）",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787378000002,
@@ -4740,7 +5658,10 @@
     "fbRounds": 0,
     "fails": [],
     "failsBefore": [],
-    "note": "KEEP3c r3（页面卡死未收尾，首绘实测）"
+    "note": "KEEP3c r3（页面卡死未收尾，首绘实测）",
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787378141859,
@@ -4759,7 +5680,10 @@
     "failsBefore": [
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787379324419,
@@ -4774,7 +5698,10 @@
     "reviewRounds": 6,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787380085888,
@@ -4789,7 +5716,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787381298950,
@@ -4807,7 +5737,10 @@
     "note": "",
     "failsBefore": [
       "cylinder.r≈98 命中 0/1"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787385425687,
@@ -4826,7 +5759,10 @@
     "failsBefore": [
       "box 圆心距 [57.9, 57.9, 58.0, 58.0, 58.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787386607850,
@@ -4846,7 +5782,10 @@
       "特征数=9（期望 12~22）",
       "cylinder 数量=3（期望 ≥5）",
       "boolean 数量=1（期望 ≥3）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787389190300,
@@ -4865,7 +5804,10 @@
     "failsBefore": [
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 0.0]，R=65±1.5 命中 0/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787390014776,
@@ -4880,7 +5822,10 @@
     "reviewRounds": 3,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787390938259,
@@ -4899,7 +5844,10 @@
     "failsBefore": [
       "box 圆心距 [0.0, 0.0, 0.0, 0.0, 65.0]，R=65±1.5 命中 1/5",
       "box 角度均布：实体不足 2 个"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787392090283,
@@ -4926,7 +5874,10 @@
       "box 角度均布：实体不足 2 个",
       "cylinder 偏心量 []，同轴于(0,0)：0/3",
       "轴 Φ31/孔 Φ32：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "unknown-fail"
   },
   {
     "ts": 1787393296732,
@@ -4941,7 +5892,10 @@
     "reviewRounds": 6,
     "fbRounds": 0,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787394207042,
@@ -4961,7 +5915,10 @@
       "Q": 200,
       "H": 50,
       "n": 1450
-    }
+    },
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "unknown-fail"
   },
   {
     "ts": 1787394703499,
@@ -4981,7 +5938,10 @@
       "Q": 200,
       "H": 50,
       "n": 1450
-    }
+    },
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787395968898,
@@ -4999,7 +5959,10 @@
     "note": "",
     "failsBefore": [
       "特征数=24（期望 12~22，零件冗余，请删除多余零件）"
-    ]
+    ],
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397851190,
@@ -5014,7 +5977,10 @@
     "reviewRounds": 3,
     "fbRounds": 1,
     "fails": [],
-    "note": ""
+    "note": "",
+    "mode": "real",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397896712,
@@ -5033,7 +5999,10 @@
     "failsBefore": [
       "circle 数量=1（期望 ≥7）",
       "圆周孔 0/6"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397898150,
@@ -5053,7 +6022,10 @@
       "circle 数量=0（期望 ≥2）",
       "未找到 r≈10 @(20,30) 的圆",
       "未找到 r≈10 @(80,30) 的圆"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397900579,
@@ -5071,7 +6043,10 @@
     "note": "",
     "failsBefore": [
       "boolean 数量=0（期望 ≥1）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397902460,
@@ -5090,7 +6065,10 @@
     "failsBefore": [
       "特征数=2（期望 3~6）",
       "boolean 数量=0（期望 ≥1）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397905075,
@@ -5109,7 +6087,10 @@
     "failsBefore": [
       "特征数=8（期望 9~15）",
       "boolean 数量=0（期望 ≥1）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397906684,
@@ -5128,7 +6109,10 @@
     "failsBefore": [
       "circle 数量=5（期望 ≥9）",
       "螺旋圆 4 个，半径序列 [50.0, 55.0, 60.0, 65.0]（需≥8 且单调不减✗）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397909279,
@@ -5147,7 +6131,10 @@
     "failsBefore": [
       "特征数=5（期望 6~12）",
       "boolean 数量=0（期望 ≥2）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397910970,
@@ -5169,7 +6156,10 @@
       "cylinder 偏心量 [0.00, 0.00, 0.00, 0.00]，同轴于(0,0)：4/5",
       "cylinder 直径段 [30, 25, 20, 15]（4/5 级台阶）",
       "cylinder.h 求和=230（期望≈260）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397912390,
@@ -5190,7 +6180,10 @@
       "未找到 r≈45 @(18,0) 的圆",
       "未找到 r≈40 @(0,0) 的圆",
       "未找到 r≈12 @(0,0) 的圆"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397915776,
@@ -5209,7 +6202,10 @@
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）",
       "轴 Φ60/孔 Φ61：缺轴·孔✓·间隙=—（配合不合格：缺轴）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397919640,
@@ -5228,7 +6224,10 @@
     "failsBefore": [
       "cylinder 数量=5（期望 ≥6）",
       "boolean 数量=3（期望 ≥4）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397921143,
@@ -5249,7 +6248,10 @@
       "文字含「离心泵总装图」：0/1 ✗",
       "文字含「比例」：0/1 ✗",
       "文字含「图号」：0/1 ✗"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397926246,
@@ -5267,7 +6269,10 @@
     "note": "",
     "failsBefore": [
       "轴 Φ32/孔 Φ33：缺轴·孔✓·间隙=—（配合不合格：缺轴）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397928654,
@@ -5287,7 +6292,10 @@
       "尺寸标注 0 个（期望≥3）",
       "尺寸标注 0 个（diametric）（期望≥2）",
       "text 数量=0（期望 8~60）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397932331,
@@ -5305,7 +6313,10 @@
     "note": "",
     "failsBefore": [
       "cylinder 数量=2（期望 ≥3）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397933811,
@@ -5329,7 +6340,10 @@
       "文字含「图号」：0/1 ✗",
       "文字含「HT200」：0/1 ✗",
       "文字含「机械密封」：0/1 ✗"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397935478,
@@ -5353,7 +6367,10 @@
       "文字含「叶轮」：0/1 ✗",
       "文字含「泵轴」：0/1 ✗",
       "文字含「机械密封」：0/1 ✗"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397936899,
@@ -5376,7 +6393,10 @@
       "circle 数量=3（期望 ≥4）",
       "过圆心的直线 0（期望≥1）",
       "line 在「中心线」层：0（期望≥1） ✗（图层缺失或实体画在了别的层）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397938325,
@@ -5400,7 +6420,10 @@
       "diametric标注数值≈80（±2）✗ 未找到",
       "diametric标注数值≈24（±2）✗ 未找到",
       "linear标注数值≈180（±2）✗ 未找到"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397941713,
@@ -5418,7 +6441,10 @@
     "note": "",
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397945078,
@@ -5436,7 +6462,10 @@
     "note": "",
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397955437,
@@ -5455,7 +6484,10 @@
     "failsBefore": [
       "cylinder 数量=8（期望 ≥11）",
       "轴 Φ60✗ → 叶轮孔 Φ61✓ → 轴承孔 Φ64✗，间隙[0.50 / 1.50]（配合链不合格）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397959178,
@@ -5473,7 +6505,10 @@
     "note": "",
     "failsBefore": [
       "cylinder 数量=4（期望 ≥5）"
-    ]
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
   },
   {
     "ts": 1787397961602,
@@ -5493,6 +6528,54 @@
       "尺寸标注 0 个（期望≥3）",
       "尺寸标注 0 个（diametric）（期望≥2）",
       "text 数量=0（期望 8~60）"
+    ],
+    "mode": "mock",
+    "modeInferred": true,
+    "outcome": "ok"
+  },
+  {
+    "ts": 1787465376141,
+    "mode": "mock",
+    "outcome": "ok",
+    "taskId": "flange2d",
+    "taskName": "法兰盘俯视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 54,
+    "scoreAfter": 54,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "circle 数量=1（期望 ≥7）",
+      "圆周孔 0/6"
+    ],
+    "note": "",
+    "failsBefore": [
+      "circle 数量=1（期望 ≥7）",
+      "圆周孔 0/6"
+    ]
+  },
+  {
+    "ts": 1787465425264,
+    "mode": "mock",
+    "outcome": "ok",
+    "taskId": "flange2d",
+    "taskName": "法兰盘俯视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 54,
+    "scoreAfter": 100,
+    "delta": 46,
+    "reviewOutcome": "已满意",
+    "reviewRounds": 2,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "failsBefore": [
+      "circle 数量=1（期望 ≥7）",
+      "圆周孔 0/6"
     ]
   }
 ]

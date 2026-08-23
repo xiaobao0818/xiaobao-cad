@@ -4,6 +4,21 @@
  * 输出：整体趋势 + 按任务聚合 + 审阅有效率（质量提升可量化）
  * ============================================================ */
 
+/** 只保留真实模型轮次。mock 剧本分数是写死的，混进任何指标都会让结论失真。
+ *  历史条目没有 mode 字段（回填脚本按时间间隔推断），未标记的一律不算真实。 */
+export function realOnly(entries) {
+  return (Array.isArray(entries) ? entries : []).filter((e) => e && e.mode === 'real');
+}
+
+/** 可用于能力评估的轮次：真实 + 非基础设施故障。
+ *  timeout（等待超时）是跑测环境问题，剔除；noproduce（模型没画出东西）是能力问题，必须计入。
+ *  返回 { list, excluded } —— 剔除数量要跟着指标一起报出来，否则又变成幸存者偏差。 */
+export function evaluable(entries) {
+  const real = realOnly(entries);
+  const list = real.filter((e) => e.outcome !== 'timeout');
+  return { list, excluded: real.length - list.length, total: real.length };
+}
+
 export function summarize(entries) {
   const list = Array.isArray(entries) ? entries.filter((e) => e && typeof e === 'object') : [];
   const byTask = new Map();
