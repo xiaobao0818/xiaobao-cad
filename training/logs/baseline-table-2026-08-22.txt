@@ -1,0 +1,28 @@
+任务 | 轮次 | 首绘中位数 | 失败率
+axialflow3d | 5 | 89 | 0%
+bom2d | 5 | 67 | 0%
+bracket2d | 4 | 100 | 0%
+casing3d | 6 | 94 | 17%
+conversation3d | 19 | 74 | 32%
+doublesuction3d | 11 | 0 | 55%
+drawingchain2d | 3 | 100 | 0%
+drawingframe2d | 5 | 100 | 0%
+flange2d | 6 | 54 | 0%
+impeller3d | 5 | 100 | 20%
+minipump3d | 7 | 74 | 14%
+multistage3d | 4 | 100 | 0%
+plate3d | 4 | 100 | 0%
+pump2d | 4 | 100 | 0%
+pumpboth | 3 | 67 | 0%
+pumpboth-bare | 3 | 67 | 0%
+pumpdrawing2d | 6 | 97 | 0%
+pumpduty3d | 6 | 91 | 0%
+pumpduty3d-bare | 39 | 81 | 3%
+selfprime3d | 5 | 88 | 0%
+shaft3d | 4 | 94 | 0%
+sleeve3d | 6 | 86 | 0%
+threeview2d | 6 | 68 | 0%
+volute2d | 4 | 59 | 25%
+
+不足3轮: 无
+任务数: 24 总真实轮次: 170
