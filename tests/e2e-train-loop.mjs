@@ -21,6 +21,16 @@ const KEEP = process.env.KEEP === '1'; // 保留既有训练日志（分轮续�
 const EVAL = process.env.EVAL === '1';
 const SKIP3D = process.env.SKIP3D === '1' || (process.env.TASK || 'flange2d') === 'flange2d' ? '1' : '';
 const DUTY = process.env.DUTY || ''; // 换工况测试：DUTY=Q,H,n 覆盖任务工况（prompt 重渲染 + dutyChecks 重建）
+// HOLDOUT=1：从留出工况集（training/holdout.mjs）随机抽一组未用过的工况评测，
+// 用过即从留出集移除（持久化到 training/logs/holdout-used.json），不得回流训练。
+let HOLDOUT_DUTY = '';
+if (process.env.HOLDOUT === '1') {
+  const { drawHoldoutDuty } = await import('../training/holdout.mjs');
+  const r = drawHoldoutDuty();
+  if (!r.duty) throw new Error('留出工况已全部用完（' + r.used.length + ' 组已评测），需要扩充留出集');
+  HOLDOUT_DUTY = `${r.duty.Q},${r.duty.H},${r.duty.n}`;
+  console.log(`  [holdout] 抽取留出工况 ${HOLDOUT_DUTY}（${r.duty.note}），剩余 ${r.remaining} 组`);
+}
 
 let n = 0;
 const ok = (msg) => { n++; console.log(`  ✓ ${msg}`); };
@@ -52,7 +62,7 @@ try {
       }));
     }, REAL_KEY);
   }
-  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB || EVAL ? '&noreview=1' : ''}${EVAL ? '&fbmax=0' : (process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : '')}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
+  await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB || EVAL ? '&noreview=1' : ''}${EVAL ? '&fbmax=0' : (process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : '')}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}${HOLDOUT_DUTY ? '&duty=' + HOLDOUT_DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
   if (!KEEP) await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
 
   // 选单任务：法兰盘，1 轮

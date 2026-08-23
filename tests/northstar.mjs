@@ -62,21 +62,30 @@ console.log(`\n【指标2】全部任务首绘滑动均值(窗5)  单调=${mono 
 const m2 = verdict('指标2', lastAvgOf(byTs), lastAvgOf(kept), 90);
 console.log('  最近 6 个滑动均值(含失败轮): ' + avgSeries.slice(-6).join(' → '));
 
-// 指标3：换工况跌幅（阶段4 起要求 ≥3 组未训练留出工况）
+// 指标3：换工况跌幅（阶段4：必须基于留出工况，训练过的工况不再算泛化证据）
+// 基准 = 任务在基准工况（无 duty）的首绘中位；留出 = 来自 training/holdout.mjs 的工况
+import { HOLDOUT_DUTIES } from '../training/holdout.mjs';
+const HOLDOUT_KEYS = new Set(HOLDOUT_DUTIES.map((d) => JSON.stringify({ Q: d.Q, H: d.H, n: d.n })));
 const dutyIds = [...new Set(byTs.filter((e) => e.duty).map((e) => e.taskId))];
 let m3 = dutyIds.length > 0;
 for (const tid of dutyIds) {
   const dAll = dutyDrop(byTs.filter((e) => e.taskId === tid));
-  const dKept = dutyDrop(kept.filter((e) => e.taskId === tid));
   if (!dAll) continue;
   const worst = (d) => (d && d.dutyRuns.length ? Math.max(...d.dutyRuns.map((r) => r.drop)) : 0);
+  const dutyRuns = dAll.dutyRuns.map((r) => ({ ...r, holdout: HOLDOUT_KEYS.has(JSON.stringify(r.duty)) }));
   console.log(`\n【指标3】${tid} 换工况最大跌幅（基准中位 ${dAll.baseMedian}，n=${dAll.nBase}）`);
-  for (const r of dAll.dutyRuns) console.log(`  duty=${JSON.stringify(r.duty)} 首绘=${r.first} 跌幅=${r.drop} ${r.drop <= 10 ? '✅' : '❌'}`);
-  const uniqueDuties = new Set(dAll.dutyRuns.map((r) => JSON.stringify(r.duty))).size;
-  if (uniqueDuties < 3) {
-    console.log(`  ⚠️ 只测了 ${uniqueDuties} 组工况，且已被反复训练 —— 这不是泛化测试，需要留出工况（阶段4）`);
+  const holdoutRuns = dutyRuns.filter((r) => r.holdout);
+  const trainedRuns = dutyRuns.filter((r) => !r.holdout);
+  for (const r of holdoutRuns) console.log(`  [留出] duty=${JSON.stringify(r.duty)} 首绘=${r.first} 跌幅=${r.drop} ${r.drop <= 10 ? '✅' : '❌'}`);
+  for (const r of trainedRuns) console.log(`  [训练过] duty=${JSON.stringify(r.duty)} 首绘=${r.first} 跌幅=${r.drop}（不作为泛化证据）`);
+  if (holdoutRuns.length < 3) {
+    console.log(`  ⚠️ 留出工况只有 ${holdoutRuns.length} 组（需 ≥3 组未训练工况），泛化性仍无法判定`);
   }
-  m3 = verdict('指标3', worst(dAll), worst(dKept), 10, (v) => v <= 10) && m3;
+  const worstHoldout = holdoutRuns.length ? Math.max(...holdoutRuns.map((r) => r.drop)) : null;
+  const worstTrained = trainedRuns.length ? Math.max(...trainedRuns.map((r) => r.drop)) : null;
+  if (worstHoldout == null) { m3 = false; continue; }
+  m3 = verdict('指标3(留出)', worstHoldout, worstHoldout, 10, (v) => v <= 10) && m3;
+  if (worstTrained != null) console.log(`  训练过工况最大跌幅 ${worstTrained}（仅参考，不算泛化）`);
 }
 if (!dutyIds.length) { console.log('\n【指标3】无换工况数据'); m3 = false; }
 

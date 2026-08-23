@@ -8177,5 +8177,81 @@
       "闭合轮廓 @(0,0)-(420,297) ±2 ✗（图框/标题栏缺失或尺寸不符）",
       "闭合轮廓 @(240,0)-(420,56) ±2 ✗（图框/标题栏缺失或尺寸不符）"
     ]
+  },
+  {
+    "ts": 1787476460335,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 89,
+    "scoreAfter": 89,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "cylinder.r≈134.5 命中 0/1"
+    ],
+    "note": "",
+    "duty": {
+      "Q": 120,
+      "H": 15,
+      "n": 1450
+    },
+    "failsBefore": [
+      "cylinder.r≈134.5 命中 0/1"
+    ]
+  },
+  {
+    "ts": 1787476560767,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 89,
+    "scoreAfter": 89,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "boolean 数量=2（期望 ≥3）"
+    ],
+    "note": "",
+    "duty": {
+      "Q": 400,
+      "H": 10,
+      "n": 1450
+    },
+    "failsBefore": [
+      "boolean 数量=2（期望 ≥3）"
+    ]
+  },
+  {
+    "ts": 1787476665859,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "pumpduty3d-bare",
+    "taskName": "商用泵·裸需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": "",
+    "duty": {
+      "Q": 25,
+      "H": 80,
+      "n": 2900
+    }
   }
 ]
