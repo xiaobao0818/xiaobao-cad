@@ -1022,8 +1022,13 @@ export default class AIChatPanel {
         if (noTextOnly >= 3) {
           return { fallback: false, text: msg.content };
         }
-        // 再给一次机会：明确要求模型调用工具
-        this.messages.push({ role: 'user', content: '[系统提示] 请直接调用工具完成绘图/建模，不要只输出文字说明。' });
+        // 再给机会：明确要求模型立即调用工具创建实体（针对只输出 think 计划不调工具的失败模式）
+        this.messages.push({
+          role: 'user',
+          content: '[系统提示] 你刚才只输出了文字/思考，没有调用任何工具，工作区没有任何产出。'
+            + '现在必须立即调用创建工具（3D 用 create_primitive_3d，2D 用 draw_entities）实际创建第一批实体——'
+            + '不要继续解释计划，直接执行。',
+        });
         continue;
       }
       const text = msg.content || '';
