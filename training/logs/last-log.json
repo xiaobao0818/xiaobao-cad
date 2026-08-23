@@ -7215,5 +7215,22 @@
       "circle 数量=1（期望 ≥7）",
       "圆周孔 0/6"
     ]
+  },
+  {
+    "ts": 1787467950589,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "conversation3d",
+    "taskName": "商用泵·裸对话需求（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]
