@@ -1,3 +1,5 @@
+<p align="center"><img src="xiaobao-logo.png" width="120" alt="小宝CAD 标志" /></p>
+
 # 🐻 小宝CAD（XiaoBao CAD）
 
 一款完全运行在浏览器中的 **2D/3D CAD 软件**，内置 **AI 大模型助手**：既有专业 2D 制图（图层/标注/命令行/对象捕捉），又有基于 **OpenCASCADE 实体内核**的 **3D 实体建模**（布尔运算/圆角/倒角/STEP），还可以直接用自然语言对话创作，或把图纸文件丢给 AI 做参考来改图、建图、标注。

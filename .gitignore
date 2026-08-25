@@ -13,3 +13,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# 服务器 SSH 私钥（切勿提交）
+惊鸿服务器-SSH私钥.key

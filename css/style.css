@@ -34,6 +34,7 @@ body {
 }
 .logo { display: flex; align-items: center; gap: 7px; }
 .logo-icon svg { width: 26px; height: 26px; display: block; }
+.logo-icon img { width: 26px; height: 26px; display: block; border-radius: 5px; object-fit: cover; }
 .logo-text { font-size: 16px; font-weight: 700; letter-spacing: .5px; }
 .logo-text em { font-style: normal; color: var(--accent); }
 #menubar { display: flex; gap: 2px; flex: 1; }
