@@ -50,6 +50,25 @@ curl -skI https://jinghongyouxi.com/cad/training/knowledge.js | grep -i content-
 md5sum /www/wwwroot/jinghongyouxi.com/index.html    # 应保持 d26a976f09966d4810db7536aaf7a104
 ```
 
+## API Key 预置（部署版特有，勿入仓库）
+
+线上 `cad/js/ai.js` 的 `DEFAULT_SETTINGS.key` 已预置 MiniMax API Key（新访客零配置即可用 AI）。
+**注意**：
+- 重建部署包时 `js/ai.js` 是从源码 sed 生成的，会**丢失预置 key** → 上传后用 python 精准注入：
+  ```bash
+  # 服务器上执行（KEY 值不要写入本文件/仓库）
+  python3 -c "
+  s = open('/www/wwwroot/jinghongyouxi.com/cad/js/ai.js').read()
+  old = \"model: 'MiniMax-M3',\n  key: '',\"
+  new = \"model: 'MiniMax-M3',\n  key: '你的KEY',\"
+  assert s.count(old) == 1
+  open('/www/wwwroot/jinghongyouxi.com/cad/js/ai.js','w').write(s.replace(old, new))
+  "
+  ```
+- 预置后 key 对任何访客可见（查看源码即可提取）——属公开 Key，建议定期轮换或设置消费上限；
+  若需隐藏，后续可改用服务器端 PHP 代理（站点已启用 PHP 8.2）。
+- 仓库代码（`js/ai.js` 源文件）**永远保持 `key: ''`**，提交前检查 `grep -rn "sk-cp-"`。
+
 ## 路径改写对照（浏览器解析基准）
 
 | 文件 | 原路径 | 改写为 | 解析基准 |
