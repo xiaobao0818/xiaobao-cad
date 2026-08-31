@@ -104,6 +104,25 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
 }
 
 {
+  // HATCH 实体映射（CAD1000 挖掘发现的真实缺口：剖面图高频；libredwg 顶点式边界）
+  const data = mapDwgDatabase({
+    tables: { LAYER: { entries: [] } }, header: {},
+    entities: [
+      { type: 'HATCH', layer: '0', patternName: 'SOLID', solidFill: 1, patternAngle: 0, patternScale: 1.5, boundaryPaths: [{ boundaryPathTypeFlag: 7, isClosed: 1, vertices: [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 50 }, { x: 0, y: 50 }] }] },
+      { type: 'HATCH', layer: '0', patternName: 'ANGLE', solidFill: 0, boundaryPaths: [{ boundaryPathTypeFlag: 3, vertices: [{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }] }] },
+      { type: 'HATCH', layer: '0', boundaryPaths: [{ boundaryPathTypeFlag: 1, edges: [{ kind: 'line' }] }] }, // 边式边界：跳过不崩溃
+    ],
+  });
+  const hs = data.entities.filter((e) => e.type === 'hatch');
+  assert.equal(hs.length, 2, `HATCH 应导入 2 个（顶点式），实际 ${hs.length}`);
+  const solid = hs.find((h) => h.solid);
+  assert(solid && solid.boundary.kind === 'polyline' && solid.boundary.points.length === 4 && solid.spacing === 1.5, 'SOLID 填充：边界顶点 + spacing');
+  const pat = hs.find((h) => !h.solid);
+  assert(pat && pat.boundary.points.length === 3, '图案填充：非 solid 保留边界');
+  ok('HATCH 实体导入（顶点式边界；边式跳过不崩溃）');
+}
+
+{
   // DIMENSION 实体映射（对照 CAD1000 数据集真实图纸字段：definitionPoint/subDefinitionPoint/textPoint/measurement）
   const data = mapDwgDatabase({
     tables: { LAYER: { entries: [] } }, header: {},

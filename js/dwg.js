@@ -164,8 +164,26 @@ export function mapDwgDatabase(db) {
           entities.push(ent);
           break;
         }
+        case 'HATCH': {
+          // 剖面线/填充：仅支持顶点式边界（polyline 边界）；边式边界（样条/弧线组合）暂不支持，
+          // 与 DXF 侧"仅 polyline 边界"行为一致。数据来源：CAD1000 挖掘（HATCH×58 为真实图纸高频缺口）
+          const pts = [];
+          for (const p of e.boundaryPaths || []) {
+            for (const v of p.vertices || []) {
+              pts.push({ x: v.x ?? 0, y: v.y ?? 0, ...(typeof v.bulge === 'number' ? { bulge: v.bulge } : {}) });
+            }
+          }
+          if (pts.length < 3) break;
+          const ent = { ...base(e, 'hatch') };
+          ent.boundary = { kind: 'polyline', points: pts };
+          ent.solid = !!(e.solidFill) || String(e.patternName || '').toUpperCase() === 'SOLID';
+          if (typeof e.patternAngle === 'number') ent.angle = e.patternAngle; // libredwg 弧度
+          if (typeof e.patternScale === 'number' && e.patternScale > 0) ent.spacing = e.patternScale;
+          entities.push(ent);
+          break;
+        }
         default:
-          break; // SPLINE/HATCH/3DSOLID 等暂不支持
+          break; // SPLINE/3DSOLID/MULTILEADER 等暂不支持
       }
     } catch (err) { /* 单个实体失败不阻断整体 */ }
   }

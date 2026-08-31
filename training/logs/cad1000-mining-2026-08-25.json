@@ -1,0 +1,2338 @@
+{
+ "generatedAt": "2026-08-31T18:04:48.189Z",
+ "source": "markov-ai/cad-1000-hours (autocad)",
+ "workflowsScanned": 238,
+ "mechanicalFound": 102,
+ "mechanicalIds": [
+  "autocad/01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
+  "autocad/02b5cedf-11ed-4fcd-8130-fb283a6d59a2",
+  "autocad/044507f6-1ece-4893-afbe-93d14c2d6def",
+  "autocad/02e026b7-7e80-4fe3-9ae0-cf52f307d27c",
+  "autocad/0b534355-d2fd-4c7e-b126-42f50fe552c7",
+  "autocad/0902aaea-3fb0-4fc2-941f-d0a06b664018",
+  "autocad/0a0cc801-9d52-4ddd-a335-2be3f80acce5",
+  "autocad/06d7107b-1172-4953-a8a2-614d5a1e22bc",
+  "autocad/0ee1de8f-2141-4718-9f8b-2fe322a391d4",
+  "autocad/0ce1a970-0889-4915-bbee-803bd7458660",
+  "autocad/0d681686-4914-448e-a7d8-cd27a6bfffe0",
+  "autocad/1b8d1294-348f-4810-b84a-ac297d9ff1c0",
+  "autocad/151ed919-c922-4d6d-b29f-e4ffbee6aa14",
+  "autocad/1c9af049-f700-4a01-94ee-302654f66962",
+  "autocad/1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
+  "autocad/202b130d-b540-4646-b8bf-0eae95238176",
+  "autocad/22f03536-fe56-4cc3-8a28-95ffc957b578",
+  "autocad/21668536-f057-4992-9c6c-1873c9aadc4c",
+  "autocad/22ce00dc-1716-4e10-99c2-a24c32e74f5c",
+  "autocad/2436f65f-24d5-40ee-8814-cdb6c878ea1f",
+  "autocad/226c0314-f7cd-4164-afe8-3c3565f0ddbd",
+  "autocad/296893c0-1042-42ff-a3d9-056abf486a2d",
+  "autocad/287f0331-b08e-402b-807b-00360129aaa2",
+  "autocad/295ab771-a341-4344-b35a-94f0f9d5cd51",
+  "autocad/2893eb7c-b0fd-445a-898d-73b2e18a280e",
+  "autocad/30c77a9b-d3e4-4a6c-ad05-6a2222378676",
+  "autocad/2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+  "autocad/33df5662-d683-416b-b76c-fe7458f31a41",
+  "autocad/3c6725b5-0065-403b-98d4-1fa431933e2d",
+  "autocad/3a040dc1-86ee-43e0-89d4-ff3f29cedee1",
+  "autocad/35e0abe4-0386-4dd8-bcba-121056c5c427",
+  "autocad/38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+  "autocad/4384c679-e891-40a3-ac71-17019d146aa6",
+  "autocad/47bf1c7f-1e7c-43f7-b126-a804d200b824",
+  "autocad/48f4fc33-792a-4e74-a3fd-6d098e3f434b",
+  "autocad/456290b8-7743-4084-a23c-a48fc4fb8434",
+  "autocad/3e5dc6a0-5be3-4f83-9867-2624022584bb",
+  "autocad/49c97759-82b7-4579-bfe0-c85e7b127608",
+  "autocad/5bcf582d-0e55-47e7-b366-81c18cb94530",
+  "autocad/5f6750a7-45ca-44d9-9c73-720c513913b5",
+  "autocad/60a13c99-2d03-4e46-971b-3ac982fbc22f",
+  "autocad/5a8c46f3-bd1a-4c01-875d-d3627d9d9f06",
+  "autocad/63440eb3-d63a-48cc-b44c-d33157c75d86",
+  "autocad/66d0f5c0-c9a8-4bc3-849b-066b9e42d127",
+  "autocad/644ca747-ff96-4c6c-a99d-9348ad6c9388",
+  "autocad/6796192d-ea16-48d1-9c45-6e45821c2d06",
+  "autocad/653ee70e-f99e-4755-8eae-e2686b6ef136",
+  "autocad/715d71c8-db25-4f5c-a019-bfb69c3dd3f3",
+  "autocad/6b2a6616-03b5-4024-a858-9fc5ee3349c6",
+  "autocad/6b064ea3-7192-449b-8c84-09e470c2f56c",
+  "autocad/7493402a-56df-4e85-8caf-3be261ed43f1",
+  "autocad/7e3217aa-b2da-40f7-be8a-1196150a8dff",
+  "autocad/7f2f6954-41cd-4b04-b025-8c25e04283fb",
+  "autocad/8110b572-667c-454c-a590-3e4383a694f1",
+  "autocad/833c9591-ef9d-4978-938d-bd1f24912b21",
+  "autocad/81f5415e-6972-489a-b184-042495fb9aa3",
+  "autocad/7f1d915a-1f37-438a-83d0-6798bdbacb17",
+  "autocad/8956851f-220c-4855-93e7-15c37cd591d3",
+  "autocad/880a4cb2-600b-4d53-993e-1851c0655035",
+  "autocad/8f60fb44-e220-4b73-a3e1-583346b8b719",
+  "autocad/8cab2f5c-ca3b-466c-abd7-3ecbfacbb99b",
+  "autocad/8fc225b8-0a4a-4e80-80e4-320ef6c5b9eb",
+  "autocad/922a7a98-f938-47cf-a1fb-7f628d1ed079",
+  "autocad/90e4ec06-bee1-4c6d-908a-accd2deb1abf",
+  "autocad/9178ab6a-9763-4242-a493-85104e734058",
+  "autocad/99710697-42e2-4cfc-9d71-ab5e1cfe34d8",
+  "autocad/946a6e2d-1e10-4631-8200-2da886ba190a",
+  "autocad/9a22374a-3bd0-49b4-a89f-229150a832af",
+  "autocad/9917b0b3-0f6f-4d2e-a480-853b271d2d0b",
+  "autocad/9bae68a6-5ee3-49ce-9bdb-392f7ebaa1a4",
+  "autocad/a0b5e6f9-f263-4a3d-b3aa-f1b528180810",
+  "autocad/9bcf8690-c868-4a28-9c1f-c31e6c3c086c",
+  "autocad/9b751d63-a529-4e33-ac2e-01d2e1febf6f",
+  "autocad/a9831bfc-2660-4ff9-b9f9-c9ffb031b72d",
+  "autocad/a9577462-2021-495a-86c2-424009f0e85b",
+  "autocad/b0e61e85-da11-47d1-9492-44b98b5d8d24",
+  "autocad/b1a2792f-d2c7-4abb-90f5-2c920fc32339",
+  "autocad/b0b3f8b7-7169-4075-9e7a-89548757dcae",
+  "autocad/aa050f47-755b-4e2c-8454-fd65582b6dea",
+  "autocad/b35da7d3-bd7f-4eb7-a9d2-7e26ab12f959",
+  "autocad/b5198dce-ea38-4c0f-bb3d-e176fa2c888a",
+  "autocad/b8caa13e-2ed9-415a-b0f9-ff656dd660ba",
+  "autocad/b59fce61-2710-4347-8f77-f76fa091eb55",
+  "autocad/bc8ed390-e778-41b5-98a8-f81928b4ac32",
+  "autocad/bcec3f5d-46e0-4972-86fc-3f657e817b80",
+  "autocad/b93dd9f2-104f-407c-b04e-20862b535f18",
+  "autocad/baab0d97-306e-4b0c-804c-4973d85aecbc",
+  "autocad/be6dd8ab-2e8d-472b-ac8b-f6dc59927169",
+  "autocad/c64f3dff-69c4-42ad-8bd9-13a111134b42",
+  "autocad/d27faf4e-5009-4c48-b884-ac5dad2fd3c0",
+  "autocad/d2455f18-592c-4805-8515-9fdd95f28fe0",
+  "autocad/d4e6c024-ef97-4bfb-af4f-46146fb3ca88",
+  "autocad/e286bf95-c996-45b6-8739-37528ef5ba58",
+  "autocad/d6476942-b98a-44c8-940b-3fc63f518e3e",
+  "autocad/ec8eab3a-7fbf-4de4-ac4f-7b387f9b5426",
+  "autocad/e5bf17e4-08ba-48f4-8a1e-0066f5ef07e5",
+  "autocad/e6d91541-f5d4-44de-8a86-da16ad47ed3a",
+  "autocad/f21cf629-db9f-4c5a-a5f5-89bf721c7d08",
+  "autocad/ed7a0d60-90f7-4af4-93c1-8055ee6d22a3",
+  "autocad/f3957ff1-a7fe-4a4c-ac3d-7d7d025ff256",
+  "autocad/f5ef823e-2aff-4c24-ac07-b7950fb72636",
+  "autocad/fcd4c0bc-8ab0-4003-8720-4605c47c19e6"
+ ],
+ "sampled": [
+  "autocad/01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
+  "autocad/02b5cedf-11ed-4fcd-8130-fb283a6d59a2",
+  "autocad/044507f6-1ece-4893-afbe-93d14c2d6def",
+  "autocad/02e026b7-7e80-4fe3-9ae0-cf52f307d27c",
+  "autocad/0b534355-d2fd-4c7e-b126-42f50fe552c7",
+  "autocad/0902aaea-3fb0-4fc2-941f-d0a06b664018",
+  "autocad/0a0cc801-9d52-4ddd-a335-2be3f80acce5",
+  "autocad/06d7107b-1172-4953-a8a2-614d5a1e22bc",
+  "autocad/0ee1de8f-2141-4718-9f8b-2fe322a391d4",
+  "autocad/0ce1a970-0889-4915-bbee-803bd7458660",
+  "autocad/0d681686-4914-448e-a7d8-cd27a6bfffe0",
+  "autocad/1b8d1294-348f-4810-b84a-ac297d9ff1c0",
+  "autocad/151ed919-c922-4d6d-b29f-e4ffbee6aa14",
+  "autocad/1c9af049-f700-4a01-94ee-302654f66962",
+  "autocad/1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
+  "autocad/202b130d-b540-4646-b8bf-0eae95238176",
+  "autocad/22f03536-fe56-4cc3-8a28-95ffc957b578",
+  "autocad/21668536-f057-4992-9c6c-1873c9aadc4c",
+  "autocad/22ce00dc-1716-4e10-99c2-a24c32e74f5c",
+  "autocad/2436f65f-24d5-40ee-8814-cdb6c878ea1f"
+ ],
+ "aggregate": {
+  "n": 20,
+  "entityComposition": {
+   "line": 1446,
+   "dimension": 233,
+   "circle": 99,
+   "arc": 141,
+   "polyline": 143,
+   "insert": 5,
+   "text": 162
+  },
+  "dimSubtypeTotal": {
+   "linear": 202,
+   "angular": 4,
+   "radial": 17,
+   "diametric": 10
+  },
+  "decPlaceHist": {
+   "0": 210,
+   "1": 13,
+   "7": 1,
+   "8": 9
+  },
+  "styleCount": {
+   "ISO-25": 9,
+   "Standard": 5
+  },
+  "layerCounts": [
+   2,
+   1,
+   2,
+   1,
+   2,
+   3,
+   2,
+   1,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   3,
+   1,
+   7,
+   1,
+   3
+  ],
+  "withSpecDims": 11,
+  "specMatchRate": null,
+  "rawUnmapped": {
+   "LINE": 1446,
+   "DIMENSION": 233,
+   "CIRCLE": 99,
+   "ARC": 141,
+   "LWPOLYLINE": 143,
+   "SPLINE": 16,
+   "3DSOLID": 12,
+   "INSERT": 5,
+   "HATCH": 58,
+   "MULTILEADER": 53,
+   "MTEXT": 94,
+   "VIEWPORT": 17,
+   "ATTRIB": 16,
+   "TEXT": 68
+  },
+  "specMatch": [
+   {
+    "id": "01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
+    "spec": 0,
+    "values": 13,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "044507f6-1ece-4893-afbe-93d14c2d6def",
+    "spec": 0,
+    "values": 5,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "0b534355-d2fd-4c7e-b126-42f50fe552c7",
+    "spec": 0,
+    "values": 48,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "0902aaea-3fb0-4fc2-941f-d0a06b664018",
+    "spec": 0,
+    "values": 17,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "0d681686-4914-448e-a7d8-cd27a6bfffe0",
+    "spec": 0,
+    "values": 19,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "1b8d1294-348f-4810-b84a-ac297d9ff1c0",
+    "spec": 0,
+    "values": 13,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "151ed919-c922-4d6d-b29f-e4ffbee6aa14",
+    "spec": 0,
+    "values": 36,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "1c9af049-f700-4a01-94ee-302654f66962",
+    "spec": 0,
+    "values": 13,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
+    "spec": 0,
+    "values": 18,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "202b130d-b540-4646-b8bf-0eae95238176",
+    "spec": 0,
+    "values": 17,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "2436f65f-24d5-40ee-8814-cdb6c878ea1f",
+    "spec": 0,
+    "values": 12,
+    "hit": 0,
+    "rate": 0
+   }
+  ],
+  "specMatchOverall": 0
+ },
+ "drawings": [
+  {
+   "id": "01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
+   "task": "Create a dimensioned 2D technical drawing of a mechanical support stand.",
+   "nDims": 15,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Central column outer width",
+     "measurement": "45 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Central column inner width",
+     "measurement": "35 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Lower brace attachment height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Top plate thickness",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Inclined upper arm angle",
+     "measurement": "0.785398163397 radian"
+    },
+    {
+     "id": "D6",
+     "element": "Inclined upper arm length",
+     "measurement": "120 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Inclined upper arm end radius",
+     "measurement": "15.9099025767 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Base mounting lug outer diameter",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Inclined upper arm mounting-hole diameter",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Central column vertical spacing above brace junction",
+     "measurement": "165 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Right base mounting lug vertical offset",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Left base mounting lug horizontal offset",
+     "measurement": "102 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Left top plate overhang",
+     "measurement": "23.7 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Left base mounting-hole diameter",
+     "measurement": "12.6 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Right base mounting-hole diameter",
+     "measurement": "12.6 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 20,
+    "DIMENSION": 13,
+    "CIRCLE": 3,
+    "ARC": 3
+   },
+   "mappedTypes": {
+    "line": 20,
+    "dimension": 13,
+    "circle": 3,
+    "arc": 3
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 9,
+    "angular": 1,
+    "radial": 1,
+    "diametric": 2
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1
+   ],
+   "dimValues": [
+    45,
+    35,
+    50,
+    15,
+    0.7853981633974488,
+    120,
+    15.909902576703189,
+    30.000000000000455,
+    15.000000000000455,
+    164.99999999999818,
+    100.00000000000091,
+    102.00000000000182,
+    23.699999999999818
+   ]
+  },
+  {
+   "id": "02b5cedf-11ed-4fcd-8130-fb283a6d59a2",
+   "task": "Create a 3D flange-bracket component in AutoCAD.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LWPOLYLINE": 1,
+    "CIRCLE": 4,
+    "SPLINE": 1,
+    "3DSOLID": 1
+   },
+   "mappedTypes": {
+    "polyline": 1,
+    "circle": 4
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "044507f6-1ece-4893-afbe-93d14c2d6def",
+   "task": "Create a dimensioned spiral staircase drawing in plan and elevation.",
+   "nDims": 8,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Overall staircase rise",
+     "measurement": "3200 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper extension height",
+     "measurement": "871.832 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Tread spacing",
+     "measurement": "329.189 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Plan stair radius",
+     "measurement": "1000 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Central support radius",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Central support diameter",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Riser height",
+     "measurement": "160 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Railing diameter",
+     "measurement": "50 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "ARC": 2,
+    "LINE": 95,
+    "CIRCLE": 1,
+    "INSERT": 1,
+    "SPLINE": 11,
+    "HATCH": 4,
+    "DIMENSION": 5,
+    "MULTILEADER": 1,
+    "MTEXT": 25
+   },
+   "mappedTypes": {
+    "arc": 2,
+    "line": 95,
+    "circle": 1,
+    "insert": 1,
+    "dimension": 5,
+    "text": 25
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 3,
+    "radial": 2
+   },
+   "decPlaces": [
+    0,
+    8,
+    8,
+    0,
+    0
+   ],
+   "dimValues": [
+    3200.000000000002,
+    871.8324855698593,
+    329.189180561468,
+    999.9999999999941,
+    50.000000000005
+   ]
+  },
+  {
+   "id": "02e026b7-7e80-4fe3-9ae0-cf52f307d27c",
+   "task": "Create an isometric wireframe drawing of two distinct stepped geometric designs.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 58
+   },
+   "mappedTypes": {
+    "line": 58
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "0b534355-d2fd-4c7e-b126-42f50fe552c7",
+   "task": "Create a dimensioned isometric technical drawing sheet",
+   "nDims": 50,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Upper-left component dimension 01",
+     "measurement": "55 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper-left component dimension 02",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Upper-left component dimension 03",
+     "measurement": "35 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Upper-left component dimension 04",
+     "measurement": "45 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Upper-left component dimension 05",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Upper-left component dimension 06",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Upper-left component dimension 07",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Upper-left component dimension 08",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Upper-left component dimension 09",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Upper-right component dimension 01",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Upper-right component dimension 02",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Upper-right component dimension 03",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Upper-right component dimension 04",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Upper-right component dimension 05",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Upper-right component dimension 06",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Upper-right component dimension 07",
+     "measurement": "45 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Upper-right component dimension 08",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D18",
+     "element": "Upper-right component dimension 09",
+     "measurement": "55 millimeter"
+    },
+    {
+     "id": "D19",
+     "element": "Upper-right component dimension 10",
+     "measurement": "35 millimeter"
+    },
+    {
+     "id": "D20",
+     "element": "Upper-right component dimension 11",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D21",
+     "element": "Upper-right component dimension 12",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D22",
+     "element": "Upper-right component dimension 13",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D23",
+     "element": "Lower-left component dimension 01",
+     "measurement": "120 millimeter"
+    },
+    {
+     "id": "D24",
+     "element": "Lower-left component dimension 02",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D25",
+     "element": "Lower-left component dimension 03",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D26",
+     "element": "Lower-left component dimension 04",
+     "measurement": "55 millimeter"
+    },
+    {
+     "id": "D27",
+     "element": "Lower-left component dimension 05",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D28",
+     "element": "Lower-left component dimension 06",
+     "measurement": "70 millimeter"
+    },
+    {
+     "id": "D29",
+     "element": "Lower-left component dimension 07",
+     "measurement": "120 millimeter"
+    },
+    {
+     "id": "D30",
+     "element": "Lower-left component dimension 08",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D31",
+     "element": "Lower-left component dimension 09",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D32",
+     "element": "Lower-left component dimension 10",
+     "measurement": "85 millimeter"
+    },
+    {
+     "id": "D33",
+     "element": "Lower-left component dimension 11",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D34",
+     "element": "Lower-left component dimension 12",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D35",
+     "element": "Lower-left component dimension 13",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D36",
+     "element": "Lower-right component dimension 01",
+     "measurement": "150 millimeter"
+    },
+    {
+     "id": "D37",
+     "element": "Lower-right component dimension 02",
+     "measurement": "65 millimeter"
+    },
+    {
+     "id": "D38",
+     "element": "Lower-right component dimension 03",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D39",
+     "element": "Lower-right component dimension 04",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D40",
+     "element": "Lower-right component dimension 05",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D41",
+     "element": "Lower-right component dimension 06",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D42",
+     "element": "Lower-right component dimension 07",
+     "measurement": "15 millimeter"
+    },
+    {
+     "id": "D43",
+     "element": "Lower-right component dimension 08",
+     "measurement": "90 millimeter"
+    },
+    {
+     "id": "D44",
+     "element": "Lower-right component dimension 09",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D45",
+     "element": "Lower-right component dimension 10",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D46",
+     "element": "Lower-right component dimension 11",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D47",
+     "element": "Lower-right component dimension 12",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D48",
+     "element": "Lower-right component dimension 13",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D49",
+     "element": "Layout1 sheet width",
+     "measurement": "420 millimeter"
+    },
+    {
+     "id": "D50",
+     "element": "Layout1 sheet height",
+     "measurement": "297 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 116,
+    "DIMENSION": 48,
+    "VIEWPORT": 2,
+    "INSERT": 1,
+    "ATTRIB": 8
+   },
+   "mappedTypes": {
+    "line": 116,
+    "dimension": 48,
+    "insert": 1
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 48
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    55,
+    25,
+    35,
+    45.00000000000091,
+    30,
+    40,
+    15,
+    30,
+    80,
+    79.99999999999955,
+    25,
+    20,
+    10,
+    24.99999999999909,
+    10,
+    45,
+    10,
+    54.999999999999545,
+    35,
+    15,
+    20,
+    15.000000000000455,
+    120.00000000000045,
+    25,
+    40,
+    55.00000000000409,
+    40,
+    70.00000000000045,
+    120,
+    80.00000000000091,
+    30,
+    84.99999999999955,
+    25,
+    20,
+    20,
+    149.99999999999955,
+    65.00000000000091,
+    100.00000000000045,
+    20,
+    15,
+    20,
+    15,
+    90,
+    40,
+    30,
+    40,
+    20,
+    30
+   ]
+  },
+  {
+   "id": "0902aaea-3fb0-4fc2-941f-d0a06b664018",
+   "task": "Create the Kitchen Elevation At-C 2D drawing.",
+   "nDims": 17,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Top left filler width",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Top narrow cabinet tower width",
+     "measurement": "600 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Top refrigerator unit width",
+     "measurement": "1000 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Upper right horizontal zone width",
+     "measurement": "1150 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Upper storage aggregate width",
+     "measurement": "1650 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Overall dimensioned elevation width",
+     "measurement": "2800 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Top fascia height",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Upper shutter cabinet height",
+     "measurement": "750 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Upper shelf compartment height",
+     "measurement": "635 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Open oven unit height",
+     "measurement": "450 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Lower cabinet compartment height",
+     "measurement": "875 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Bottom skirting height",
+     "measurement": "85 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Lower tower stack height",
+     "measurement": "2060 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Overall elevation height",
+     "measurement": "2850 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Bottom left filler width",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Bottom narrow cabinet tower width",
+     "measurement": "600 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Bottom refrigerator unit width",
+     "measurement": "1000 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 86,
+    "HATCH": 2,
+    "LWPOLYLINE": 20,
+    "ARC": 1,
+    "DIMENSION": 17,
+    "MTEXT": 27,
+    "VIEWPORT": 4
+   },
+   "mappedTypes": {
+    "line": 86,
+    "polyline": 20,
+    "arc": 1,
+    "dimension": 17,
+    "text": 27
+   },
+   "layerCount": 3,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 17
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    50,
+    600,
+    1000,
+    1150,
+    1650,
+    2800,
+    40,
+    750.0000000000005,
+    635,
+    450.0000000000002,
+    875.0000000000002,
+    85,
+    2060.0000000000005,
+    2850.000000000001,
+    50,
+    600,
+    999.9999999999995
+   ]
+  },
+  {
+   "id": "0a0cc801-9d52-4ddd-a335-2be3f80acce5",
+   "task": "Create an annotated newel-post stair section detail",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 74,
+    "ARC": 12,
+    "LWPOLYLINE": 36,
+    "DIMENSION": 4,
+    "CIRCLE": 31,
+    "MTEXT": 11,
+    "HATCH": 6,
+    "MULTILEADER": 15
+   },
+   "mappedTypes": {
+    "line": 74,
+    "arc": 12,
+    "polyline": 36,
+    "dimension": 4,
+    "circle": 31,
+    "text": 11
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "angular": 1,
+    "linear": 3
+   },
+   "decPlaces": [
+    8,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    0.5280744484263611,
+    12,
+    7,
+    39
+   ]
+  },
+  {
+   "id": "06d7107b-1172-4953-a8a2-614d5a1e22bc",
+   "task": "Create a 3D piston model as a single solid body.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 1
+   },
+   "mappedTypes": {},
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "0ee1de8f-2141-4718-9f8b-2fe322a391d4",
+   "task": "Create a 3D solid model of a mechanical part.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 3
+   },
+   "mappedTypes": {},
+   "layerCount": 2,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "0ce1a970-0889-4915-bbee-803bd7458660",
+   "task": "Create a geometrical half-turn stair plan and section drawing",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 217,
+    "LWPOLYLINE": 40,
+    "ARC": 31,
+    "TEXT": 53,
+    "CIRCLE": 46,
+    "SPLINE": 2,
+    "DIMENSION": 1,
+    "HATCH": 19,
+    "MULTILEADER": 8
+   },
+   "mappedTypes": {
+    "line": 217,
+    "polyline": 40,
+    "arc": 31,
+    "text": 53,
+    "circle": 46,
+    "dimension": 1
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 1
+   },
+   "decPlaces": [
+    0
+   ],
+   "dimValues": [
+    147
+   ]
+  },
+  {
+   "id": "0d681686-4914-448e-a7d8-cd27a6bfffe0",
+   "task": "Create a dimensioned 2D sectional drawing of a circular mechanical housing bracket.",
+   "nDims": 20,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Overall part height",
+     "measurement": "151.630660823 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Top flange thickness",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Top flange overall width",
+     "measurement": "134 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Top flange inner span",
+     "measurement": "108 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Base-to-housing-center vertical distance",
+     "measurement": "76 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Base thickness",
+     "measurement": "16 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Left base segment length",
+     "measurement": "52 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Base left edge to housing centerline",
+     "measurement": "89 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Central lower feature width",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Base overall length",
+     "measurement": "178 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Right support lower recess span",
+     "measurement": "12.44 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Right support height",
+     "measurement": "19.3 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Upper-right lug outside diameter",
+     "measurement": "18 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Upper-right lug hole radius",
+     "measurement": "5 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Annular housing inner diameter",
+     "measurement": "90 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Annular housing outer diameter",
+     "measurement": "108 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Housing angular sector",
+     "measurement": "2.35619449019 radian"
+    },
+    {
+     "id": "D18",
+     "element": "Right lower housing fillet radius",
+     "measurement": "4 millimeter"
+    },
+    {
+     "id": "D19",
+     "element": "Lower-left transition radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D20",
+     "element": "Lower-left lug hole diameter",
+     "measurement": "10 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "ARC": 19,
+    "LINE": 21,
+    "LWPOLYLINE": 2,
+    "CIRCLE": 2,
+    "HATCH": 5,
+    "DIMENSION": 19
+   },
+   "mappedTypes": {
+    "arc": 19,
+    "line": 21,
+    "polyline": 2,
+    "circle": 2,
+    "dimension": 19
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 12,
+    "diametric": 3,
+    "radial": 3,
+    "angular": 1
+   },
+   "decPlaces": [
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    1,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0
+   ],
+   "dimValues": [
+    151.6306608227426,
+    10,
+    134,
+    107.99999999999999,
+    75.99999999999994,
+    16.00000000000003,
+    52,
+    89,
+    20,
+    178,
+    12.439996819457477,
+    19.30000000000001,
+    18,
+    4.999999999999929,
+    90.00000000000001,
+    107.99999999999999,
+    2.356194490192346,
+    4.000000000000014,
+    9.9999999999999
+   ]
+  },
+  {
+   "id": "1b8d1294-348f-4810-b84a-ac297d9ff1c0",
+   "task": "Create the dimensioned Exercise 10 mechanical profile",
+   "nDims": 13,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Central vertical arc spacing",
+     "measurement": "28 mm"
+    },
+    {
+     "id": "D2",
+     "element": "Upper-right body transition radius",
+     "measurement": "60 mm radius"
+    },
+    {
+     "id": "D3",
+     "element": "Pedestal height",
+     "measurement": "24.7192516236 mm"
+    },
+    {
+     "id": "D4",
+     "element": "Lower-right transition radius",
+     "measurement": "10 mm radius"
+    },
+    {
+     "id": "D5",
+     "element": "Base to lower-opening centerline spacing",
+     "measurement": "60 mm"
+    },
+    {
+     "id": "D6",
+     "element": "Lower-opening to central-opening centerline spacing",
+     "measurement": "57.5 mm"
+    },
+    {
+     "id": "D7",
+     "element": "Central-opening to upper-opening centerline spacing",
+     "measurement": "145.5 mm"
+    },
+    {
+     "id": "D8",
+     "element": "Upper circular opening diameter",
+     "measurement": "36.7 mm diameter"
+    },
+    {
+     "id": "D9",
+     "element": "Lower circular opening diameter",
+     "measurement": "57.2 mm diameter"
+    },
+    {
+     "id": "D10",
+     "element": "Upper outer cap radius",
+     "measurement": "31.6 mm radius"
+    },
+    {
+     "id": "D11",
+     "element": "Upper-left body transition radius",
+     "measurement": "60 mm radius"
+    },
+    {
+     "id": "D12",
+     "element": "Central rounded return radius",
+     "measurement": "14 mm radius"
+    },
+    {
+     "id": "D13",
+     "element": "Central right return span",
+     "measurement": "14 mm"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 9,
+    "CIRCLE": 3,
+    "ARC": 14,
+    "DIMENSION": 13,
+    "SPLINE": 2
+   },
+   "mappedTypes": {
+    "line": 9,
+    "circle": 3,
+    "arc": 14,
+    "dimension": 13
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 6,
+    "radial": 5,
+    "diametric": 2
+   },
+   "decPlaces": [
+    0,
+    0,
+    8,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    28,
+    59.99999999999994,
+    24.71925162359723,
+    10,
+    60.00000000000002,
+    57.500000000000014,
+    145.50000000000003,
+    36.69999999999999,
+    57.2,
+    31.600000000000023,
+    59.999999999999886,
+    13.999999999999979,
+    14
+   ]
+  },
+  {
+   "id": "151ed919-c922-4d6d-b29f-e4ffbee6aa14",
+   "task": "Create a dimensioned elevation drawing of a steel compound-wall gate.",
+   "nDims": 19,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Main gate opening width",
+     "measurement": "3900 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Main gate overall height",
+     "measurement": "2600 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Gate framed panel height",
+     "measurement": "1850 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Gate upper arch rise",
+     "measurement": "600 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Left compound-wall bay width",
+     "measurement": "2000 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Right compound-wall bay width",
+     "measurement": "2000 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Left outer pier width",
+     "measurement": "500 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Right outer pier width",
+     "measurement": "500 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Masonry arched opening width",
+     "measurement": "900 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Masonry opening straight-side height",
+     "measurement": "1750 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Masonry arched opening radius",
+     "measurement": "528 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Gate vertical square bar size",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Equal horizontal spacing at gate bars",
+     "measurement": "127.5 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Gate upper rail offset",
+     "measurement": "250 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Gate lower frame height",
+     "measurement": "450 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Gate-side frame depth",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Stone cap base width",
+     "measurement": "465 millimeter"
+    },
+    {
+     "id": "D18",
+     "element": "Stone cap profile height",
+     "measurement": "259 millimeter"
+    },
+    {
+     "id": "D19",
+     "element": "Stone cap crown radius",
+     "measurement": "113 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LWPOLYLINE": 7,
+    "LINE": 623,
+    "ARC": 56,
+    "HATCH": 2,
+    "DIMENSION": 36,
+    "CIRCLE": 1,
+    "MULTILEADER": 12,
+    "TEXT": 2,
+    "MTEXT": 2
+   },
+   "mappedTypes": {
+    "polyline": 7,
+    "line": 623,
+    "arc": 56,
+    "dimension": 36,
+    "circle": 1,
+    "text": 4
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "radial": 2,
+    "linear": 34
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    528.0000000000036,
+    641,
+    112.99999999999636,
+    38,
+    200,
+    50,
+    2600,
+    600,
+    1750,
+    251,
+    249.99999999939973,
+    400,
+    1850,
+    250,
+    80,
+    150,
+    450,
+    2600,
+    3900,
+    2000,
+    500,
+    1800,
+    900,
+    500,
+    150,
+    465,
+    94.5,
+    20,
+    259,
+    400,
+    127.5,
+    127.5,
+    127.5,
+    675,
+    675,
+    150
+   ]
+  },
+  {
+   "id": "1c9af049-f700-4a01-94ee-302654f66962",
+   "task": "Create a dimensioned 2D mechanical drawing of a sectioned slotted bracket profile.",
+   "nDims": 13,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Left upper outer vertical segment",
+     "measurement": "70 millimeters"
+    },
+    {
+     "id": "D2",
+     "element": "Upper stepped recess depth",
+     "measurement": "40 millimeters"
+    },
+    {
+     "id": "D3",
+     "element": "Overall profile height",
+     "measurement": "200 millimeters"
+    },
+    {
+     "id": "D4",
+     "element": "Central left opening width",
+     "measurement": "40 millimeters"
+    },
+    {
+     "id": "D5",
+     "element": "Upper stepped recess width",
+     "measurement": "80 millimeters"
+    },
+    {
+     "id": "D6",
+     "element": "Left upper shoulder width",
+     "measurement": "40 millimeters"
+    },
+    {
+     "id": "D7",
+     "element": "Horizontal distance from curved-profile datum to right U-feature",
+     "measurement": "170 millimeters"
+    },
+    {
+     "id": "D8",
+     "element": "Right U-shaped feature width",
+     "measurement": "60 millimeters"
+    },
+    {
+     "id": "D9",
+     "element": "Right-end margin width",
+     "measurement": "70 millimeters"
+    },
+    {
+     "id": "D10",
+     "element": "Overall profile length",
+     "measurement": "500 millimeters"
+    },
+    {
+     "id": "D11",
+     "element": "Right U-shaped feature vertical position",
+     "measurement": "100 millimeters"
+    },
+    {
+     "id": "D12",
+     "element": "Inner curved profile diameter",
+     "measurement": "100 millimeters"
+    },
+    {
+     "id": "D13",
+     "element": "Outer rounded profile diameter",
+     "measurement": "200 millimeters"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 23,
+    "ARC": 3,
+    "HATCH": 1,
+    "DIMENSION": 13,
+    "VIEWPORT": 2
+   },
+   "mappedTypes": {
+    "line": 23,
+    "arc": 3,
+    "dimension": 13
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 11,
+    "diametric": 2
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    70,
+    40,
+    200,
+    40,
+    80,
+    40,
+    170,
+    60,
+    70,
+    500,
+    100.00000000000011,
+    99.99999999999994,
+    199.99999999999994
+   ]
+  },
+  {
+   "id": "1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
+   "task": "Create a dimensioned Rectangle command demonstration drawing",
+   "nDims": 18,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Basic rectangle height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Basic rectangle width",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Rotated rectangle angle",
+     "measurement": "0.698131700798 radian"
+    },
+    {
+     "id": "D4",
+     "element": "Rotated rectangle long side",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Rotated rectangle short side",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Equal-chamfer rectangle horizontal setback",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Equal-chamfer rectangle vertical setback",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Equal-chamfer rectangle height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Equal-chamfer rectangle width",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Unequal-chamfer rectangle larger setback",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Unequal-chamfer rectangle smaller setback",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Unequal-chamfer rectangle height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Unequal-chamfer rectangle width",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Filleted rectangle width",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Filleted rectangle height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Filleted rectangle corner radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Width-style rectangle height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D18",
+     "element": "Width-style rectangle width",
+     "measurement": "100 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LWPOLYLINE": 6,
+    "DIMENSION": 18,
+    "LINE": 1
+   },
+   "mappedTypes": {
+    "polyline": 6,
+    "dimension": 18,
+    "line": 1
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 16,
+    "angular": 1,
+    "radial": 1
+   },
+   "decPlaces": [
+    0,
+    0,
+    7,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    50.000000000000014,
+    99.99999999999999,
+    0.6981317007977335,
+    100.00000000000004,
+    50,
+    10,
+    10.000000000000007,
+    50.00000000000001,
+    100,
+    20,
+    10,
+    50.000000000000014,
+    100,
+    100,
+    50.00000000000003,
+    10.000000000000057,
+    50.00000000000003,
+    100
+   ]
+  },
+  {
+   "id": "202b130d-b540-4646-b8bf-0eae95238176",
+   "task": "Create a dimensioned 2D drawing titled “Kitchen Elevation At-C.”",
+   "nDims": 17,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Kitchen elevation dimensioned width",
+     "measurement": "2800 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper left filler width",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Loft left shutter bay width",
+     "measurement": "600 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Loft right shutter bay width",
+     "measurement": "1000 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Loft storage frame width",
+     "measurement": "1650 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Right-side bay width",
+     "measurement": "1150 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Loft top frame thickness",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Loft shutter zone height",
+     "measurement": "750 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Upper storage compartment height",
+     "measurement": "635 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Open oven unit height",
+     "measurement": "450 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Lower storage compartment height",
+     "measurement": "875 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Base skirting zone height",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Cabinet stack height below loft",
+     "measurement": "2060 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Kitchen elevation dimensioned height",
+     "measurement": "2850 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Lower left filler width",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Lower vertical storage run width",
+     "measurement": "600 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Refrigerator bay width",
+     "measurement": "1000 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 33,
+    "LWPOLYLINE": 6,
+    "HATCH": 5,
+    "DIMENSION": 17,
+    "MTEXT": 29,
+    "INSERT": 1
+   },
+   "mappedTypes": {
+    "line": 33,
+    "polyline": 6,
+    "dimension": 17,
+    "text": 29,
+    "insert": 1
+   },
+   "layerCount": 3,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 17
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    2800,
+    50,
+    600,
+    1000,
+    1650,
+    1150,
+    40,
+    750.0000000000036,
+    635,
+    449.9999999999927,
+    875.0000000000036,
+    100,
+    2059.9999999999964,
+    2850,
+    49.99999999999454,
+    600.0000000000036,
+    1000
+   ]
+  },
+  {
+   "id": "22f03536-fe56-4cc3-8a28-95ffc957b578",
+   "task": "Create a 3D isometric model of a rounded mechanical plate component with a circular opening and slotted stepped extensio",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 1,
+    "CIRCLE": 1
+   },
+   "mappedTypes": {
+    "circle": 1
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "21668536-f057-4992-9c6c-1873c9aadc4c",
+   "task": "Create a 3D mechanical bracket model and a projection drawing sheet.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 1,
+    "INSERT": 2,
+    "VIEWPORT": 9,
+    "ATTRIB": 8,
+    "DIMENSION": 17
+   },
+   "mappedTypes": {
+    "insert": 2,
+    "dimension": 17
+   },
+   "layerCount": 7,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 13,
+    "diametric": 1,
+    "radial": 3
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    16,
+    118.00000000000182,
+    20,
+    24,
+    22,
+    8.000000000000028,
+    48.00000000000001,
+    44.000000000000924,
+    23.999999999998664,
+    40.000000000000256,
+    12,
+    12,
+    20,
+    16,
+    44.00000000000091,
+    64,
+    40.000000000000256
+   ]
+  },
+  {
+   "id": "22ce00dc-1716-4e10-99c2-a24c32e74f5c",
+   "task": "Create a 3D mechanical mounting bracket",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LWPOLYLINE": 3,
+    "CIRCLE": 3,
+    "3DSOLID": 5,
+    "LINE": 3
+   },
+   "mappedTypes": {
+    "polyline": 3,
+    "circle": 3,
+    "line": 3
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "2436f65f-24d5-40ee-8814-cdb6c878ea1f",
+   "task": "Create a dimensioned 2D double-panel door detail.",
+   "nDims": 12,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Overall door elevation width",
+     "measurement": "48 inch"
+    },
+    {
+     "id": "D2",
+     "element": "Inner frame width",
+     "measurement": "43 inch"
+    },
+    {
+     "id": "D3",
+     "element": "Side frame width",
+     "measurement": "2.5 inch"
+    },
+    {
+     "id": "D4",
+     "element": "Vertical stile width",
+     "measurement": "4 inch"
+    },
+    {
+     "id": "D5",
+     "element": "Overall door elevation height",
+     "measurement": "84 inch"
+    },
+    {
+     "id": "D6",
+     "element": "Bottom rail height",
+     "measurement": "8 inch"
+    },
+    {
+     "id": "D7",
+     "element": "Top rail height",
+     "measurement": "4 inch"
+    },
+    {
+     "id": "D8",
+     "element": "Top frame width",
+     "measurement": "2.5 inch"
+    },
+    {
+     "id": "D9",
+     "element": "Lower panel height",
+     "measurement": "28 inch"
+    },
+    {
+     "id": "D10",
+     "element": "Upper panel height",
+     "measurement": "35 inch"
+    },
+    {
+     "id": "D11",
+     "element": "Middle rail height",
+     "measurement": "6 inch"
+    },
+    {
+     "id": "D12",
+     "element": "Height to top of middle rail",
+     "measurement": "42 inch"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 67,
+    "CIRCLE": 4,
+    "HATCH": 14,
+    "TEXT": 13,
+    "DIMENSION": 12,
+    "LWPOLYLINE": 22,
+    "MULTILEADER": 17
+   },
+   "mappedTypes": {
+    "line": 67,
+    "circle": 4,
+    "text": 13,
+    "dimension": 12,
+    "polyline": 22
+   },
+   "layerCount": 3,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 12
+   },
+   "decPlaces": [
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    48,
+    43,
+    2.5,
+    4,
+    84.00000000000091,
+    8.00000000000091,
+    4,
+    2.499999999996362,
+    28,
+    35,
+    6,
+    42.00000000000091
+   ]
+  }
+ ]
+}
