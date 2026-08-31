@@ -27,6 +27,13 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
   assert(byType.line > 0 && byType.polyline > 0 && byType.arc > 0 && byType.text > 0);
   ok(`类型分布: ${Object.entries(byType).map(([k, v]) => k + '×' + v).join(', ')}`);
 
+  // DIMENSION 实体（真实图纸标注，此前被静默丢弃；本示例含 9 个）
+  assert((byType.dimension || 0) >= 9, `示例图纸应含 ≥9 个尺寸标注，实际 ${byType.dimension || 0}`);
+  const dim = data.entities.find((e) => e.type === 'dimension');
+  assert(dim && ['linear', 'angular', 'diametric', 'radial'].includes(dim.subtype), '标注应有子类型');
+  if (dim.subtype === 'linear') assert(Number.isFinite(dim.x1) && Number.isFinite(dim.y3));
+  ok(`DIMENSION 实体导入：${byType.dimension} 个（样例 subtype=${dim.subtype}）`);
+
   const line = data.entities.find((e) => e.type === 'line');
   assert(Number.isFinite(line.x1) && Number.isFinite(line.y2));
   assert(line.layer && line.layer !== '0');
@@ -94,6 +101,27 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
   assert.equal(d2.entities.length, 0);
   assert(d2.layers.some((l) => l.name === '0'));
   ok('mapDwgDatabase 空值/坏 entities 防御');
+}
+
+{
+  // DIMENSION 实体映射（对照 CAD1000 数据集真实图纸字段：definitionPoint/subDefinitionPoint/textPoint/measurement）
+  const data = mapDwgDatabase({
+    tables: { LAYER: { entries: [] } }, header: {},
+    entities: [
+      { type: 'DIMENSION', dimensionType: 160, layer: '0', definitionPoint: { x: 2530.318, y: 1802.084, z: 0 }, subDefinitionPoint1: { x: 2485.318, y: 1866.947 }, subDefinitionPoint2: { x: 2530.318, y: 1866.947 }, textPoint: { x: 2507.818, y: 1802.084 }, measurement: 45, text: '', styleName: 'ISO-25', rotationAngle: 0 },
+      { type: 'DIMENSION', dimensionType: 3, layer: '0', definitionPoint: { x: 0, y: 0 }, subDefinitionPoint1: { x: 30, y: 0 }, textPoint: { x: 0, y: 40 }, measurement: 60 },
+      { type: 'DIMENSION', dimensionType: 2, layer: '0', definitionPoint: { x: 10, y: 10 }, subDefinitionPoint1: { x: 40, y: 10 }, subDefinitionPoint2: { x: 10, y: 40 }, textPoint: { x: 22, y: 22 } },
+    ],
+  });
+  const dims = data.entities.filter((e) => e.type === 'dimension');
+  assert.equal(dims.length, 3, `DIMENSION 应全部导入，实际 ${dims.length}`);
+  const lin = dims.find((d) => d.subtype === 'linear');
+  assert(lin && Math.abs(lin.x3 - lin.x1) < 1e-9 && lin.value === 45, '线性标注：旋转线性几何 + measurement 值');
+  const dia = dims.find((d) => d.subtype === 'diametric');
+  assert(dia && Math.abs(dia.px - 30) < 1e-9 && dia.ty === 40, '直径标注：px/py 与文字位置');
+  const ang = dims.find((d) => d.subtype === 'angular');
+  assert(ang && Math.abs(ang.r - Math.hypot(12, 12)) < 1e-6, '角度标注：r 由文字点推算');
+  ok('DIMENSION 实体导入（linear/diametric/angular + measurement）');
 }
 
 console.log(`\n全部通过：${n} 项`);

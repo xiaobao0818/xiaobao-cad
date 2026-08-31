@@ -128,8 +128,44 @@ export function mapDwgDatabase(db) {
         case 'INSERT':
           entities.push({ ...base(e, 'insert'), block: e.name || '', x: e.insertionPoint?.x ?? 0, y: e.insertionPoint?.y ?? 0, scaleX: e.xScale ?? 1, scaleY: e.yScale ?? 1, rotation: e.rotation ?? 0 });
           break;
+        case 'DIMENSION': {
+          // 真实 AutoCAD 图纸的标注以 DIMENSION 实体存储（此前被静默丢弃）。
+          // dimensionType 低 4 位与 DXF flag 70 编码一致：0=旋转线性 1=对齐 2/5=角度 3=直径 4=半径
+          const dt = (e.dimensionType ?? 0) & 0x0f;
+          const ent = { ...base(e, 'dimension') };
+          const dp = e.definitionPoint || {}, sp1 = e.subDefinitionPoint1 || {}, sp2 = e.subDefinitionPoint2 || {}, tp = e.textPoint || {};
+          if (dt === 2 || dt === 5) {
+            ent.subtype = 'angular';
+            ent.cx = dp.x ?? 0; ent.cy = dp.y ?? 0;
+            ent.a1x = sp1.x ?? 0; ent.a1y = sp1.y ?? 0;
+            ent.a2x = sp2.x ?? 0; ent.a2y = sp2.y ?? 0;
+            if (tp.x != null && tp.y != null) {
+              ent.r = Math.hypot(tp.x - ent.cx, tp.y - ent.cy);
+              ent.tx = tp.x; ent.ty = tp.y;
+            }
+          } else if (dt === 3 || dt === 4) {
+            ent.subtype = dt === 3 ? 'diametric' : 'radial';
+            ent.cx = dp.x ?? 0; ent.cy = dp.y ?? 0;
+            ent.px = sp1.x ?? 0; ent.py = sp1.y ?? 0;
+            const r = Math.hypot(ent.px - ent.cx, ent.py - ent.cy);
+            ent.tx = tp.x != null ? tp.x : ent.cx;
+            ent.ty = tp.y != null ? tp.y : ent.cy + r; // 缺省在圆心上方
+          } else {
+            ent.subtype = 'linear';
+            ent.x1 = dp.x ?? 0; ent.y1 = dp.y ?? 0;
+            ent.x2 = sp1.x ?? 0; ent.y2 = sp1.y ?? 0;
+            ent.x3 = sp2.x ?? 0; ent.y3 = sp2.y ?? 0;
+            if (typeof e.rotationAngle === 'number' && e.rotationAngle !== 0) ent.angle = e.rotationAngle; // libredwg 弧度
+            else if (dt === 1) ent.angle = Math.atan2(ent.y2 - ent.y1, ent.x2 - ent.x1);
+            else ent.angle = 0;
+          }
+          if (typeof e.measurement === 'number' && isFinite(e.measurement)) ent.value = e.measurement;
+          if (e.text) ent.text = String(e.text);
+          entities.push(ent);
+          break;
+        }
         default:
-          break; // SPLINE/HATCH/DIMENSION/3DSOLID 等暂不支持
+          break; // SPLINE/HATCH/3DSOLID 等暂不支持
       }
     } catch (err) { /* 单个实体失败不阻断整体 */ }
   }
