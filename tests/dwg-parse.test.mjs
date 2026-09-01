@@ -123,6 +123,25 @@ console.log('== DWG 解析映射（真实示例文件 example_2007.dwg） ==');
 }
 
 {
+  // MULTILEADER 实体映射（CAD1000 挖掘：引线标注 ×53 高频缺口；保留文字与位置，%%C→⌀ 清洗）
+  const data = mapDwgDatabase({
+    tables: { LAYER: { entries: [] } }, header: {},
+    entities: [
+      { type: 'MULTILEADER', layer: '0', textContent: '{\\C240;\\c2367469;50%%C RAILIN}G', textHeight: 100, textAnchor: { x: 10, y: 20, z: 0 } },
+      { type: 'MULTILEADER', layer: '0', textContent: 'BRICK WALL - 9"', textHeight: 4, textAnchor: { x: 5, y: 6 } },
+      { type: 'MULTILEADER', layer: '0', textContent: '', textHeight: 2.5, textAnchor: { x: 0, y: 0 } }, // 空文字跳过
+    ],
+  });
+  const ts = data.entities.filter((e) => e.type === 'text');
+  assert.equal(ts.length, 2, `MULTILEADER 应导入 2 个文字，实际 ${ts.length}`);
+  const dia = ts.find((t) => t.text.includes('⌀'));
+  assert(dia && dia.x === 10 && dia.y === 20 && dia.height === 100 && /^50⌀ RAILING$/.test(dia.text), 'MULTILEADER：格式码清洗 + 位置 + 字高');
+  const brick = ts.find((t) => t.text.includes('BRICK'));
+  assert(brick && brick.height === 4, 'MULTILEADER：普通引线文字');
+  ok('MULTILEADER 实体导入（文字+位置；%%C→⌀ 清洗；空引线跳过）');
+}
+
+{
   // DIMENSION 实体映射（对照 CAD1000 数据集真实图纸字段：definitionPoint/subDefinitionPoint/textPoint/measurement）
   const data = mapDwgDatabase({
     tables: { LAYER: { entries: [] } }, header: {},

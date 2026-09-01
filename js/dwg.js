@@ -122,6 +122,16 @@ export function mapDwgDatabase(db) {
           entities.push({ ...base(e, 'text'), x: e.insertionPoint?.x ?? 0, y: e.insertionPoint?.y ?? 0, text: String(e.text ?? '').replace(/\\P/g, '\n'), height: e.textHeight ?? 2.5, rotation: e.rotation ?? 0, halign, valign });
           break;
         }
+        case 'MULTILEADER': {
+          // 引线标注（CAD1000 挖掘：真实机械图纸高频缺口 ×53）：保留标注文字与位置（图纸语义核心），引线折线简化不导入
+          const tp = e.textAnchor || e.contentBasePosition || {};
+          const ent = { ...base(e, 'text'), x: tp.x ?? 0, y: tp.y ?? 0 };
+          ent.text = String(e.textContent ?? '').replace(/\\C\d+;|\\c[0-9a-fA-F]+;|\\f[^;]*;|\\H\d*\.?\d*;|\\A\d+;/g, '').replace(/\{|\}/g, '').replace(/%%C/g, '⌀').replace(/%%D/g, '°').replace(/%%P/g, '±').replace(/\s+/g, ' ').trim();
+          if (!ent.text) break; // 空引线不导入
+          ent.height = typeof e.textHeight === 'number' && e.textHeight > 0 ? e.textHeight : 2.5;
+          entities.push(ent);
+          break;
+        }
         case 'POINT':
           entities.push({ ...base(e, 'point'), x: e.position?.x ?? 0, y: e.position?.y ?? 0 });
           break;
