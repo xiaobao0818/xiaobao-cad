@@ -301,6 +301,17 @@ def build_stage(stage, messages, has_tools):
                        {"type": "dimension", "subtype": "linear", "x1": -90, "y1": 100, "x2": 90, "y2": 100, "x3": 0, "y3": 115},
                    ]})]}
             return resp(msg, "tool_calls")
+        if task == "standdrawing2d" and not assistant_has(messages, "补上标注"):
+            msg = {"role": "assistant", "content": "截图里发现图纸缺少尺寸标注，我补上关键尺寸标注（补上标注）。",
+                   "tool_calls": [tool_call("r-sd1", "draw_entities", {"items": [
+                       {"type": "dimension", "subtype": "linear", "x1": 60, "y1": 35, "x2": 105, "y2": 35, "x3": 82.5, "y3": 25},
+                       {"type": "dimension", "subtype": "linear", "x1": 30, "y1": 50, "x2": 30, "y2": 280, "x3": 20, "y3": 165},
+                       {"type": "dimension", "subtype": "linear", "x1": 32.5, "y1": 305, "x2": 47.5, "y2": 305, "x3": 40, "y3": 315},
+                       {"type": "dimension", "subtype": "linear", "x1": 182.5, "y1": 287.5, "x2": 267.4, "y2": 372.4, "x3": 240, "y3": 350},
+                       {"type": "dimension", "subtype": "diametric", "cx": 10, "cy": 80, "px": 25, "py": 80, "tx": 20, "ty": 55},
+                       {"type": "dimension", "subtype": "diametric", "cx": 10, "cy": 80, "px": 16.3, "py": 80, "tx": -8, "ty": 80},
+                   ]})]}
+            return resp(msg, "tool_calls")
         if task == "volute2d" and not assistant_has(messages, "补上后半螺旋"):
             items = []
             for i in range(4, 8):
@@ -646,6 +657,24 @@ def build_stage(stage, messages, has_tools):
                    ]})]}
             return resp(msg, "tool_calls")
         msg = {"role": "assistant", "content": "✅ 水泵剖视图已绘制完成（几何部分，标注待审阅补上）。", "tool_calls": None}
+        return resp(msg, "stop")
+    if task == "standdrawing2d":
+        if not assistant_has(messages, "支撑架主体"):
+            msg = {"role": "assistant", "content": "我先画支撑架的立柱、顶板、斜撑、安装耳和斜臂（支撑架主体，训练剧本：故意漏尺寸标注，等审阅补上）。",
+                   "tool_calls": [tool_call("t-sd1", "draw_entities", {"items": [
+                       {"type": "rectangle", "x1": 60, "y1": 50, "x2": 105, "y2": 280},
+                       {"type": "rectangle", "x1": 32.5, "y1": 280, "x2": 182.5, "y2": 295},
+                       {"type": "line", "x1": 60, "y1": 140, "x2": 10, "y2": 80},
+                       {"type": "line", "x1": 105, "y1": 140, "x2": 155, "y2": 80},
+                       {"type": "circle", "cx": 10, "cy": 80, "r": 15},
+                       {"type": "circle", "cx": 155, "cy": 80, "r": 15},
+                       {"type": "circle", "cx": 267.4, "cy": 372.4, "r": 15.9},
+                       {"type": "circle", "cx": 10, "cy": 80, "r": 6.3},
+                       {"type": "circle", "cx": 155, "cy": 80, "r": 6.3},
+                       {"type": "circle", "cx": 267.4, "cy": 372.4, "r": 7.5},
+                   ]})]}
+            return resp(msg, "tool_calls")
+        msg = {"role": "assistant", "content": "✅ 支撑架图纸已绘制完成（几何部分，标注待审阅补上）。", "tool_calls": None}
         return resp(msg, "stop")
     if task == "volute2d":
         if not assistant_has(messages, "蜗壳主体"):

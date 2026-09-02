@@ -1,0 +1,1764 @@
+{
+ "generatedAt": "2026-09-02T09:05:07.047Z",
+ "source": "markov-ai/cad-1000-hours (autocad)",
+ "workflowsScanned": 238,
+ "mechanicalFound": 102,
+ "mechanicalIds": [
+  "autocad/02b5cedf-11ed-4fcd-8130-fb283a6d59a2",
+  "autocad/01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
+  "autocad/044507f6-1ece-4893-afbe-93d14c2d6def",
+  "autocad/02e026b7-7e80-4fe3-9ae0-cf52f307d27c",
+  "autocad/0a0cc801-9d52-4ddd-a335-2be3f80acce5",
+  "autocad/0902aaea-3fb0-4fc2-941f-d0a06b664018",
+  "autocad/06d7107b-1172-4953-a8a2-614d5a1e22bc",
+  "autocad/0b534355-d2fd-4c7e-b126-42f50fe552c7",
+  "autocad/0ce1a970-0889-4915-bbee-803bd7458660",
+  "autocad/0d681686-4914-448e-a7d8-cd27a6bfffe0",
+  "autocad/0ee1de8f-2141-4718-9f8b-2fe322a391d4",
+  "autocad/151ed919-c922-4d6d-b29f-e4ffbee6aa14",
+  "autocad/1b8d1294-348f-4810-b84a-ac297d9ff1c0",
+  "autocad/202b130d-b540-4646-b8bf-0eae95238176",
+  "autocad/1c9af049-f700-4a01-94ee-302654f66962",
+  "autocad/1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
+  "autocad/22f03536-fe56-4cc3-8a28-95ffc957b578",
+  "autocad/2436f65f-24d5-40ee-8814-cdb6c878ea1f",
+  "autocad/226c0314-f7cd-4164-afe8-3c3565f0ddbd",
+  "autocad/22ce00dc-1716-4e10-99c2-a24c32e74f5c",
+  "autocad/21668536-f057-4992-9c6c-1873c9aadc4c",
+  "autocad/296893c0-1042-42ff-a3d9-056abf486a2d",
+  "autocad/295ab771-a341-4344-b35a-94f0f9d5cd51",
+  "autocad/2893eb7c-b0fd-445a-898d-73b2e18a280e",
+  "autocad/287f0331-b08e-402b-807b-00360129aaa2",
+  "autocad/30c77a9b-d3e4-4a6c-ad05-6a2222378676",
+  "autocad/33df5662-d683-416b-b76c-fe7458f31a41",
+  "autocad/2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+  "autocad/3a040dc1-86ee-43e0-89d4-ff3f29cedee1",
+  "autocad/35e0abe4-0386-4dd8-bcba-121056c5c427",
+  "autocad/38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+  "autocad/3c6725b5-0065-403b-98d4-1fa431933e2d",
+  "autocad/456290b8-7743-4084-a23c-a48fc4fb8434",
+  "autocad/3e5dc6a0-5be3-4f83-9867-2624022584bb",
+  "autocad/4384c679-e891-40a3-ac71-17019d146aa6",
+  "autocad/47bf1c7f-1e7c-43f7-b126-a804d200b824",
+  "autocad/48f4fc33-792a-4e74-a3fd-6d098e3f434b",
+  "autocad/49c97759-82b7-4579-bfe0-c85e7b127608",
+  "autocad/5f6750a7-45ca-44d9-9c73-720c513913b5",
+  "autocad/5a8c46f3-bd1a-4c01-875d-d3627d9d9f06",
+  "autocad/5bcf582d-0e55-47e7-b366-81c18cb94530",
+  "autocad/60a13c99-2d03-4e46-971b-3ac982fbc22f",
+  "autocad/63440eb3-d63a-48cc-b44c-d33157c75d86",
+  "autocad/6796192d-ea16-48d1-9c45-6e45821c2d06",
+  "autocad/66d0f5c0-c9a8-4bc3-849b-066b9e42d127",
+  "autocad/644ca747-ff96-4c6c-a99d-9348ad6c9388",
+  "autocad/653ee70e-f99e-4755-8eae-e2686b6ef136",
+  "autocad/6b064ea3-7192-449b-8c84-09e470c2f56c",
+  "autocad/715d71c8-db25-4f5c-a019-bfb69c3dd3f3",
+  "autocad/6b2a6616-03b5-4024-a858-9fc5ee3349c6",
+  "autocad/7e3217aa-b2da-40f7-be8a-1196150a8dff",
+  "autocad/7493402a-56df-4e85-8caf-3be261ed43f1",
+  "autocad/81f5415e-6972-489a-b184-042495fb9aa3",
+  "autocad/833c9591-ef9d-4978-938d-bd1f24912b21",
+  "autocad/7f2f6954-41cd-4b04-b025-8c25e04283fb",
+  "autocad/8110b572-667c-454c-a590-3e4383a694f1",
+  "autocad/7f1d915a-1f37-438a-83d0-6798bdbacb17",
+  "autocad/8cab2f5c-ca3b-466c-abd7-3ecbfacbb99b",
+  "autocad/8fc225b8-0a4a-4e80-80e4-320ef6c5b9eb",
+  "autocad/8f60fb44-e220-4b73-a3e1-583346b8b719",
+  "autocad/8956851f-220c-4855-93e7-15c37cd591d3",
+  "autocad/880a4cb2-600b-4d53-993e-1851c0655035",
+  "autocad/922a7a98-f938-47cf-a1fb-7f628d1ed079",
+  "autocad/9178ab6a-9763-4242-a493-85104e734058",
+  "autocad/90e4ec06-bee1-4c6d-908a-accd2deb1abf",
+  "autocad/9917b0b3-0f6f-4d2e-a480-853b271d2d0b",
+  "autocad/99710697-42e2-4cfc-9d71-ab5e1cfe34d8",
+  "autocad/9a22374a-3bd0-49b4-a89f-229150a832af",
+  "autocad/946a6e2d-1e10-4631-8200-2da886ba190a",
+  "autocad/9bae68a6-5ee3-49ce-9bdb-392f7ebaa1a4",
+  "autocad/9b751d63-a529-4e33-ac2e-01d2e1febf6f",
+  "autocad/9bcf8690-c868-4a28-9c1f-c31e6c3c086c",
+  "autocad/a0b5e6f9-f263-4a3d-b3aa-f1b528180810",
+  "autocad/a9831bfc-2660-4ff9-b9f9-c9ffb031b72d",
+  "autocad/a9577462-2021-495a-86c2-424009f0e85b",
+  "autocad/aa050f47-755b-4e2c-8454-fd65582b6dea",
+  "autocad/b1a2792f-d2c7-4abb-90f5-2c920fc32339",
+  "autocad/b0e61e85-da11-47d1-9492-44b98b5d8d24",
+  "autocad/b0b3f8b7-7169-4075-9e7a-89548757dcae",
+  "autocad/b35da7d3-bd7f-4eb7-a9d2-7e26ab12f959",
+  "autocad/b5198dce-ea38-4c0f-bb3d-e176fa2c888a",
+  "autocad/b8caa13e-2ed9-415a-b0f9-ff656dd660ba",
+  "autocad/b59fce61-2710-4347-8f77-f76fa091eb55",
+  "autocad/bc8ed390-e778-41b5-98a8-f81928b4ac32",
+  "autocad/bcec3f5d-46e0-4972-86fc-3f657e817b80",
+  "autocad/b93dd9f2-104f-407c-b04e-20862b535f18",
+  "autocad/baab0d97-306e-4b0c-804c-4973d85aecbc",
+  "autocad/be6dd8ab-2e8d-472b-ac8b-f6dc59927169",
+  "autocad/c64f3dff-69c4-42ad-8bd9-13a111134b42",
+  "autocad/d2455f18-592c-4805-8515-9fdd95f28fe0",
+  "autocad/d4e6c024-ef97-4bfb-af4f-46146fb3ca88",
+  "autocad/d27faf4e-5009-4c48-b884-ac5dad2fd3c0",
+  "autocad/e286bf95-c996-45b6-8739-37528ef5ba58",
+  "autocad/d6476942-b98a-44c8-940b-3fc63f518e3e",
+  "autocad/ec8eab3a-7fbf-4de4-ac4f-7b387f9b5426",
+  "autocad/e6d91541-f5d4-44de-8a86-da16ad47ed3a",
+  "autocad/e5bf17e4-08ba-48f4-8a1e-0066f5ef07e5",
+  "autocad/f3957ff1-a7fe-4a4c-ac3d-7d7d025ff256",
+  "autocad/ed7a0d60-90f7-4af4-93c1-8055ee6d22a3",
+  "autocad/f21cf629-db9f-4c5a-a5f5-89bf721c7d08",
+  "autocad/f5ef823e-2aff-4c24-ac07-b7950fb72636",
+  "autocad/fcd4c0bc-8ab0-4003-8720-4605c47c19e6"
+ ],
+ "sampled": [
+  "autocad/21668536-f057-4992-9c6c-1873c9aadc4c",
+  "autocad/296893c0-1042-42ff-a3d9-056abf486a2d",
+  "autocad/295ab771-a341-4344-b35a-94f0f9d5cd51",
+  "autocad/2893eb7c-b0fd-445a-898d-73b2e18a280e",
+  "autocad/287f0331-b08e-402b-807b-00360129aaa2",
+  "autocad/30c77a9b-d3e4-4a6c-ad05-6a2222378676",
+  "autocad/33df5662-d683-416b-b76c-fe7458f31a41",
+  "autocad/2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+  "autocad/3a040dc1-86ee-43e0-89d4-ff3f29cedee1",
+  "autocad/35e0abe4-0386-4dd8-bcba-121056c5c427",
+  "autocad/38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+  "autocad/3c6725b5-0065-403b-98d4-1fa431933e2d",
+  "autocad/456290b8-7743-4084-a23c-a48fc4fb8434",
+  "autocad/3e5dc6a0-5be3-4f83-9867-2624022584bb",
+  "autocad/4384c679-e891-40a3-ac71-17019d146aa6",
+  "autocad/47bf1c7f-1e7c-43f7-b126-a804d200b824",
+  "autocad/48f4fc33-792a-4e74-a3fd-6d098e3f434b",
+  "autocad/49c97759-82b7-4579-bfe0-c85e7b127608",
+  "autocad/5f6750a7-45ca-44d9-9c73-720c513913b5",
+  "autocad/5a8c46f3-bd1a-4c01-875d-d3627d9d9f06"
+ ],
+ "aggregate": {
+  "n": 20,
+  "entityComposition": {
+   "insert": 6,
+   "dimension": 156,
+   "line": 6208,
+   "circle": 146,
+   "polyline": 70,
+   "arc": 121,
+   "hatch": 27,
+   "text": 80,
+   "ellipse": 9
+  },
+  "dimSubtypeTotal": {
+   "linear": 85,
+   "diametric": 13,
+   "radial": 43,
+   "angular": 15
+  },
+  "decPlaceHist": {
+   "0": 123,
+   "1": 8,
+   "8": 25
+  },
+  "styleCount": {
+   "ISO-25": 8,
+   "Standard": 8
+  },
+  "layerCounts": [
+   7,
+   2,
+   2,
+   2,
+   2,
+   7,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   2,
+   1,
+   1,
+   1,
+   2,
+   2,
+   1
+  ],
+  "withSpecDims": 10,
+  "specMatchRate": null,
+  "rawUnmapped": {
+   "3DSOLID": 12,
+   "INSERT": 6,
+   "VIEWPORT": 18,
+   "ATTRIB": 8,
+   "DIMENSION": 156,
+   "LINE": 6208,
+   "CIRCLE": 146,
+   "LWPOLYLINE": 70,
+   "ARC": 121,
+   "HATCH": 28,
+   "MTEXT": 51,
+   "MULTILEADER": 29,
+   "ELLIPSE": 9,
+   "SOLID": 1
+  },
+  "specMatch": [
+   {
+    "id": "295ab771-a341-4344-b35a-94f0f9d5cd51",
+    "spec": 0,
+    "values": 13,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "2893eb7c-b0fd-445a-898d-73b2e18a280e",
+    "spec": 0,
+    "values": 10,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "287f0331-b08e-402b-807b-00360129aaa2",
+    "spec": 0,
+    "values": 3,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "33df5662-d683-416b-b76c-fe7458f31a41",
+    "spec": 0,
+    "values": 4,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+    "spec": 0,
+    "values": 14,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+    "spec": 0,
+    "values": 9,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "3c6725b5-0065-403b-98d4-1fa431933e2d",
+    "spec": 0,
+    "values": 10,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "456290b8-7743-4084-a23c-a48fc4fb8434",
+    "spec": 0,
+    "values": 12,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "3e5dc6a0-5be3-4f83-9867-2624022584bb",
+    "spec": 0,
+    "values": 11,
+    "hit": 0,
+    "rate": 0
+   },
+   {
+    "id": "49c97759-82b7-4579-bfe0-c85e7b127608",
+    "spec": 0,
+    "values": 18,
+    "hit": 0,
+    "rate": 0
+   }
+  ],
+  "specMatchOverall": 0
+ },
+ "drawings": [
+  {
+   "id": "21668536-f057-4992-9c6c-1873c9aadc4c",
+   "task": "Create a 3D mechanical bracket model and a projection drawing sheet.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 1,
+    "INSERT": 2,
+    "VIEWPORT": 9,
+    "ATTRIB": 8,
+    "DIMENSION": 17
+   },
+   "mappedTypes": {
+    "insert": 2,
+    "dimension": 17
+   },
+   "layerCount": 7,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 13,
+    "diametric": 1,
+    "radial": 3
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    16,
+    118.00000000000182,
+    20,
+    24,
+    22,
+    8.000000000000028,
+    48.00000000000001,
+    44.000000000000924,
+    23.999999999998664,
+    40.000000000000256,
+    12,
+    12,
+    20,
+    16,
+    44.00000000000091,
+    64,
+    40.000000000000256
+   ]
+  },
+  {
+   "id": "296893c0-1042-42ff-a3d9-056abf486a2d",
+   "task": "Create a collection of angular line-command drawings",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 72,
+    "DIMENSION": 3
+   },
+   "mappedTypes": {
+    "line": 72,
+    "dimension": 3
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 1,
+    "angular": 2
+   },
+   "decPlaces": [
+    0,
+    8,
+    8
+   ],
+   "dimValues": [
+    15,
+    1.5707963267948846,
+    1.570796326794918
+   ]
+  },
+  {
+   "id": "295ab771-a341-4344-b35a-94f0f9d5cd51",
+   "task": "Create a dimensioned 2D circle-command exercise sheet",
+   "nDims": 13,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Upper-left outer small circle radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper-left upper medium circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Upper-left central circle radius",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Upper-right triangle vertex circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Upper-right triangle base length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Upper-right triangle right base angle",
+     "measurement": "1.0471975512 radian"
+    },
+    {
+     "id": "D7",
+     "element": "Upper-right triangle left base angle",
+     "measurement": "1.0471975512 radian"
+    },
+    {
+     "id": "D8",
+     "element": "Lower diamond top circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Lower diamond outer circle radius",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Middle-left crossed-line angle",
+     "measurement": "1.0471975512 radian"
+    },
+    {
+     "id": "D11",
+     "element": "Middle-left diagonal line length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Middle-right rectangular guide height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Middle-right rectangular guide width",
+     "measurement": "100 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "CIRCLE": 26,
+    "DIMENSION": 13,
+    "LINE": 9,
+    "LWPOLYLINE": 1
+   },
+   "mappedTypes": {
+    "circle": 26,
+    "dimension": 13,
+    "line": 9,
+    "polyline": 1
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "radial": 6,
+    "linear": 4,
+    "angular": 3
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    8,
+    8,
+    0,
+    0
+   ],
+   "dimValues": [
+    10.000000000000039,
+    20.00000000000001,
+    50.00000000000001,
+    20.000000000000128,
+    99.99999999999966,
+    1.047197551196598,
+    1.047197551196598,
+    19.999999999999943,
+    99.99999999999972,
+    1.0471975511965985,
+    100.00004619111311,
+    50.00000000000003,
+    100
+   ]
+  },
+  {
+   "id": "2893eb7c-b0fd-445a-898d-73b2e18a280e",
+   "task": "Create a dimensioned, vertically symmetric 2D mechanical profile from circles, arcs, and lines.",
+   "nDims": 10,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Four outer lobe radii",
+     "measurement": "18 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Four lobe-hole radii",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Central annulus outer radius",
+     "measurement": "45 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Central annulus inner radius",
+     "measurement": "27.5 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Upper-right diagonal centerline angle from vertical",
+     "measurement": "0.523598775598 radian"
+    },
+    {
+     "id": "D6",
+     "element": "Upper-left diagonal centerline angle from vertical",
+     "measurement": "0.523598775598 radian"
+    },
+    {
+     "id": "D7",
+     "element": "Lobe-to-central-profile transition fillet radius",
+     "measurement": "5 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Upper and lower central concave arc radius",
+     "measurement": "17 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Central feature to upper-left lobe center spacing",
+     "measurement": "60 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Lower-left radial band width",
+     "measurement": "8 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "ARC": 18,
+    "LINE": 25,
+    "CIRCLE": 4,
+    "DIMENSION": 10
+   },
+   "mappedTypes": {
+    "arc": 18,
+    "line": 25,
+    "circle": 4,
+    "dimension": 10
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "radial": 6,
+    "angular": 2,
+    "linear": 2
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    1,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    18,
+    10.000000000000078,
+    44.99999999999997,
+    27.499999999999986,
+    0.5235987755982969,
+    0.5235987755982983,
+    4.9999999999999964,
+    17.000000000000902,
+    59.99999999999998,
+    7.99999999999999
+   ]
+  },
+  {
+   "id": "287f0331-b08e-402b-807b-00360129aaa2",
+   "task": "Create an arc-command practice drawing",
+   "nDims": 3,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Knife handle vertical span",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Knife handle upper subdivision",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Knife handle second subdivision",
+     "measurement": "20 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "ARC": 25,
+    "LINE": 11,
+    "DIMENSION": 3
+   },
+   "mappedTypes": {
+    "arc": 25,
+    "line": 11,
+    "dimension": 3
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 3
+   },
+   "decPlaces": [
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    80,
+    20,
+    20
+   ]
+  },
+  {
+   "id": "30c77a9b-d3e4-4a6c-ad05-6a2222378676",
+   "task": "Create a 3D mechanical support bracket and its dimensioned drawing views.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "3DSOLID": 1,
+    "INSERT": 1,
+    "VIEWPORT": 9,
+    "DIMENSION": 12
+   },
+   "mappedTypes": {
+    "insert": 1,
+    "dimension": 12
+   },
+   "layerCount": 7,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 9,
+    "radial": 3
+   },
+   "decPlaces": [
+    0,
+    0,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    35,
+    15,
+    29.580398915498108,
+    98.28427124746122,
+    14.999999999999972,
+    77.99999999999997,
+    10,
+    60.00000000000185,
+    105.00000000000001,
+    9.999999999999972,
+    29.99999999999998,
+    15.000000000000114
+   ]
+  },
+  {
+   "id": "33df5662-d683-416b-b76c-fe7458f31a41",
+   "task": "Create a detailed L-shaped staircase drawing",
+   "nDims": 14,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Stair flight width",
+     "measurement": "36 inch"
+    },
+    {
+     "id": "D2",
+     "element": "Landing horizontal direction",
+     "measurement": "40 inch"
+    },
+    {
+     "id": "D3",
+     "element": "Landing vertical direction",
+     "measurement": "40 inch"
+    },
+    {
+     "id": "D4",
+     "element": "Tread depth",
+     "measurement": "12 inch"
+    },
+    {
+     "id": "D5",
+     "element": "Brick wall thickness",
+     "measurement": "9 inch"
+    },
+    {
+     "id": "D6",
+     "element": "Cement plaster thickness",
+     "measurement": "0.75 inch"
+    },
+    {
+     "id": "D7",
+     "element": "Stair slab thickness",
+     "measurement": "6 inch"
+    },
+    {
+     "id": "D8",
+     "element": "Stone finish thickness",
+     "measurement": "1 inch"
+    },
+    {
+     "id": "D9",
+     "element": "Riser height",
+     "measurement": "7 inch"
+    },
+    {
+     "id": "D10",
+     "element": "Nosing projection",
+     "measurement": "1 inch"
+    },
+    {
+     "id": "D11",
+     "element": "Baluster height",
+     "measurement": "3 foot"
+    },
+    {
+     "id": "D12",
+     "element": "Handrail diameter",
+     "measurement": "2 inch"
+    },
+    {
+     "id": "D13",
+     "element": "Newel post height",
+     "measurement": "3 foot"
+    },
+    {
+     "id": "D14",
+     "element": "Newel post diameter",
+     "measurement": "3 inch"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 170,
+    "LWPOLYLINE": 9,
+    "ARC": 11,
+    "CIRCLE": 35,
+    "HATCH": 8,
+    "MTEXT": 35,
+    "DIMENSION": 4,
+    "MULTILEADER": 13
+   },
+   "mappedTypes": {
+    "line": 170,
+    "polyline": 9,
+    "arc": 11,
+    "circle": 35,
+    "hatch": 8,
+    "text": 48,
+    "dimension": 4
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 4
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    35.999999999999545,
+    40,
+    40,
+    12
+   ]
+  },
+  {
+   "id": "2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+   "task": "Create a dimensioned 2D drawing of a perforated circular hub connected to a curved slotted arm.",
+   "nDims": 14,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Hub hole pitch radius",
+     "measurement": "32.5 millimeters"
+    },
+    {
+     "id": "D2",
+     "element": "Hub outer radius",
+     "measurement": "50 millimeters"
+    },
+    {
+     "id": "D3",
+     "element": "Hub central opening radius",
+     "measurement": "15 millimeters"
+    },
+    {
+     "id": "D4",
+     "element": "Peripheral hole diameter",
+     "measurement": "22 millimeters"
+    },
+    {
+     "id": "D5",
+     "element": "Upper arm angular extent",
+     "measurement": "0.645359493843 radians"
+    },
+    {
+     "id": "D6",
+     "element": "Lower arm angular extent",
+     "measurement": "0.646184152633 radians"
+    },
+    {
+     "id": "D7",
+     "element": "Horizontal hub-to-arm offset",
+     "measurement": "43.4587756862 millimeters"
+    },
+    {
+     "id": "D8",
+     "element": "Neck opening height",
+     "measurement": "40 millimeters"
+    },
+    {
+     "id": "D9",
+     "element": "Upper neck transition radius",
+     "measurement": "5 millimeters"
+    },
+    {
+     "id": "D10",
+     "element": "Lower neck transition radius",
+     "measurement": "5 millimeters"
+    },
+    {
+     "id": "D11",
+     "element": "Arm innermost arc radius",
+     "measurement": "115 millimeters"
+    },
+    {
+     "id": "D12",
+     "element": "Arm second arc radius",
+     "measurement": "125 millimeters"
+    },
+    {
+     "id": "D13",
+     "element": "Arm third arc radius",
+     "measurement": "145 millimeters"
+    },
+    {
+     "id": "D14",
+     "element": "Arm outermost arc radius",
+     "measurement": "155 millimeters"
+    }
+   ],
+   "rawTypes": {
+    "CIRCLE": 2,
+    "ARC": 15,
+    "INSERT": 1,
+    "DIMENSION": 14,
+    "LINE": 6
+   },
+   "mappedTypes": {
+    "circle": 2,
+    "arc": 15,
+    "insert": 1,
+    "dimension": 14,
+    "line": 6
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "radial": 9,
+    "diametric": 1,
+    "angular": 2,
+    "linear": 2
+   },
+   "decPlaces": [
+    1,
+    0,
+    0,
+    0,
+    8,
+    8,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    32.500000000000014,
+    49.99999999999999,
+    15.000000000000014,
+    21.999999999999975,
+    0.645359493842943,
+    0.6461841526328636,
+    43.45877568616258,
+    40.00000000000001,
+    5,
+    4.999999999999986,
+    114.99999999999999,
+    124.99999999999999,
+    144.99999999999997,
+    155.00000000000003
+   ]
+  },
+  {
+   "id": "3a040dc1-86ee-43e0-89d4-ff3f29cedee1",
+   "task": "Create a detailed newel-post quarter-turn stair section drawing.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 101,
+    "ARC": 9,
+    "LWPOLYLINE": 12,
+    "CIRCLE": 19,
+    "HATCH": 5,
+    "MTEXT": 15,
+    "MULTILEADER": 15,
+    "DIMENSION": 4
+   },
+   "mappedTypes": {
+    "line": 101,
+    "arc": 9,
+    "polyline": 12,
+    "circle": 19,
+    "hatch": 5,
+    "text": 30,
+    "dimension": 4
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "angular": 1,
+    "linear": 3
+   },
+   "decPlaces": [
+    8,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    0.5280744484263584,
+    12,
+    7,
+    39
+   ]
+  },
+  {
+   "id": "35e0abe4-0386-4dd8-bcba-121056c5c427",
+   "task": "Create a dimensioned 2D mechanical bracket drawing.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 6,
+    "CIRCLE": 5,
+    "ARC": 1,
+    "DIMENSION": 10
+   },
+   "mappedTypes": {
+    "line": 6,
+    "circle": 5,
+    "arc": 1,
+    "dimension": 10
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 7,
+    "diametric": 2,
+    "angular": 1
+   },
+   "decPlaces": [
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    8
+   ],
+   "dimValues": [
+    60,
+    10.400000000000006,
+    43.50000000000001,
+    40,
+    19.999999999999986,
+    18,
+    18,
+    80.00000000000001,
+    47.5,
+    1.3894726352713862
+   ]
+  },
+  {
+   "id": "38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+   "task": "Create the dimensioned 2D engineering drawing for the Plate 2 component.",
+   "nDims": 9,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Left end center to central hole center",
+     "measurement": "48 millimeters"
+    },
+    {
+     "id": "D2",
+     "element": "Left end center to profile transition",
+     "measurement": "60 millimeters"
+    },
+    {
+     "id": "D3",
+     "element": "Left outer semicircular profile radius",
+     "measurement": "30 millimeters"
+    },
+    {
+     "id": "D4",
+     "element": "Left concentric outer circle diameter",
+     "measurement": "30 millimeters"
+    },
+    {
+     "id": "D5",
+     "element": "Left concentric inner hole diameter",
+     "measurement": "20 millimeters"
+    },
+    {
+     "id": "D6",
+     "element": "Right circular hole diameter",
+     "measurement": "20 millimeters"
+    },
+    {
+     "id": "D7",
+     "element": "Right outer semicircular profile diameter",
+     "measurement": "40 millimeters"
+    },
+    {
+     "id": "D8",
+     "element": "Left end center to right end center",
+     "measurement": "96 millimeters"
+    },
+    {
+     "id": "D9",
+     "element": "Central hole diameter",
+     "measurement": "10 millimeters"
+    }
+   ],
+   "rawTypes": {
+    "ARC": 4,
+    "CIRCLE": 4,
+    "LINE": 7,
+    "DIMENSION": 9
+   },
+   "mappedTypes": {
+    "arc": 4,
+    "circle": 4,
+    "line": 7,
+    "dimension": 9
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "linear": 3,
+    "radial": 1,
+    "diametric": 5
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    48,
+    60,
+    29.99999999999909,
+    29.999999999999545,
+    20,
+    19.999999999999204,
+    40.00000000000091,
+    96.00000000000182,
+    9.999999999999545
+   ]
+  },
+  {
+   "id": "3c6725b5-0065-403b-98d4-1fa431933e2d",
+   "task": "Create a dimensioned 2D mechanical profile using circles, arcs, lines, and related drafting geometry.",
+   "nDims": 10,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Horizontal spacing from the central right circle to the rightmost peripheral hole center",
+     "measurement": "33.5 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Horizontal spacing from the lower-left boss center to the central right circle center",
+     "measurement": "80 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Vertical spacing between the upper-left and lower-left boss centers",
+     "measurement": "85 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Rounded right outer arc radius",
+     "measurement": "52.2 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Lower-left inner circle radius",
+     "measurement": "8 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Lower-left outer circle radius",
+     "measurement": "18 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Upper-left outer circle diameter",
+     "measurement": "52 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Upper-left inner circle diameter",
+     "measurement": "26 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Peripheral radial-pattern hole diameter",
+     "measurement": "21.9 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Central right circle diameter",
+     "measurement": "30 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "CIRCLE": 5,
+    "ARC": 2,
+    "LWPOLYLINE": 1,
+    "INSERT": 1,
+    "LINE": 2,
+    "DIMENSION": 10
+   },
+   "mappedTypes": {
+    "circle": 5,
+    "arc": 2,
+    "polyline": 1,
+    "insert": 1,
+    "line": 2,
+    "dimension": 10
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 3,
+    "radial": 3,
+    "diametric": 4
+   },
+   "decPlaces": [
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0
+   ],
+   "dimValues": [
+    33.5,
+    80,
+    85,
+    52.200000000000045,
+    7.999999999999979,
+    18.000000000000163,
+    52.000000000000014,
+    26.00000000000004,
+    21.900000000000006,
+    29.999999999999993
+   ]
+  },
+  {
+   "id": "456290b8-7743-4084-a23c-a48fc4fb8434",
+   "task": "Create a dimensioned series of circle-based geometric construction exercises.",
+   "nDims": 12,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "First study central circle radius",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "First study upper intermediate circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "First study upper outer circle radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Second study upper-right vertex circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Second study triangle angle",
+     "measurement": "1.0471975512 radian"
+    },
+    {
+     "id": "D6",
+     "element": "Second study triangle base length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Third study outer circle radius",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Third study upper satellite circle radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Fourth study rectangular frame horizontal length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Fourth study rectangular frame vertical height",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Fifth study diagonal segment length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Fifth study included angle",
+     "measurement": "1.0471975512 radian"
+    }
+   ],
+   "rawTypes": {
+    "CIRCLE": 26,
+    "LINE": 9,
+    "LWPOLYLINE": 1,
+    "DIMENSION": 12
+   },
+   "mappedTypes": {
+    "circle": 26,
+    "line": 9,
+    "polyline": 1,
+    "dimension": 12
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "ISO-25"
+   ],
+   "dimSubtypes": {
+    "radial": 6,
+    "angular": 2,
+    "linear": 4
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8
+   ],
+   "dimValues": [
+    50,
+    20,
+    9.999999999999773,
+    19.999999999997954,
+    1.0471975511965994,
+    100.00000000000091,
+    99.99999999999977,
+    19.999999999999545,
+    100,
+    50,
+    100,
+    1.0471975511965987
+   ]
+  },
+  {
+   "id": "3e5dc6a0-5be3-4f83-9867-2624022584bb",
+   "task": "Create a dimensioned 2D mechanical profile using lines, circles, and tangent arcs.",
+   "nDims": 11,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Large outer connecting arc radius",
+     "measurement": "175 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper outer circle radius",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Upper inner circle radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Lower-left step transition radius",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Right base transition radius",
+     "measurement": "40 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Lower circular-feature center height above base datum",
+     "measurement": "60 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Rightmost base segment length",
+     "measurement": "36 millimeter"
+    },
+    {
+     "id": "D8",
+     "element": "Intermediate base span to right end",
+     "measurement": "94 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Overall dimensioned base span",
+     "measurement": "150 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Upper circular-feature center height above base datum",
+     "measurement": "150 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Upper inclined-edge transition arc radius",
+     "measurement": "25 millimeter"
+    }
+   ],
+   "rawTypes": {
+    "LINE": 8,
+    "CIRCLE": 4,
+    "ARC": 4,
+    "DIMENSION": 11
+   },
+   "mappedTypes": {
+    "line": 8,
+    "circle": 4,
+    "arc": 4,
+    "dimension": 11
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "radial": 6,
+    "linear": 5
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "dimValues": [
+    174.99999999999994,
+    24.99999999999997,
+    9.999999999999872,
+    20.000000000000085,
+    40.00000000000017,
+    60.000000000000036,
+    36,
+    94,
+    150.00000000000003,
+    150.00000000000009,
+    24.999999999999957
+   ]
+  },
+  {
+   "id": "4384c679-e891-40a3-ac71-17019d146aa6",
+   "task": "Create a colored front elevation drawing of a single-story residence.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LINE": 2326,
+    "HATCH": 15,
+    "LWPOLYLINE": 25,
+    "CIRCLE": 3,
+    "INSERT": 1,
+    "ARC": 31
+   },
+   "mappedTypes": {
+    "line": 2326,
+    "hatch": 14,
+    "polyline": 25,
+    "circle": 3,
+    "insert": 1,
+    "arc": 31
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "47bf1c7f-1e7c-43f7-b126-a804d200b824",
+   "task": "Create a DWG model of a mechanical connecting link.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "CIRCLE": 3,
+    "3DSOLID": 4,
+    "LINE": 10
+   },
+   "mappedTypes": {
+    "circle": 3,
+    "line": 10
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "48f4fc33-792a-4e74-a3fd-6d098e3f434b",
+   "task": "Create a 3D CAD model of a connecting-rod-like mechanical component.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "CIRCLE": 4,
+    "3DSOLID": 3,
+    "LWPOLYLINE": 4,
+    "LINE": 4
+   },
+   "mappedTypes": {
+    "circle": 4,
+    "polyline": 4,
+    "line": 4
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  },
+  {
+   "id": "49c97759-82b7-4579-bfe0-c85e7b127608",
+   "task": "Create an Ellipse command practice drawing",
+   "nDims": 19,
+   "specDims": [
+    {
+     "id": "D1",
+     "element": "Upper-left ellipse minor radius",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D2",
+     "element": "Upper-left ellipse full major-axis length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D3",
+     "element": "Upper-right concentric example left horizontal radius",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D4",
+     "element": "Upper-right concentric example upper vertical radius",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D5",
+     "element": "Upper-right concentric example right horizontal radius",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D6",
+     "element": "Middle-left rotation-option ellipse full width",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D7",
+     "element": "Middle-right elliptical arc angle",
+     "measurement": "0.785398163397 radian"
+    },
+    {
+     "id": "D8",
+     "element": "Middle-right elliptical arc horizontal radius",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D9",
+     "element": "Middle-right elliptical arc vertical radius",
+     "measurement": "25 millimeter"
+    },
+    {
+     "id": "D10",
+     "element": "Lower-left capsule upper ellipse minor radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D11",
+     "element": "Lower-left capsule width",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D12",
+     "element": "Lower-left capsule side length",
+     "measurement": "100 millimeter"
+    },
+    {
+     "id": "D13",
+     "element": "Lower-right stem ellipse major radius",
+     "measurement": "30 millimeter"
+    },
+    {
+     "id": "D14",
+     "element": "Lower-right stem width",
+     "measurement": "20 millimeter"
+    },
+    {
+     "id": "D15",
+     "element": "Lower-right top ellipse minor radius",
+     "measurement": "10 millimeter"
+    },
+    {
+     "id": "D16",
+     "element": "Lower-right vertical stem side length",
+     "measurement": "50 millimeter"
+    },
+    {
+     "id": "D17",
+     "element": "Lower-right included taper angle",
+     "measurement": "1.2217304764 radian"
+    },
+    {
+     "id": "D18",
+     "element": "Lower-right sloping side length",
+     "measurement": "60 millimeter"
+    },
+    {
+     "id": "D19",
+     "element": "Middle-left ellipse rotation annotation",
+     "measurement": "Rotation of 20 degree"
+    }
+   ],
+   "rawTypes": {
+    "ELLIPSE": 9,
+    "DIMENSION": 18,
+    "MULTILEADER": 1,
+    "LINE": 10
+   },
+   "mappedTypes": {
+    "ellipse": 9,
+    "dimension": 18,
+    "text": 1,
+    "line": 10
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 16,
+    "angular": 2
+   },
+   "decPlaces": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    8,
+    0
+   ],
+   "dimValues": [
+    25.000000000000004,
+    100,
+    25,
+    25.000000000000004,
+    50,
+    100,
+    0.7853981633974483,
+    50,
+    25,
+    10,
+    50.00000000000001,
+    100,
+    30,
+    20.000000000000057,
+    10,
+    50.000000000000114,
+    1.2217304763960293,
+    60
+   ]
+  },
+  {
+   "id": "5f6750a7-45ca-44d9-9c73-720c513913b5",
+   "task": "Create Basic Exercise 9 as a monochrome 2D geometric drawing of circular, polygonal, star, hatch, and dimensioning const",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "CIRCLE": 3,
+    "LWPOLYLINE": 16,
+    "LINE": 3432,
+    "ARC": 1,
+    "DIMENSION": 6,
+    "MTEXT": 1,
+    "SOLID": 1
+   },
+   "mappedTypes": {
+    "circle": 3,
+    "polyline": 16,
+    "line": 3432,
+    "arc": 1,
+    "dimension": 6,
+    "text": 1
+   },
+   "layerCount": 2,
+   "dimStyles": [
+    "Standard"
+   ],
+   "dimSubtypes": {
+    "linear": 6
+   },
+   "decPlaces": [
+    8,
+    8,
+    8,
+    8,
+    8,
+    8
+   ],
+   "dimValues": [
+    34.64101615137753,
+    34.64101615137747,
+    34.64101615137762,
+    43.59255168032172,
+    43.59255168032166,
+    43.59255168032166
+   ]
+  },
+  {
+   "id": "5a8c46f3-bd1a-4c01-875d-d3627d9d9f06",
+   "task": "Create the PROJECTION 1 three-dimensional mechanical bracket model.",
+   "nDims": 0,
+   "specDims": [],
+   "rawTypes": {
+    "LWPOLYLINE": 1,
+    "3DSOLID": 3,
+    "CIRCLE": 3
+   },
+   "mappedTypes": {
+    "polyline": 1,
+    "circle": 3
+   },
+   "layerCount": 1,
+   "dimStyles": [],
+   "dimSubtypes": {},
+   "decPlaces": [],
+   "dimValues": []
+  }
+ ]
+}

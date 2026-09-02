@@ -60,6 +60,7 @@ const TASK_SPECS = {
   pumpboth: ['impeller', 'casing', 'assembly'],
   'pumpduty3d-bare': ['impeller', 'casing', 'assembly'],
   'pumpboth-bare': ['impeller', 'casing', 'assembly'],
+  standdrawing2d: ['flange'],
 };
 
 /** 任务对应的规范条目（去重；-bare 裸需求任务复用基任务规范） */

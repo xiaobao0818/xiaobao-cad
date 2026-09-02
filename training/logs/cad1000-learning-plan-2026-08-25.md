@@ -14,6 +14,15 @@
 - 主数据集无明确 license：只读分析，素材文件不入库、不分发
 - 预算分散：pumpduty3d-bare 只做指标3留出测量（封顶 5 轮）
 
+
+### G0 探针门禁（制度化，2026-08-25 审计后新增）
+
+**任何 knowledge/data.js 或 js/ai.js 系统提示的知识性改动，在跑正式固定 EVAL 集之前，
+必须先通过探针门禁**：`bash tests/probe-regression.sh`（flange2d/volute2d/threeview2d 各 1 轮 EVAL，
+阈值默认 85，`THRESHOLD=` 可调）。三任务代表"无图框零件图/曲线型线/多视图"三类易被全局规则污染的场景。
+
+背景：变量5 幅面条目因缺此门禁污染 flange2d(100→50)/volute2d(100→17)，多耗 24 轮预算。
+
 ## 1. 学习管线总览
 
 ```

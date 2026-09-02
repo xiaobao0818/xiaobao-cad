@@ -378,6 +378,30 @@ export const TRAIN_TASKS = [
       { side: '2d', type: 'count', kind: 'text', min: 8, max: 60, weight: 3 },
     ],
   },
+  {
+    id: 'standdrawing2d',
+    ws: '2d',
+    name: '支撑架技术图纸（2D·CAD1000 派生）',
+    // P6 派生任务：镜像 CAD1000 机械工作流 01dd0e82（dimensioned support stand）的构成与验收思想
+    // （中心立柱+顶板+对称斜撑+圆头安装耳+斜臂端圆+尺寸标注齐全），自建布局坐标，素材不入库
+    prompt: '请绘制支撑架零件技术图纸（mm 坐标系，尺寸标注齐全的 2D 机械图）：①中心立柱：外轮廓矩形 (60,50)-(105,280)（宽 45、高 230）；内腔画两条竖线 x=67.5 与 x=97.5（y 从 50 到 280）表示 35 内宽的槽形壁；②顶板：矩形 (32.5,280)-(182.5,295)（150×15，居中于柱顶向两侧伸出）；③左右对称斜撑：两条直线，分别从立柱下部 (60,140) 与 (105,140) 斜向下至 (10,80) 与 (155,80)；④左右安装耳：Φ30 圆（圆心 (10,80) 与 (155,80)，半径 15），各带同圆心 Φ12.6 内孔（半径 6.3）；⑤右上斜臂：从顶板右上角 (182.5,287.5) 沿 45° 方向画两条平行轮廓线（间距 10、长 120）至端部圆心 (267.4,372.4)；端部圆 Φ31.8（半径 15.9）与中心孔 Φ15（半径 7.5）同圆心 (267.4,372.4)；⑥尺寸标注（draw_entities 的 dimension 图元）覆盖全部关键尺寸：立柱宽 45（linear，两端点距离 45）、立柱高 230（linear）、顶板厚 15（linear）、斜臂长 120（linear，两端点距离 120）、斜臂倾角 45°（angular）、安装耳 Φ30 与孔 Φ12.6（diametric：cx/cy=圆心、px/py=圆周点）、端部 Φ31.8 与孔 Φ15（diametric）。',
+    checks: [
+      { type: 'polylineBboxAt', x1: 60, y1: 50, x2: 105, y2: 280, tol: 3, weight: 3 },      // R1 中心立柱外轮廓
+      { type: 'polylineBboxAt', x1: 32.5, y1: 280, x2: 182.5, y2: 295, tol: 3, weight: 2 },  // R2 顶板跨柱顶
+      { type: 'countInBand', kind: 'line', x1: -20, y1: 60, x2: 190, y2: 170, min: 2, weight: 2 }, // R3 对称斜撑
+      { type: 'circleAt', cx: 10, cy: 80, r: 15, tol: 1.5, weight: 2 },                      // R4 左安装耳
+      { type: 'circleAt', cx: 155, cy: 80, r: 15, tol: 1.5, weight: 2 },                     // R4 右安装耳
+      { type: 'circleAt', cx: 267.4, cy: 372.4, r: 15.9, tol: 1.5, weight: 2 },              // R5 斜臂端圆
+      { type: 'count', kind: 'circle', min: 6, weight: 1 },                                  // 耳×2+孔×2+端圆+端孔
+      { type: 'dimensionCount', min: 6, weight: 2 },                                         // R6 标注齐备
+      { type: 'dimensionCount', subtype: 'diametric', min: 2, weight: 2 },
+      { type: 'dimensionCount', subtype: 'linear', min: 2, weight: 2 },
+      { type: 'dimensionValue', subtype: 'linear', target: 45, tol: 2, weight: 2 },          // 立柱宽 45
+      { type: 'dimensionValue', subtype: 'linear', target: 230, tol: 3, weight: 2 },         // 立柱高 230
+      { type: 'dimensionValue', subtype: 'diametric', target: 30, tol: 2, weight: 3 },       // 耳 Φ30
+      { type: 'dimensionValue', subtype: 'diametric', target: 12.6, tol: 1, weight: 1 },     // 孔 Φ12.6
+    ],
+  },
 ];
 
 export const taskById = (id) => TRAIN_TASKS.find((t) => t.id === id) || null;
