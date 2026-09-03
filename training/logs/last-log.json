@@ -9922,5 +9922,140 @@
       "H": 18,
       "n": 1450
     }
+  },
+  {
+    "ts": 1788413190265,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 61,
+    "scoreAfter": 61,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "未找到 r≈15 @(10,80) 的圆",
+      "未找到 r≈15 @(155,80) 的圆",
+      "未找到 r≈15.9 @(267.4,372.4) 的圆"
+    ],
+    "note": "",
+    "failsBefore": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "未找到 r≈15 @(10,80) 的圆",
+      "未找到 r≈15 @(155,80) 的圆",
+      "未找到 r≈15.9 @(267.4,372.4) 的圆"
+    ]
+  },
+  {
+    "ts": 1788413669906,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 2,
+    "ws": "2d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1788413886168,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 3,
+    "ws": "2d",
+    "scoreBefore": 82,
+    "scoreAfter": 82,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）"
+    ]
+  },
+  {
+    "ts": 1788414134347,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1788414640575,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 2,
+    "ws": "2d",
+    "scoreBefore": 61,
+    "scoreAfter": 61,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "未找到 r≈15 @(10,80) 的圆",
+      "未找到 r≈15 @(155,80) 的圆",
+      "未找到 r≈15.9 @(267.4,372.4) 的圆"
+    ],
+    "note": "",
+    "failsBefore": [
+      "闭合轮廓 @(60,50)-(105,280) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "闭合轮廓 @(32.5,280)-(182.5,295) ±3 ✗（图框/标题栏缺失或尺寸不符）",
+      "未找到 r≈15 @(10,80) 的圆",
+      "未找到 r≈15 @(155,80) 的圆",
+      "未找到 r≈15.9 @(267.4,372.4) 的圆"
+    ]
+  },
+  {
+    "ts": 1788414887122,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "standdrawing2d",
+    "taskName": "支撑架技术图纸（2D·CAD1000 派生）",
+    "round": 3,
+    "ws": "2d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
   }
 ]
