@@ -1,6 +1,5 @@
-/* ============================================================
- * 小宝CAD 命令框架 —— 命令行解析 / 交互输入（点/长度/角度/文本）/ 队列执行
- * ============================================================ */
+// commands.js —— 命令框架：命令行文本解析 + 交互式取点/取数/取文本 + 命令队列。
+// 08-17 一天写完，之后没再改过。CANCELLED / ENDED 两个 Symbol 是给各命令做流程控制用的。
 import { Emitter, parsePoint, parseNumber, parseLength, dist, angleOf, R2D } from './util.js';
 
 export const CANCELLED = Symbol('cancelled'); // Esc / 右键：取消整个命令
@@ -37,7 +36,7 @@ export class Commander extends Emitter {
     return this;
   }
 
-  /* ---------------- 输入原语 ---------------- */
+  // 输入原语 ----------------------------------------------------------
   awaitPoint(opts = {}) { return this._await('point', opts); }
   awaitNumber(opts = {}) { return this._await('number', opts); }
   awaitDistance(base, opts = {}) { return this._await('distance', { ...opts, base }); }
@@ -118,7 +117,7 @@ export class Commander extends Emitter {
     inp.resolve(CANCELLED);
   }
 
-  /* ---------------- 事件路由 ---------------- */
+  /*--- 事件路由 ---*/
   onMouseMove(screen) {
     const inp = this._input;
     if (!inp) return;
@@ -184,7 +183,7 @@ export class Commander extends Emitter {
     if (this._input) this._cancelInput();
   }
 
-  /* ---------------- 命令执行 ---------------- */
+  // ---- 命令执行
   exec(str) {
     str = (str || '').trim();
     if (this._input) { this.onText(str); return; }

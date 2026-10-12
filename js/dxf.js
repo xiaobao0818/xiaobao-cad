@@ -1,14 +1,12 @@
-/* ============================================================
- * 小宝CAD DXF 读写模块 —— 纯 ES 模块（无浏览器 API）
- * 导出：
- *   parseDXF(text) -> { units, layers, blocks, entities, currentLayer }
- *   writeDXF(scene) -> string
- * ============================================================ */
+/* dxf.js —— DXF 读写。纯 ES 模块，不引用任何浏览器 API，所以能直接丢进 node 跑测试。
+ * 读：按组码对切分，遇到 0 开一个新实体，再按实体类型分派；R12 和 R2000 都能吃。
+ * 写：统一按 R2000 输出，ENTITIES 段 + TABLES 段的图层表。
+ *
+ * 对外就两个函数： parseDXF(text) / writeDXF(scene)
+ */
 import { uid, D2R, R2D, TAU } from './util.js';
 
-/* ============================================================
- * 通用小工具
- * ============================================================ */
+// [通用小工具]
 
 /** 把任意值转为数字；非法/缺失返回 null */
 function toNum(v) {
@@ -60,10 +58,8 @@ function valuesOf(coll) {
   return [];
 }
 
-/* ============================================================
- * 词法：把文本切分为 [组码, 值] 序列
- * 组码允许带空格/制表符，值允许前导空格，行尾 \n 或 \r\n
- * ============================================================ */
+// 词法：把文本切分为 [组码, 值] 序列
+// 组码允许带空格/制表符，值允许前导空格，行尾 \n 或 \r\n
 function tokenize(text) {
   const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n');
   const pairs = [];
@@ -100,9 +96,7 @@ function skipSection(pairs, i) {
   return i;
 }
 
-/* ============================================================
- * 实体基础
- * ============================================================ */
+/* === 实体基础 === */
 function baseEntity(type) {
   return { type, layer: null, color: null, ltype: null, lw: null };
 }
@@ -131,7 +125,7 @@ function finalize(e) {
   return e;
 }
 
-/* ---------------- MTEXT 内容清理 ---------------- */
+/* MTEXT 内容清理 */
 function cleanMText(s) {
   let t = String(s ?? '').replace(/\r\n?/g, '\n');
   t = t.replace(/\\\{/g, '\u0000').replace(/\\\}/g, '\u0001'); // 字面大括号
@@ -145,9 +139,7 @@ function cleanMText(s) {
   return t;
 }
 
-/* ============================================================
- * 单条实体记录解析（不含多记录类型 POLYLINE）
- * ============================================================ */
+/* === 单条实体记录解析（不含多记录类型 POLYLINE） === */
 function parseEntityRecord(rec, type, depth) {
   let e;
   switch (type) {
@@ -319,10 +311,8 @@ function parseEntityRecord(rec, type, depth) {
   return finalize(e);
 }
 
-/* ============================================================
- * 在给定位置解析一条实体（含多记录 POLYLINE+VERTEX）
- * 返回 { entity, next }
- * ============================================================ */
+// 在给定位置解析一条实体（含多记录 POLYLINE+VERTEX）
+// 返回 { entity, next }
 function parseEntityAt(pairs, j, depth, data) {
   const type = String(pairs[j][1]).trim().toUpperCase();
   const { rec, next } = collectRecord(pairs, j + 1);
@@ -357,9 +347,7 @@ function parseEntityAt(pairs, j, depth, data) {
   return { entity, next };
 }
 
-/* ============================================================
- * SECTION 解析
- * ============================================================ */
+// ===== SECTION 解析 =====
 function parseHeader(pairs, i, data) {
   while (i < pairs.length) {
     const [code, value] = pairs[i];
@@ -494,9 +482,9 @@ function parseEntities(pairs, i, data) {
   return i;
 }
 
-/* ============================================================
- * parseDXF
- * ============================================================ */
+// [parseDXF]
+// 组码表切分：一行组码、一行值，交替往下读。
+// 注意组码前后可能有空格，值那一行是原样保留的（文字内容会带前导空格）。
 export function parseDXF(text) {
   const data = { units: 'mm', layers: [], blocks: [], entities: [], currentLayer: '0' };
   const pairs = tokenize(text);
@@ -521,9 +509,7 @@ export function parseDXF(text) {
   return data;
 }
 
-/* ============================================================
- * writeDXF —— 输出 R12 风格文本 DXF
- * ============================================================ */
+// ---- writeDXF —— 输出 R12 风格文本 DXF ----
 let _handle = 0;
 
 function writeEntityColor(e, L) {

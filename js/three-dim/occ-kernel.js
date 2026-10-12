@@ -1,40 +1,43 @@
-/**
- * occ-kernel.js
+/*
+ * occ-kernel.js —— OpenCASCADE.js 实体内核的薄封装（方案里的"路线B"：真 B-rep 实体建模）。
  *
- * OpenCASCADE.js solid-modeling kernel wrapper (路线B 完整三维实体建模).
+ * 底层是 opencascade.js v1.1.1 的 WASM 构建。这个文件其实只干一件事：把 TopoDS_Shape
+ * 这类必须手动 delete 的 C++ 对象全都挡在模块内部，外面只认整数 body id。
+ * 内部 Map 存 id -> shape，remove() / clear() 时统一释放，外面千万别自己留引用。
  *
- * This module wraps the OpenCASCADE.js WASM build (`opencascade.js` v1.1.1) behind a
- * small, allocator-safe solid kernel.  Body ids are monotonic integers; the underlying
- * `TopoDS_Shape` objects are kept in an internal Map and are freed with `.delete()`.
- *
- * API surface (see Kernel class below):
+ * 对外开放的都在下面的 Kernel 类里：
  *   createBox / createCylinder / createSphere / createCone / createTorus
  *   boolean / transform / copy / mesh / volume / bbox
  *   exportSTL / exportSTEP / importSTEP
  *   fillet / chamfer
  *   deleteBody / bodyCount / dispose
  *
- * Verified call signatures for opencascade.js v1.1.1 (Node + browser):
- *   - Primitives:       new oc.BRepPrimAPI_MakeBox_1(dx,dy,dz)
- *                       new oc.BRepPrimAPI_MakeCylinder_1(r,h)
- *                       new oc.BRepPrimAPI_MakeSphere_1(r)
- *                       new oc.BRepPrimAPI_MakeCone_1(r1,r2,h)
- *                       new oc.BRepPrimAPI_MakeTorus_1(r1,r2)
- *   - Boolean:          new oc.BRepAlgoAPI_Cut_3(a,b)     (also Fuse_3 / Common_3)
- *   - Volume:           oc.BRepGProp.VolumeProperties_1(shape, props, false, false, false)
- *   - Bbox:             oc.BRepBndLib.Add(shape, box, true)
- *   - Mesh:             new oc.BRepMesh_IncrementalMesh_2(shape, lin, false, ang, false)
- *   - Transform:        new oc.BRepBuilderAPI_Transform_2(shape, trsf, copy)
- *   - Fillet/Chamfer:   Add_2(radius|distance, edge)
- *   - STEP:             writer.Transfer(shape, STEPControl_StepModelType.STEPControl_AsIs, true)
+ * 注意 WASM 是单线程的，所有内核调用必须串行 await，别并发打进去 —— 试过，会崩。
  *
- * Implementation notes (observed on this build):
- *   - StlAPI_Writer.Write() returns false (default tessellation deflection is too
- *     small and SetDeflection is not bound), so exportSTL emits a binary STL directly
- *     from the mesh() triangles instead.
- *   - OCC's STEP reader/writer only accepts filenames of up to 5 characters before
- *     the extension in this WASM build; longer names yield IFSelect_RetError.  The
- *     export/import methods therefore use the short names `out.step` / `in.step`.
+ * ---------------------------------------------------------------------------
+ * 下面是这版 opencascade.js（v1.1.1）实际可用的调用签名，Node 和浏览器里都验过。
+ * 官方文档跟这个 WASM 构建对不上（好多类没导出，或者后缀编号不一样），
+ * 所以把能用的记在这儿，省得下次又去 dist 里翻符号表。
+ *
+ *   基本体     BRepPrimAPI_MakeBox_1(dx, dy, dz)
+ *              BRepPrimAPI_MakeCylinder_1(r, h)
+ *              BRepPrimAPI_MakeSphere_1(r)
+ *              BRepPrimAPI_MakeCone_1(r1, r2, h)
+ *              BRepPrimAPI_MakeTorus_1(r1, r2)
+ *   布尔       BRepAlgoAPI_Cut_3(a, b)      并集 Fuse_3 / 交集 Common_3
+ *   体积       BRepGProp.VolumeProperties_1(shape, props, false, false, false)
+ *   包围盒     BRepBndLib.Add(shape, box, true)
+ *   网格       BRepMesh_IncrementalMesh_2(shape, lin, false, ang, false)
+ *   变换       BRepBuilderAPI_Transform_2(shape, trsf, copy)
+ *   圆角/倒角  Add_2(radius | distance, edge)
+ *   STEP       writer.Transfer(shape, STEPControl_StepModelType.STEPControl_AsIs, true)
+ *
+ * 两个踩过的坑，别再踩：
+ *  1) StlAPI_Writer.Write() 在这个构建里恒返回 false（默认细分精度太细，而 SetDeflection
+ *     压根没绑定），所以 exportSTL 干脆不走它，直接拿 mesh() 出来的三角面自己拼二进制 STL。
+ *  2) OCC 的 STEP 读写器在这个 WASM 版本里，扩展名前的文件名最多只能有 5 个字符，
+ *     长了就报 IFSelect_RetError。所以导入导出固定用 out.step / in.step 这两个短名，
+ *     外面要什么文件名，等写完了再改。
  */
 
 let ocInstance = null;
@@ -110,7 +113,7 @@ export class Kernel {
     this._disposed = false;
   }
 
-  /* ------------------------------------------------------------------ util -- */
+  // --- util ---
 
   _assertReady() {
     if (this._disposed || !this.oc) {
@@ -215,7 +218,7 @@ export class Kernel {
     return newShape;
   }
 
-  /* ------------------------------------------------------------- creation -- */
+  // --- creation ---
 
   createBox(p = {}) {
     this._assertReady();
@@ -282,7 +285,7 @@ export class Kernel {
     return this._store(shape);
   }
 
-  /* -------------------------------------------------------------- boolean -- */
+  /* --- boolean --- */
 
   boolean(op, aId, bIdOrIds) {
     this._assertReady();
@@ -317,7 +320,7 @@ export class Kernel {
     return this._store(acc);
   }
 
-  /* ------------------------------------------------------------ transform -- */
+  // --- transform ---
 
   transform(id, t = {}) {
     this._assertReady();
@@ -338,7 +341,7 @@ export class Kernel {
     return this._store(newShape);
   }
 
-  /* ------------------------------------------------------------------ mesh -- */
+  /* --- mesh --- */
 
   mesh(id, opts = {}) {
     this._assertReady();
@@ -397,7 +400,7 @@ export class Kernel {
     };
   }
 
-  /* -------------------------------------------------------------- measure -- */
+  /* --- measure --- */
 
   volume(id) {
     this._assertReady();
@@ -409,7 +412,7 @@ export class Kernel {
     return this._bbox(this._assertBody(id));
   }
 
-  /* -------------------------------------------------------------- export --- */
+  // --- export ---
 
   exportSTL(idOrIds) {
     this._assertReady();
@@ -621,7 +624,7 @@ export class Kernel {
     }
   }
 
-  /* ------------------------------------------------------------- lifecycle -- */
+  /* --- lifecycle --- */
 
   deleteBody(id) {
     this._assertReady();

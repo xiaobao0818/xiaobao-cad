@@ -1,6 +1,18 @@
-/* ============================================================
- * 小宝CAD AI 助手 —— 对话式 CAD 创作（MiniMax M3 原生多模态，OpenAI 兼容接口）
- * ============================================================ */
+/*
+ * ai.js —— AI 助手，对话式 CAD 创作。
+ * 接口按 OpenAI 兼容协议写，默认接 MiniMax M3：文本对话、函数调用、多模态看图
+ * 一个 key 全包，省得分两套配置。
+ *
+ * 几处不太直观的地方，改之前先看一眼：
+ *   1. 工具集随工作区过滤 —— 2D 区只挂 2D 工具，3D 区只挂 3D 工具，
+ *      别图省事把两套合在一起，模型会拿 2D 工具去 3D 场景里乱画；
+ *   2. 系统提示里每一轮都附带实时图纸状态，这样能省掉模型先查询再动手的那一轮；
+ *   3. 自动审阅 = 绘制完截图回喂模型自检，循环没有硬上限，
+ *      只靠"连续两轮提出完全相同的修改"来刹车，防止打转。
+ *
+ * 改动轨迹：08-17 初版 / 08-17 换 MiniMax M3 并加自动审阅 /
+ *           08-25 ~ 09-01 照 EVAL 结果来回调了几轮提示词。
+ */
 import { escapeHtml, D2R, dist, translationM, rotationM, scaleM, mirrorM } from './util.js';
 import { make, newEntity } from './entities.js';
 import { Scene } from './scene.js';
@@ -8,7 +20,8 @@ import { fileToText, buildDataSummary, buildSceneSummary, svgToEntities } from '
 import { sizingFromDuty, sizingText } from '../training/pumpdesign.mjs';
 import { searchText as kbSearchText } from '../training/knowledge.mjs';
 
-/* ---------------- 常量 ---------------- */
+// ---- 常量
+// 设置只存 localStorage，key 不上传任何地方
 const SETTINGS_KEY = 'xbcad:ai-settings';
 const SETTINGS_VERSION = 2;
 const DEFAULT_SETTINGS = {
@@ -98,7 +111,7 @@ const FALLBACK_INSTRUCTION =
 
 const num = (v, d = 0) => { const x = Number(v); return Number.isFinite(x) ? x : d; };
 
-/* ---------------- 工具定义（OpenAI function calling 格式） ---------------- */
+// --- 工具定义（OpenAI function calling 格式） ---
 const TOOLS = [
   {
     type: 'function',
@@ -352,7 +365,7 @@ const TOOLS = [
   },
 ];
 
-/* ---------------- 样式注入 ---------------- */
+// --- 样式注入 ---
 const STYLE_TEXT = `
 #tab-ai .ai-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .ai-head { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--border); flex: none; }
@@ -411,7 +424,6 @@ const STYLE_TEXT = `
 .ai-send.stop { background: var(--red); }
 `;
 
-/* ============================================================ */
 export default class AIChatPanel {
   constructor(CAD) {
     this.CAD = CAD;
@@ -509,7 +521,6 @@ export default class AIChatPanel {
     }
   }
 
-  /* ---------------- 设置 ---------------- */
   _loadSettings() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
@@ -536,7 +547,7 @@ export default class AIChatPanel {
     return { ...DEFAULT_SETTINGS };
   }
 
-  /* ---------------- 样式 ---------------- */
+  // --- 样式 ---
   _injectStyle() {
     if (document.getElementById('xbcad-ai-style')) return;
     const st = document.createElement('style');
@@ -545,7 +556,6 @@ export default class AIChatPanel {
     document.head.appendChild(st);
   }
 
-  /* ---------------- UI 构建 ---------------- */
   _buildUI() {
     const root = document.getElementById('tab-ai');
     root.innerHTML = '';
@@ -630,7 +640,7 @@ export default class AIChatPanel {
       '配置 MiniMax API Key（⚙ 设置 → platform.minimaxi.com 申请）即可开始。';
   }
 
-  /* ---------------- 状态同步 ---------------- */
+  // --- 状态同步 ---
   _updateStatus() {
     const el = document.getElementById('aiStatus');
     if (el) {
@@ -651,7 +661,7 @@ export default class AIChatPanel {
     if (this.modelEl) this.modelEl.textContent = this.settings.model || '未配置';
   }
 
-  /* ---------------- 对外方法 ---------------- */
+  // --- 对外方法 ---
   openSettings() { this._openSettingsDialog(); }
 
   ask(text) {
@@ -669,7 +679,6 @@ export default class AIChatPanel {
     this._pendingSend = false;
   }
 
-  /* ---------------- 消息渲染 ---------------- */
   _addMessage(role, content) {
     const wrap = document.createElement('div');
     wrap.className = 'ai-msg ' + role;
@@ -701,7 +710,7 @@ export default class AIChatPanel {
     return esc;
   }
 
-  /* ---------------- 输入 / 发送 ---------------- */
+  // --- 输入 / 发送 ---
   _sendFromInput() {
     const text = this.textarea.value.trim();
     if (!text) return;
@@ -715,7 +724,6 @@ export default class AIChatPanel {
     this._runConversation();
   }
 
-  /* ---------------- 主流程 ---------------- */
   async _runConversation() {
     const s = this.settings;
     if (!s.key) {
@@ -824,7 +832,7 @@ export default class AIChatPanel {
     } catch (e) { /* 日志失败不影响功能 */ }
   }
 
-  /* ---------------- 多模态审阅（MiniMax M3 看图优化闭环） ---------------- */
+  // 多模态审阅（MiniMax M3 看图优化闭环） ----------------------------------------------------------
   _manualReview() {
     if (this._busy) { this.CAD.notify('AI 正在工作中，请先等待或点「停止」', 'error'); return; }
     this._busy = true;
@@ -1122,7 +1130,7 @@ export default class AIChatPanel {
     } else this.messages.push({ role: 'user', content: instr.trim() });
   }
 
-  /* ---------------- 网络请求 ---------------- */
+  // ---- 网络请求
   async _post(body, signal, endpointCfg = {}) {
     const s = this.settings;
     const cfg = {
@@ -1189,7 +1197,7 @@ export default class AIChatPanel {
     return msg ? `HTTP ${status}: ${msg}` : `HTTP ${status}: ${(text || '').slice(0, 200)}`;
   }
 
-  /* ---------------- 工具调度 ---------------- */
+  // [工具调度]
   _registerTools() {
     this._tools = {
       draw_entities: (a) => this._toolDrawEntities(a),
@@ -1229,7 +1237,7 @@ export default class AIChatPanel {
     return fn(args || {});
   }
 
-  /* ---------------- 工具实现 ---------------- */
+  /* 工具实现 */
   _toolDrawEntities(args) {
     const items = Array.isArray(args.items) ? args.items : [];
     if (!items.length) throw new Error('items 不能为空');
@@ -1464,13 +1472,13 @@ export default class AIChatPanel {
     }
   }
 
-  /* ---------------- 文件参考 ---------------- */
+  // 文件参考 ----------------------------------------------------------
   _onFiles(fileList) {
     for (const f of fileList) this._attachFile(f);
     this.fileInput.value = '';
   }
 
-  /* ---------------- DWG 文本信息提取（专有二进制，尽力提取明文信息） ---------------- */
+  // ===== DWG 文本信息提取（专有二进制，尽力提取明文信息） =====
   _dwgVersion(bytes) {
     let head = '';
     for (let i = 0; i < Math.min(bytes.length, 64); i++) head += String.fromCharCode(bytes[i]);
@@ -1674,7 +1682,7 @@ export default class AIChatPanel {
     this.chipsEl.appendChild(chip);
   }
 
-  /* ---------------- 降级模式：解析并执行代码块 ---------------- */
+  // ---- 降级模式：解析并执行代码块
   async _executeCodeBlocks(text) {
     const blocks = [];
     const re = /```(?:json|cad)\s*\n?([\s\S]*?)```/gi;
@@ -1742,7 +1750,7 @@ export default class AIChatPanel {
     return results;
   }
 
-  /* ---------------- 设置对话框 ---------------- */
+  // [设置对话框]
   _openSettingsDialog() {
     const s = this.settings;
     const box = document.createElement('div');

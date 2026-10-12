@@ -1,6 +1,7 @@
-/* ============================================================
- * 小宝CAD 工具函数库 —— 几何计算 / 格式化 / 事件 / 颜色 / 矩阵
- * ============================================================ */
+/*
+ * util.js —— 公共工具。几何计算、格式化、事件、颜色、矩阵都在这个文件里。
+ * 08-17 初版，08-18 补了矩阵分解那一批（matrixScaleXY / matrixMirrored 之类）。
+ */
 export const D2R = Math.PI / 180;
 export const R2D = 180 / Math.PI;
 export const TAU = Math.PI * 2;
@@ -13,7 +14,7 @@ export function uid() {
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const isFiniteNum = (v) => typeof v === 'number' && Number.isFinite(v);
 
-/* ---------------- 格式化 ---------------- */
+/* 格式化 */
 export function fmt(v, precision = 4) {
   if (!Number.isFinite(v)) return '';
   const p = 10 ** precision;
@@ -57,7 +58,9 @@ export function parseLength(str, base = 0) {
   return rel ? base + n : n;
 }
 
-/* ---------------- 基础工具 ---------------- */
+/* 基础工具 */
+// JSON 转一圈就够用了，图元都是纯数据，没有循环引用
+// （以前用 structuredClone，Safari 老版本不支持，换回来了）
 export function deepClone(o) {
   return typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o));
 }
@@ -81,7 +84,7 @@ export class Emitter {
   emit(ev, ...args) { this._l.get(ev)?.forEach((fn) => { try { fn(...args); } catch (e) { console.error('[event]', ev, e); } }); }
 }
 
-/* ---------------- 颜色 / 线型 ---------------- */
+// --- 颜色 / 线型 ---
 export const ACI = [
   '#000000', '#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff', '#ffffff',
   '#808080', '#c0c0c0', '#ff0000', '#ff7f7f', '#cc0000', '#cc6666', '#990000', '#996666',
@@ -114,7 +117,7 @@ export const LINETYPES = {
 };
 export function dashPattern(name) { return LINETYPES[name] || LINETYPES.CONTINUOUS; }
 
-/* ---------------- 几何 ---------------- */
+/*--- 几何 ---*/
 export function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 export function angleOf(a, b) { return Math.atan2(b.y - a.y, b.x - a.x); }
 export function polar(p, ang, d) { return { x: p.x + Math.cos(ang) * d, y: p.y + Math.sin(ang) * d }; }
@@ -237,7 +240,6 @@ export function sampleEllipsePoints(cx, cy, rx, ry, rot, start, end, n = 40) {
   return pts;
 }
 
-/* ---------------- 仿射矩阵 ---------------- */
 // [x']   [a c e] [x]
 // [y'] = [b d f] [y]
 export function applyM(m, p) {
@@ -279,7 +281,7 @@ export function matrixScaleXY(m) {
   return { sx: Math.hypot(m.a, m.b), sy: Math.hypot(m.c, m.d) };
 }
 
-/* ---------------- 包围盒 ---------------- */
+// 包围盒 ----------------------------------------------------------
 export function bboxUnion(bb1, bb2) {
   if (!bb1) return bb2 ? [...bb2] : null;
   if (!bb2) return [...bb1];

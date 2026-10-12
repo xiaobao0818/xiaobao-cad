@@ -1,6 +1,7 @@
-/* ============================================================
- * 小宝CAD 视口 —— Canvas 渲染 / 缩放平移 / 栅格 / 对象捕捉 / 拾取 / 标注绘制
- * ============================================================ */
+/* viewport.js —— Canvas 2D 视口：渲染、缩放平移、栅格、对象捕捉、拾取、标注绘制。
+ * 重绘是全量的（clearRect 之后从头画），几千个图元还跑得动；
+ * 要是图元上了万，得改成脏矩形局部重绘。   // TODO 先记着，暂时没这需求
+ */
 import {
   Emitter, clamp, TAU, D2R, colorToCSS, dashPattern, dist, fmt, fmtCoord, normAngle,
   bboxOfPoints, arcSweep,
@@ -81,13 +82,17 @@ export class DrawContext {
     }
     ctx.restore();
   }
-  /** 屏幕空间文字绘制（世界坐标输入） */
+  /** 屏幕空间文字绘制（世界坐标输入）
+   *  注意：本方法按屏幕坐标落笔，调用时 ctx 可能还带着世界变换（图元都在世界变换下绘制），
+   *  所以必须先 setTransform 回到屏幕空间，否则文字会被再乘一次缩放、落到画布外面去。
+   *  与 _drawTempMarkers 里的处理保持一致。 */
   text(e, opts, str, x, y, height, rotation, halign = 'left', valign = 'baseline') {
     const s = this.styleFor(e, opts);
     const ctx = this.ctx;
     const sp = this.vp.worldToScreen({ x, y });
     const h = height * this.vp.scale;
     ctx.save();
+    ctx.setTransform(this.vp.dpr, 0, 0, this.vp.dpr, 0, 0);
     ctx.translate(sp.x, sp.y);
     ctx.rotate(-rotation);
     ctx.font = `${Math.max(h, 1)}px "PingFang SC", "Microsoft YaHei", sans-serif`;
@@ -102,6 +107,7 @@ export class DrawContext {
     const ctx = this.ctx;
     const sp = this.vp.worldToScreen({ x, y });
     ctx.save();
+    ctx.setTransform(this.vp.dpr, 0, 0, this.vp.dpr, 0, 0);  // 同上：标记也是屏幕空间尺寸
     ctx.strokeStyle = s.color;
     ctx.fillStyle = s.color;
     ctx.lineWidth = 1;
@@ -128,7 +134,7 @@ export class DrawContext {
     const h = HANDLERS[e.type];
     if (h?.draw) h.draw(this, e, opts);
   }
-  /* ---------- 尺寸标注 ---------- */
+  // [尺寸标注]
   drawDimension(e, opts) {
     const ctx = this.ctx;
     const ds = this.scene.dimstyle || {};
@@ -254,7 +260,8 @@ export class DrawContext {
   }
 }
 
-/* ---------------- 视口 ---------------- */
+// 渲染主循环：不是 requestAnimationFrame 常驻，而是按需 _dirty 标记重绘，
+// 静态图纸的时候 CPU 基本是 0。
 export class Viewport extends Emitter {
   constructor(canvas, scene) {
     super();
@@ -302,7 +309,7 @@ export class Viewport extends Emitter {
     });
   }
 
-  /* ---------- 坐标变换 ---------- */
+  // 坐标变换 ----------------------------------------------------------
   worldToScreen(p) {
     return {
       x: (p.x - this.center.x) * this.scale + this.w / 2,
@@ -325,7 +332,7 @@ export class Viewport extends Emitter {
     return [Math.min(c1.x, c2.x), Math.min(c1.y, c2.y), Math.max(c1.x, c2.x), Math.max(c1.y, c2.y)];
   }
 
-  /* ---------- 视图操作 ---------- */
+  // ===== 视图操作 =====
   zoomAt(sx, sy, factor) {
     const w = this.screenToWorld({ x: sx, y: sy });
     const s = clamp(this.scale * factor, 1e-4, 1e7);
@@ -368,7 +375,7 @@ export class Viewport extends Emitter {
     this.emit('view');
   }
 
-  /* ---------- 栅格 ---------- */
+  // 栅格 ----------------------------------------------------------
   gridSpacing() {
     const target = 45 / this.scale;
     const pow = Math.pow(10, Math.floor(Math.log10(target)));
@@ -378,7 +385,7 @@ export class Viewport extends Emitter {
     return pow * 10;
   }
 
-  /* ---------- 拾取 / 捕捉 ---------- */
+  // ---- 拾取 / 捕捉
   hitTest(screenP, tolPx = 8) {
     const w = this.screenToWorld(screenP);
     const tol = tolPx / this.scale;
@@ -457,7 +464,7 @@ export class Viewport extends Emitter {
     return p;
   }
 
-  /* ---------- 渲染 ---------- */
+  // 渲染 ----------------------------------------------------------
   render() {
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -628,7 +635,7 @@ export class Viewport extends Emitter {
     ctx.restore();
   }
 
-  /* ---------- 导出 ---------- */
+  /* 导出 */
   toPNG(white = false) {
     const c = document.createElement('canvas');
     c.width = this.canvas.width;

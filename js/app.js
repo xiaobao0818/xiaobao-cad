@@ -1,6 +1,6 @@
-/* ============================================================
- * 小宝CAD 应用外壳 —— UI 构建 / 事件绑定 / 菜单 / 面板 / 快捷键
- * ============================================================ */
+/* app.js —— 应用外壳：搭 UI、绑事件、菜单栏、右侧面板、状态栏、快捷键。
+ * 08-17 建；08-21 把右侧面板从固定两栏改成 tab 结构（AI / 图层 / 属性）。
+ */
 import { Scene } from './scene.js';
 import { Viewport } from './viewport.js';
 import { Commander } from './commands.js';
@@ -10,7 +10,7 @@ import { registerDimTools } from './dim.js';
 import { HANDLERS } from './entities.js';
 import { escapeHtml, fmt, download } from './util.js';
 
-/* ---------------- 图标 ---------------- */
+// ===== 图标 =====
 const S = (inner) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
 const ICONS = {
   line: S('<path d="M4 20 L20 4"/>'),
@@ -50,7 +50,7 @@ const ICONS = {
   ai: S('<path d="M12 4 A8 8 0 1 1 4 12 A8 8 0 0 1 12 4 Z M9 10.5 H15 M9 13.5 H13"/><circle cx="17" cy="7" r="1.6" fill="currentColor"/><circle cx="19" cy="10" r="1.1" fill="currentColor"/>'),
 };
 
-/* ---------------- 工具栏定义 ---------------- */
+/*--- 工具栏定义 ---*/
 const TOOL_GROUPS = [
   { name: '绘图', items: [
     { cmd: 'L', label: '直线', icon: ICONS.line, tip: '直线 (L)' },
@@ -104,7 +104,7 @@ const TOOL_GROUPS = [
   ]},
 ];
 
-/* ---------------- 应用 ---------------- */
+/*--- 应用 ---*/
 class App {
   constructor() {
     this.scene = new Scene();
@@ -128,7 +128,7 @@ class App {
     this._boot();
   }
 
-  /* ---------------- 启动 ---------------- */
+  // ---- 启动
   _boot() {
     const autosave = localStorage.getItem('xbcad:autosave');
     if (autosave) {
@@ -215,7 +215,7 @@ class App {
     this.notify('已新建图纸');
   }
 
-  /* ---------------- 场景事件 ---------------- */
+  /* 场景事件 */
   _wireScene() {
     this.scene.on('change', () => { this.viewport.requestRender(); });
     this.scene.on('selection', () => { this.viewport.requestRender(); this._refreshProps(); });
@@ -234,7 +234,7 @@ class App {
     this.commander.on('command-end', () => { document.getElementById('cmdPrompt').textContent = '命令:'; });
   }
 
-  /* ---------------- 画布事件 ---------------- */
+  // ===== 画布事件 =====
   _bindEvents() {
     const canvas = this.viewport.canvas;
     canvas.addEventListener('mousedown', (e) => this._onMouseDown(e));
@@ -354,7 +354,7 @@ class App {
     vp.requestRender();
   }
 
-  /* ---------------- 键盘 ---------------- */
+  // [键盘]
   _onKeyDown(e) {
     // 模态对话框打开时：屏蔽全部快捷键，ESC 关闭最上层对话框
     if (this._modals && this._modals.length) {
@@ -443,7 +443,7 @@ class App {
     else inp.value = '';
   }
 
-  /* ---------------- 工具栏 / 菜单 ---------------- */
+  /*--- 工具栏 / 菜单 ---*/
   _buildToolbar() {
     const bar = document.getElementById('toolbar');
     for (const g of TOOL_GROUPS) {
@@ -551,7 +551,7 @@ class App {
     });
   }
 
-  /* ---------------- 面板 ---------------- */
+  /* 面板 */
   _bindPanels() {
     document.querySelectorAll('.tab-btn').forEach((b) => {
       b.addEventListener('click', () => this.switchTab(b.dataset.tab));
@@ -769,7 +769,7 @@ class App {
     return row;
   }
 
-  /* ---------------- 工作区切换（2D / 3D） ---------------- */
+  /*--- 工作区切换（2D / 3D） ---*/
   _bindWorkspace() {
     document.querySelectorAll('.ws-btn').forEach((b) => {
       b.addEventListener('click', () => this.showWorkspace(b.dataset.ws));
@@ -804,7 +804,6 @@ class App {
     this.notify(is3d ? '已切换到 3D 建模工作区' : '已切换到 2D 制图工作区');
   }
 
-  /* ---------------- 状态栏 ---------------- */
   _bindStatusbar() {
     document.querySelectorAll('.st-toggle').forEach((el) => {
       el.addEventListener('click', () => {
@@ -839,7 +838,7 @@ class App {
     document.getElementById('stSnapInfo').textContent = snap ? `[${names[snap.type] || snap.type}]` : '';
   }
 
-  /* ---------------- 对话框 / 提示 ---------------- */
+  // 对话框 / 提示 ----------------------------------------------------------
   openDialog({ title, body, buttons = [], onClose }) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -999,9 +998,10 @@ class App {
         · 修改：移动/复制/旋转/缩放/镜像/偏移/修剪/延伸/圆角/倒角/阵列/拉伸<br>
         · 标注：线性/对齐/半径/直径/角度<br>
         · 图层、块、对象捕捉、正交、栅格、撤销重做<br>
-        · 文件：DXF 读写、JSON 原生格式、SVG 导入导出、PNG 导出<br>
+        · 文件：DXF 读写、DWG 读取、JSON 原生格式、SVG 导入导出、PNG 导出<br>
+        · 三维：长方体/圆柱/球/圆锥/圆环、布尔运算、圆角倒角、STEP 与 STL 读写<br>
         · <b>🤖 AI 助手</b>：接入 MiniMax M3 大模型（原生多模态），对话式 CAD 创作与看图审阅</p>
-        <p style="color:var(--text-dim)">DWG 为专有格式，请先用 ODA/LibreDWG 转换为 DXF。</p>
+        <p style="color:var(--text-dim)">DWG 由内置 LibreDWG 解析器直接读取；标注、样条、填充等复杂对象暂不支持。</p>
       </div>`,
     });
   }
@@ -1039,7 +1039,7 @@ class App {
     this._toastTimer = setTimeout(() => el.classList.remove('show'), kind === 'error' ? 4200 : 2600);
   }
 
-  /* ---------------- 内置命令 ---------------- */
+  // [内置命令]
   _registerAppCommands() {
     const c = this.commander;
     c.register('U', () => { if (!this.scene.undo()) this.notify('没有可撤销的操作'); }, ['UNDO', 'OOPS']);
@@ -1083,7 +1083,7 @@ class App {
   }
 }
 
-/* ---------------- 启动 ---------------- */
+// ---- 启动
 window.CAD = {
   get scene() { return app.scene; },
   get viewport() { return app.viewport; },

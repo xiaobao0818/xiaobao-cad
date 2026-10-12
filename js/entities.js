@@ -1,7 +1,8 @@
-/* ============================================================
- * 小宝CAD 实体系统 —— 所有图元类型、绘制/捕捉/变换/求交
- * 实体均为纯数据对象：{ id, type, layer, color, ltype, lw, ...几何 }
- * ============================================================ */
+/* entities.js —— 图元系统。
+ * 每个图元就是一个普通对象 { id, type, layer, color, ltype, lw, ...几何 }，
+ * 故意不用 class，这样 JSON.stringify / parse 就能直接存盘，不用写 toJSON。
+ * 绘制、捕捉、变换、求交全部按 type 去查 HANDLERS 表分派。
+ */
 import {
   uid, TAU, EPS, deepClone, dist, angleOf, applyM, composeM, translationM, rotationM,
   scaleM, matrixScale, matrixRotation, matrixMirrored, matrixScaleXY, segSegIntersection,
@@ -10,7 +11,7 @@ import {
   bboxContains, pointInPolygon, sampleArcPoints, sampleEllipsePoints, flattenPolyline, fmt,
 } from './util.js';
 
-/* ---------------- 创建 ---------------- */
+// [创建]
 export function newEntity(type, fields = {}) {
   return { id: uid(), type, layer: null, color: null, ltype: null, lw: null, ...fields };
 }
@@ -29,12 +30,14 @@ export const make = {
 };
 export const entityCopy = (e) => deepClone(e);
 
-/* ---------------- 图元处理器注册表 ---------------- */
+/*--- 图元处理器注册表 ---*/
+// 所有图元行为的总入口：{ draw, snap, transform, curves, bbox, ... }
+// 加新图元类型 = 在这里加一条 + 在 newEntity 里补默认属性，别处不用改
 export const HANDLERS = {};
 
 function linePoints(e) { return [{ x: e.x1, y: e.y1 }, { x: e.x2, y: e.y2 }]; }
 
-/* ---------- point ---------- */
+/* --- point --- */
 HANDLERS.point = {
   bbox: (e) => [e.x, e.y, e.x, e.y],
   distance: (e, p) => dist(p, { x: e.x, y: e.y }),
@@ -50,7 +53,7 @@ HANDLERS.point = {
   props: () => [],
 };
 
-/* ---------- line ---------- */
+/* --- line --- */
 HANDLERS.line = {
   bbox: (e) => bboxOfPoints(linePoints(e)),
   distance: (e, p) => distPointSeg(p, { x: e.x1, y: e.y1 }, { x: e.x2, y: e.y2 }),
@@ -79,7 +82,7 @@ HANDLERS.line = {
   props: () => [],
 };
 
-/* ---------- circle ---------- */
+/* --- circle --- */
 HANDLERS.circle = {
   bbox: (e) => [e.cx - e.r, e.cy - e.r, e.cx + e.r, e.cy + e.r],
   distance: (e, p) => Math.abs(dist(p, { x: e.cx, y: e.cy }) - e.r),
@@ -117,7 +120,7 @@ HANDLERS.circle = {
   props: (e) => [{ key: 'r', label: '半径', type: 'number', get: () => e.r, set: (v) => { e.r = v; } }],
 };
 
-/* ---------- arc ---------- */
+/* --- arc --- */
 function arcEnds(e) {
   return [
     { x: e.cx + e.r * Math.cos(e.startAngle), y: e.cy + e.r * Math.sin(e.startAngle) },
@@ -176,7 +179,7 @@ HANDLERS.arc = {
   props: (e) => [{ key: 'r', label: '半径', type: 'number', get: () => e.r, set: (v) => { e.r = v; } }],
 };
 
-/* ---------- ellipse ---------- */
+/* --- ellipse --- */
 HANDLERS.ellipse = {
   bbox(e) {
     const pts = sampleEllipsePoints(e.cx, e.cy, e.rx, e.ry, e.rot, e.startAngle, e.endAngle, 48);
@@ -227,7 +230,7 @@ HANDLERS.ellipse = {
   ],
 };
 
-/* ---------- polyline ---------- */
+/* --- polyline --- */
 function plineSegs(e) {
   const segs = [];
   const n = (e.points || []).length;
@@ -338,7 +341,7 @@ HANDLERS.polyline = {
   props: (e) => [{ key: 'closed', label: '闭合', type: 'bool', get: () => !!e.closed, set: (v) => { e.closed = v; } }],
 };
 
-/* ---------- text ---------- */
+/* --- text --- */
 function textBox(e) {
   const w = e.height * 0.6 * String(e.text || '').length;
   const h = e.height;
@@ -378,7 +381,7 @@ HANDLERS.text = {
 };
 function clampToBox(v, a, b) { return v < a ? a : v > b ? b : v; }
 
-/* ---------- insert (块引用) ---------- */
+// ---- insert (块引用)
 function insertMatrix(e, scene) {
   const b = scene?.blocks?.get(e.block) || { baseX: 0, baseY: 0 };
   return composeM(rotationM(e.rotation || 0, e.x, e.y), composeM(scaleM(e.scaleX ?? 1, e.scaleY ?? 1, e.x, e.y), translationM(e.x - b.baseX, e.y - b.baseY)));
@@ -442,7 +445,7 @@ HANDLERS.insert = {
   },
 };
 
-/* ---------- dimension ---------- */
+/* --- dimension --- */
 HANDLERS.dimension = {
   bbox(e) {
     const pts = [];
@@ -488,7 +491,7 @@ HANDLERS.dimension = {
   props: () => [],
 };
 
-/* ---------- hatch ---------- */
+/* --- hatch --- */
 HANDLERS.hatch = {
   bbox(e) {
     const b = e.boundary;
@@ -559,7 +562,7 @@ HANDLERS.hatch = {
 
 export const ENTITY_TYPES = Object.keys(HANDLERS);
 
-/* ---------------- 变换 ---------------- */
+// 变换 ----------------------------------------------------------
 export function transformEntity(e, m, scene) {
   const h = HANDLERS[e.type];
   if (!h || !h.transform) return deepClone(e);
@@ -578,7 +581,7 @@ export function entityContains(e, p) {
   return h?.contains ? h.contains(e, p) : false;
 }
 
-/* ---------------- 曲线片段（用于求交/修剪/延伸） ---------------- */
+// --- 曲线片段（用于求交/修剪/延伸） ---
 // piece: {kind:'line'|'arc'|'circle'|'poly', ...}
 export function entityCurves(e, scene) {
   const h = HANDLERS[e.type];
@@ -707,7 +710,7 @@ export function entityIntersections(e1, e2, scene) {
   return out;
 }
 
-/* ---------------- 尺寸标注几何计算 ---------------- */
+/*--- 尺寸标注几何计算 ---*/
 export function dimMeasure(e, dimstyle) {
   const p = dimstyle?.precision ?? 2;
   if (e.subtype === 'linear') {

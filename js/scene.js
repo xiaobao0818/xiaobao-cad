@@ -1,6 +1,7 @@
-/* ============================================================
- * 小宝CAD 图纸场景 —— 图层 / 实体集合 / 选择集 / 撤销重做 / 块 / 序列化
- * ============================================================ */
+/* scene.js —— 图纸数据层：图层表、实体集合、选择集、撤销栈、块表、序列化。
+ * 撤销重做用的是整场景快照（deepClone），实现简单；实测 200 步对常见图纸够用，
+ * 但图元上万以后内存会比较难看，到时候再换增量记录。 */
+
 import { Emitter, deepClone, uid, bboxUnion } from './util.js';
 import { HANDLERS, transformEntity, entityBBox } from './entities.js';
 
@@ -9,6 +10,8 @@ export const DEFAULT_DIMSTYLE = {
   precision: 2, units: 'mm',
 };
 
+// FIXME 图层删除时没检查有没有实体在用它，直接删会把图元留在孤儿图层上
+//       （目前绘制还能画出来，颜色按默认走；暂时不影响使用）
 export class Scene extends Emitter {
   constructor() {
     super();
@@ -27,7 +30,7 @@ export class Scene extends Emitter {
     this.ensureLayer('0', { color: '#ffffff' });
   }
 
-  /* ---------- 图层 ---------- */
+  // ---- 图层
   ensureLayer(name, opts = {}) {
     if (!name) name = '0';
     if (!this.layers.has(name)) {
@@ -59,7 +62,7 @@ export class Scene extends Emitter {
     this.emit('layers');
   }
 
-  /* ---------- 实体 ---------- */
+  // 实体 ----------------------------------------------------------
   addEntity(e) {
     if (!e.id) e.id = uid();
     if (e.layer == null) e.layer = this.currentLayer;
@@ -89,7 +92,7 @@ export class Scene extends Emitter {
   byType(t) { return this.all().filter((e) => e.type === t); }
   count() { return this.entities.size; }
 
-  /* ---------- 选择 ---------- */
+  // --- 选择 ---
   select(ids, mode = 'set') {
     if (mode === 'set') {
       this.selection.clear();
@@ -112,7 +115,7 @@ export class Scene extends Emitter {
     this.select(ids, 'set');
   }
 
-  /* ---------- 撤销 / 重做 ---------- */
+  // --- 撤销 / 重做 ---
   _changed() { this._changeCount++; this.dirty = true; this.emit('change'); }
   _snapshot() {
     return {
@@ -175,7 +178,7 @@ export class Scene extends Emitter {
   }
   clearUndo() { this.undoStack.length = 0; this.redoStack.length = 0; this.emit('history'); }
 
-  /* ---------- 变换 / 批量编辑 ---------- */
+  // [变换 / 批量编辑]
   /**
    * 对一组实体应用矩阵。copy=true 时复制（保留原实体）。
    * insert 在非相似变换下自动分解（__explode）。
@@ -221,7 +224,7 @@ export class Scene extends Emitter {
     return this.transformEntities({ a: 1, b: 0, c: 0, d: 1, e: dx, f: dy }, ids, opts);
   }
 
-  /* ---------- 块 ---------- */
+  /* 块 */
   addBlock(name, base, entities) {
     if (!name || this.blocks.has(name)) throw new Error(`块「${name}」已存在`);
     this.blocks.set(name, {
@@ -269,7 +272,7 @@ export class Scene extends Emitter {
     return blk ? blk.entities.size : 0;
   }
 
-  /* ---------- 范围 / 查询 ---------- */
+  // --- 范围 / 查询 ---
   extents(ids = null) {
     let bb = null;
     const list = ids ? [...ids].map((id) => this.entities.get(id)).filter(Boolean) : this.all();
@@ -281,7 +284,7 @@ export class Scene extends Emitter {
     return bb;
   }
 
-  /* ---------- 序列化（小宝CAD 原生格式） ---------- */
+  /* 序列化（小宝CAD 原生格式） */
   serialize() {
     return {
       app: 'xbcad', version: 1, units: this.units,

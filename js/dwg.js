@@ -1,10 +1,11 @@
-/* ============================================================
- * 小宝CAD DWG 解析 —— 基于 @mlightcad/libredwg-web（LibreDWG WASM）
- * parseDWG(bytes) → { layers, entities, currentLayer, units }
- * 与 dxf.js 输出结构一致，可直接喂给 applyDXFData / buildDataSummary
- * ============================================================ */
+/* dwg.js —— DWG 解析，走 @mlightcad/libredwg-web（LibreDWG 的 WASM 构建）。
+ * 输出结构跟 dxf.js 对齐，这样 applyDXFData / buildDataSummary 能直接复用，不用写第二套。
+ * 09-02 补齐了 DIMENSION / HATCH / MULTILEADER 三类实体 —— 之前这些是静默丢掉的，
+ * 而标注恰恰是工程图纸里语义最重的部分。SPLINE / 3DSOLID / VIEWPORT 暂时还是跳过。
+ */
 import { uid } from './util.js';
 
+// WASM 只初始化一次，后面复用同一个 promise
 let _libPromise = null;
 function getLib() {
   if (!_libPromise) {
@@ -39,7 +40,6 @@ async function doParseDWG(bytes) {
   }
 }
 
-/* ---------------- 颜色 / 线型工具 ---------------- */
 function mapColor(e) {
   const ci = e.colorIndex;
   if (ci === 0 || ci === 256 || ci == null) {
@@ -69,7 +69,7 @@ function base(e, type) {
 }
 const V = (p) => ({ x: p?.x ?? 0, y: p?.y ?? 0 });
 
-/* ---------------- 实体映射（纯函数，可单测） ---------------- */
+/* 实体映射（纯函数，可单测） */
 export function mapDwgDatabase(db) {
   const EMPTY = { layers: [{ name: '0', color: '#ffffff', on: true, locked: false, ltype: 'CONTINUOUS' }], entities: [], currentLayer: '0', units: 'mm' };
   if (!db || typeof db !== 'object') return EMPTY;

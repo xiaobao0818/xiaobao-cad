@@ -1,12 +1,11 @@
-/* ============================================================
- * 小宝CAD 文件读写 —— 打开/保存/导出（DXF/JSON/SVG/PNG）
- * 以及供 AI 使用的图纸摘要生成、示例图纸
- * ============================================================ */
+/* io.js —— 文件读写：打开 / 保存 / 导出（DXF、JSON、SVG、PNG）。
+ * 另外还放了给 AI 用的图纸摘要生成，以及内置示例图纸。
+ */
 import { HANDLERS, newEntity, make, entityBBox } from './entities.js';
 import { Scene } from './scene.js';
 import { download, fmt, colorToCSS, escapeHtml, bboxUnion, arcFromBulge, D2R, R2D, normAngle, TAU } from './util.js';
 
-/* ---------------- 文件读取 ---------------- */
+// ===== 文件读取 =====
 export function fileToText(file) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -102,7 +101,7 @@ export function applyDXFData(scene, data) {
   scene.emit('blocks');
 }
 
-/* ---------------- 摘要（供 AI / 日志） ---------------- */
+// 摘要（供 AI / 日志） ----------------------------------------------------------
 function describeEntity(e) {
   const f = (v) => fmt(v, 2);
   switch (e.type) {
@@ -161,7 +160,7 @@ export function buildDXFSummary(text) {
   return buildDataSummary(data);
 }
 
-/* ---------------- 导出 ---------------- */
+// ===== 导出 =====
 export function saveNative(scene, name = '图纸') {
   const json = JSON.stringify(scene.serialize(), null, 1);
   download(`${name}.xbcad.json`, json, 'application/json');
@@ -263,7 +262,7 @@ export function exportSVG(scene, name = '图纸') {
   download(`${name}.svg`, parts.join('\n'), 'image/svg+xml');
 }
 
-/* ---------------- SVG 导入（完整 path 命令 + transform + 样式） ---------------- */
+/* SVG 导入（完整 path 命令 + transform + 样式） */
 export function svgToEntities(text, doc) {
   if (!doc) doc = new DOMParser().parseFromString(text, 'image/svg+xml');
   const out = [];
@@ -514,7 +513,7 @@ export function svgToEntities(text, doc) {
   return out;
 }
 
-/* ---------------- 示例图纸 ---------------- */
+// 示例图纸 ----------------------------------------------------------
 export function makeDemoScene(scene) {
   scene.layers = new Map();
   scene.ensureLayer('0', { color: '#ffffff' });

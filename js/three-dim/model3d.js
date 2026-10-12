@@ -1,8 +1,8 @@
-/* ============================================================
- * 小宝CAD 3D 文档模型 —— 实体列表 / 撤销重做 / 内核求值 / 序列化
- * body: { id, label, kind: 'box'|'cylinder'|'sphere'|'cone'|'torus'|'boolean',
- *         params: {...} | {op, a, b[]}, color, visible }
- * ============================================================ */
+/* model3d.js —— 3D 文档模型：实体列表 + 撤销重做 + 内核求值 + 序列化。
+ * body 的结构：
+ *   { id, label, kind: 'box'|'cylinder'|'sphere'|'cone'|'torus'|'boolean',
+ *     params: {...} | { op, a, b[] }, color, visible }
+ */
 import { Emitter, deepClone, uid } from '../util.js';
 
 const PRIM_COLORS = ['#7fb2e8', '#8fd3a8', '#f2c76e', '#e88b8b', '#b9a3f0', '#7fd7d3', '#e0a6d3'];
@@ -30,7 +30,6 @@ export class Model3D extends Emitter {
   }
   _changed() { this._changeCount = (this._changeCount || 0) + 1; this._dirty = true; this.emit('change'); }
 
-  /* ---------- 快照 / 撤销 ---------- */
   _snapshot() {
     return deepClone({ bodies: this.bodies, labelCounter: this._labelCounter, selection: [...this.selection] });
   }
@@ -73,7 +72,7 @@ export class Model3D extends Emitter {
     return true;
   }
 
-  /* ---------- 操作 ---------- */
+  // 操作 ----------------------------------------------------------
   addPrimitive(kind, params, opts = {}) {
     const body = {
       id: uid(), label: this._nextLabel(kind), kind, params: { ...params },
@@ -221,7 +220,7 @@ export class Model3D extends Emitter {
     this.singleOp('清空', () => { this.bodies = []; this.selection.clear(); });
   }
 
-  /* ---------- 求值：模型 → 内核 ---------- */
+  // ---- 求值：模型 → 内核
   /** 重建内核实体并生成网格；返回 [{modelId, positions, indices, color}] */
   evaluate() {
     if (!this.kernel) return [];
@@ -374,7 +373,7 @@ export class Model3D extends Emitter {
     return lines.join('\n');
   }
 
-  /* ---------- 序列化 ---------- */
+  /* 序列化 */
   serialize() {
     const bodies = deepClone(this.bodies).map((b) => {
       delete b._kids; // 运行时内核引用（跨会话失效）
@@ -405,7 +404,7 @@ export class Model3D extends Emitter {
   }
 }
 
-/* ---------- base64（浏览器/Node 通用，不依赖 btoa） ---------- */
+// --- base64（浏览器/Node 通用，不依赖 btoa） ---
 const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 function bytesToB64(bytes) {
   let s = '';

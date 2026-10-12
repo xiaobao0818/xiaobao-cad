@@ -1,6 +1,7 @@
-/* ============================================================
- * 小宝CAD 3D 建模工作区 —— 内核加载 / 工具栏 / 交互 / AI 工具 / 文件
- * ============================================================ */
+/* app3d.js —— 3D 建模工作区：内核加载、3D 工具栏、鼠标交互、AI 三维工具、STEP/STL 文件。
+ * 08-17 建，08-22 又动了一轮（加了圆角倒角和导出 STL）。
+ * 内核那 63MB 的 WASM 是懒加载的 —— 第一次切到 3D 区才拉，所以初始打开只有 2D，很快。
+ */
 import { Viewport3D } from './viewport3d.js';
 import { Model3D } from './model3d.js';
 import { initKernel } from './occ-kernel.js';
@@ -92,7 +93,7 @@ export class App3D {
     this._loadKernel();
   }
 
-  /* ---------------- 内核加载 ---------------- */
+  /* 内核加载 */
   async _loadKernel() {
     const loadingEl = document.getElementById('kernelLoading');
     try {
@@ -130,7 +131,7 @@ export class App3D {
     this.vp.onClick((e) => this._onCanvasClick(e));
   }
 
-  /* ---------------- 工具栏 ---------------- */
+  // ---- 工具栏
   _buildToolbar() {
     const bar = document.getElementById('toolbar3d');
     if (!bar) return;
@@ -171,7 +172,7 @@ export class App3D {
     else if (t.act === 'clear') this._clear();
   }
 
-  /* ---------------- 拾取流程 ---------------- */
+  // [拾取流程]
   _startBoolean(op) {
     const names = { fuse: '并集', cut: '差集', common: '交集' };
     this._pickState = { step: 1, op, a: null };
@@ -246,7 +247,7 @@ export class App3D {
     }
   }
 
-  /* ---------------- 圆角/倒角 ---------------- */
+  /*--- 圆角/倒角 ---*/
   async _filletTool(kind) {
     const name = kind === 'fillet' ? '圆角' : '倒角';
     let id = [...this.model.selection][0] || null;
@@ -301,7 +302,7 @@ export class App3D {
     }
   }
 
-  /* ---------------- 对话框 ---------------- */
+  // ---- 对话框
   _addPrimitiveDialog(kind) {
     const def = PRIM_DEFS[kind];
     const box = document.createElement('div');
@@ -418,7 +419,7 @@ export class App3D {
     this.refresh();
   }
 
-  /* ---------------- 文件 ---------------- */
+  // [文件]
   _importStep() {
     const inp = document.createElement('input');
     inp.type = 'file';
@@ -480,7 +481,7 @@ export class App3D {
     } catch (e) { this.app.notify('STL 导出失败：' + (e?.message || e), 'error'); }
   }
 
-  /* ---------------- 刷新 ---------------- */
+  // 刷新 ----------------------------------------------------------
   refresh(fitView = false) {
     if (!this.ready || !this.vp) return [];
     let meshes;
@@ -512,7 +513,7 @@ export class App3D {
     this.model.on('selection', () => { this.vp?.highlight([...this.model.selection][0] || null); });
   }
 
-  /* ---------------- AI 工具 ---------------- */
+  // ===== AI 工具 =====
   _registerAITools() {
     const CAD = window.CAD;
     if (!CAD || CAD.ai3d) return;

@@ -1,6 +1,10 @@
-/* ============================================================
- * 小宝CAD 绘图与修改工具 —— 所有绘图/编辑命令
- * ============================================================ */
+/* tools.js —— 绘图命令和修改命令都堆在这里。
+ * 直线 L、多段线 PL、矩形 REC、圆 C、圆弧 A、椭圆 EL、文字 TEXT、填充 H；
+ * 移动 M、复制 CO、旋转 RO、缩放 SC、镜像 MI、偏移 O、修剪 TR、延伸 EX、
+ * 圆角 F、倒角 CHA、阵列 AR / ARP、拉伸 S、删除 E、分解 X。
+ *
+ * 文件偏长，分节是按"命令名"排的，找东西直接搜命令名比翻目录快。
+ */
 import { CANCELLED, ENDED } from './commands.js';
 import {
   HANDLERS, make, newEntity, entityCurves, entityIntersections, piecePieceIntersections,
@@ -1216,6 +1220,8 @@ function regModify(app, c) {
   }, ['X']);
 }
 
+// 每条命令都是个 async 函数，内部用 await c.awaitPoint(...) 这种写法
+// 一步步问用户要输入；中途 Esc 会抛回 CANCELLED，所以每个 await 后面都要判一次。
 export function registerTools(app) {
   const c = app.commander;
   regDraw(app, c);

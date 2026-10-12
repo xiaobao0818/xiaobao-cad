@@ -1,6 +1,5 @@
-/* ============================================================
- * 小宝CAD 3D 视口 —— Three.js WebGL 渲染 / 轨道相机 / 拾取 / 高亮
- * ============================================================ */
+// viewport3d.js —— 3D 视口，Three.js + OrbitControls。
+// 这里只管渲染、相机和拾取高亮，几何全部在内核那边算，别把建模逻辑写进来。
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { Emitter } from '../util.js';
@@ -79,7 +78,7 @@ export class Viewport3D extends Emitter {
     this.renderer.render(this.scene, this.camera);
   }
 
-  /* ---------- 实体显示 ---------- */
+  /* 实体显示 */
   /** meshes: [{ modelId, positions: Float32Array, indices: Uint32Array, color }] */
   setBodies(meshes) {
     const seen = new Set();
@@ -157,7 +156,7 @@ export class Viewport3D extends Emitter {
     this.controls.update();
   }
 
-  /* ---------- 拾取 ---------- */
+  /* 拾取 */
   pick(clientX, clientY) {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(
