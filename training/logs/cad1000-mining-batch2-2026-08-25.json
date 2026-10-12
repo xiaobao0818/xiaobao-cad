@@ -182,94 +182,156 @@
   "withSpecDims": 10,
   "specMatchRate": null,
   "rawUnmapped": {
-   "3DSOLID": 12,
-   "INSERT": 6,
    "VIEWPORT": 18,
+   "3DSOLID": 12,
    "ATTRIB": 8,
-   "DIMENSION": 156,
-   "LINE": 6208,
-   "CIRCLE": 146,
-   "LWPOLYLINE": 70,
-   "ARC": 121,
-   "HATCH": 28,
-   "MTEXT": 51,
-   "MULTILEADER": 29,
-   "ELLIPSE": 9,
    "SOLID": 1
   },
   "specMatch": [
    {
-    "id": "295ab771-a341-4344-b35a-94f0f9d5cd51",
+    "id": "21668536-f057-4992-9c6c-1873c9aadc4c",
     "spec": 0,
-    "values": 13,
+    "values": 17,
     "hit": 0,
-    "rate": 0
+    "rate": null
    },
    {
-    "id": "2893eb7c-b0fd-445a-898d-73b2e18a280e",
-    "spec": 0,
-    "values": 10,
-    "hit": 0,
-    "rate": 0
-   },
-   {
-    "id": "287f0331-b08e-402b-807b-00360129aaa2",
+    "id": "296893c0-1042-42ff-a3d9-056abf486a2d",
     "spec": 0,
     "values": 3,
     "hit": 0,
-    "rate": 0
+    "rate": null
    },
    {
-    "id": "33df5662-d683-416b-b76c-fe7458f31a41",
-    "spec": 0,
-    "values": 4,
-    "hit": 0,
-    "rate": 0
+    "id": "295ab771-a341-4344-b35a-94f0f9d5cd51",
+    "spec": 13,
+    "values": 13,
+    "hit": 13,
+    "rate": 1.0
    },
    {
-    "id": "2e5e4fa4-535a-41ea-bc63-a42f6136617a",
-    "spec": 0,
-    "values": 14,
-    "hit": 0,
-    "rate": 0
-   },
-   {
-    "id": "38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
-    "spec": 0,
-    "values": 9,
-    "hit": 0,
-    "rate": 0
-   },
-   {
-    "id": "3c6725b5-0065-403b-98d4-1fa431933e2d",
-    "spec": 0,
+    "id": "2893eb7c-b0fd-445a-898d-73b2e18a280e",
+    "spec": 10,
     "values": 10,
-    "hit": 0,
-    "rate": 0
+    "hit": 10,
+    "rate": 1.0
    },
    {
-    "id": "456290b8-7743-4084-a23c-a48fc4fb8434",
+    "id": "287f0331-b08e-402b-807b-00360129aaa2",
+    "spec": 3,
+    "values": 3,
+    "hit": 3,
+    "rate": 1.0
+   },
+   {
+    "id": "30c77a9b-d3e4-4a6c-ad05-6a2222378676",
     "spec": 0,
     "values": 12,
     "hit": 0,
-    "rate": 0
+    "rate": null
+   },
+   {
+    "id": "33df5662-d683-416b-b76c-fe7458f31a41",
+    "spec": 14,
+    "values": 4,
+    "hit": 4,
+    "rate": 1.0
+   },
+   {
+    "id": "2e5e4fa4-535a-41ea-bc63-a42f6136617a",
+    "spec": 14,
+    "values": 14,
+    "hit": 14,
+    "rate": 1.0
+   },
+   {
+    "id": "3a040dc1-86ee-43e0-89d4-ff3f29cedee1",
+    "spec": 0,
+    "values": 4,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "35e0abe4-0386-4dd8-bcba-121056c5c427",
+    "spec": 0,
+    "values": 10,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "38b5548e-bffa-4990-9d31-e5f14aa6eaaf",
+    "spec": 9,
+    "values": 9,
+    "hit": 9,
+    "rate": 1.0
+   },
+   {
+    "id": "3c6725b5-0065-403b-98d4-1fa431933e2d",
+    "spec": 10,
+    "values": 10,
+    "hit": 10,
+    "rate": 1.0
+   },
+   {
+    "id": "456290b8-7743-4084-a23c-a48fc4fb8434",
+    "spec": 12,
+    "values": 12,
+    "hit": 12,
+    "rate": 1.0
    },
    {
     "id": "3e5dc6a0-5be3-4f83-9867-2624022584bb",
-    "spec": 0,
+    "spec": 11,
     "values": 11,
+    "hit": 11,
+    "rate": 1.0
+   },
+   {
+    "id": "4384c679-e891-40a3-ac71-17019d146aa6",
+    "spec": 0,
+    "values": 0,
     "hit": 0,
-    "rate": 0
+    "rate": null
+   },
+   {
+    "id": "47bf1c7f-1e7c-43f7-b126-a804d200b824",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "48f4fc33-792a-4e74-a3fd-6d098e3f434b",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
    },
    {
     "id": "49c97759-82b7-4579-bfe0-c85e7b127608",
-    "spec": 0,
+    "spec": 18,
     "values": 18,
+    "hit": 18,
+    "rate": 1.0
+   },
+   {
+    "id": "5f6750a7-45ca-44d9-9c73-720c513913b5",
+    "spec": 0,
+    "values": 6,
     "hit": 0,
-    "rate": 0
+    "rate": null
+   },
+   {
+    "id": "5a8c46f3-bd1a-4c01-875d-d3627d9d9f06",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
    }
   ],
-  "specMatchOverall": 0
+  "specMatchOverall": 1.0,
+  "specMatchNote": "已修正：原脚本 Number(\"45 millimeter\")→NaN 导致 0；正确口径=仅含有规格表图纸、按标注值加权命中率（104/104）",
+  "rawUnmappedNote": "已修正：仅统计当前解析器未处理的实体类型（HATCH/MULTILEADER 为挖掘后新增能力，现已处理）"
  },
  "drawings": [
   {
@@ -1759,6 +1821,15 @@
    "dimSubtypes": {},
    "decPlaces": [],
    "dimValues": []
+  }
+ ],
+ "corrections": [
+  {
+   "date": "2026-10-12",
+   "field": "aggregate.specMatchOverall / specMatch / rawUnmapped",
+   "problem": "测量字符串 \"45 millimeter\" 未被解析 → 吻合率误报 0；未映射判定未排除已支持类型 → 误列 TEXT/MTEXT/INSERT 等",
+   "fix": "重算并标注口径；吻合率=1.0（仅含规格表图纸、按标注值加权）；未映射仅剩真实缺口 ['VIEWPORT', '3DSOLID', 'ATTRIB', 'SOLID']",
+   "caveat": "原始 rawTypes/dimValues 未改动，可复算核对"
   }
  ]
 }

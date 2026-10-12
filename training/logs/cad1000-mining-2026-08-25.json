@@ -181,101 +181,156 @@
   "withSpecDims": 11,
   "specMatchRate": null,
   "rawUnmapped": {
-   "LINE": 1446,
-   "DIMENSION": 233,
-   "CIRCLE": 99,
-   "ARC": 141,
-   "LWPOLYLINE": 143,
-   "SPLINE": 16,
-   "3DSOLID": 12,
-   "INSERT": 5,
-   "HATCH": 58,
-   "MULTILEADER": 53,
-   "MTEXT": 94,
    "VIEWPORT": 17,
+   "SPLINE": 16,
    "ATTRIB": 16,
-   "TEXT": 68
+   "3DSOLID": 12
   },
   "specMatch": [
    {
     "id": "01dd0e82-9a4f-4d84-83e4-33ce6fcf0eb2",
-    "spec": 0,
+    "spec": 15,
     "values": 13,
+    "hit": 13,
+    "rate": 1.0
+   },
+   {
+    "id": "02b5cedf-11ed-4fcd-8130-fb283a6d59a2",
+    "spec": 0,
+    "values": 0,
     "hit": 0,
-    "rate": 0
+    "rate": null
    },
    {
     "id": "044507f6-1ece-4893-afbe-93d14c2d6def",
-    "spec": 0,
+    "spec": 8,
     "values": 5,
+    "hit": 5,
+    "rate": 1.0
+   },
+   {
+    "id": "02e026b7-7e80-4fe3-9ae0-cf52f307d27c",
+    "spec": 0,
+    "values": 0,
     "hit": 0,
-    "rate": 0
+    "rate": null
    },
    {
     "id": "0b534355-d2fd-4c7e-b126-42f50fe552c7",
-    "spec": 0,
+    "spec": 50,
     "values": 48,
-    "hit": 0,
-    "rate": 0
+    "hit": 48,
+    "rate": 1.0
    },
    {
     "id": "0902aaea-3fb0-4fc2-941f-d0a06b664018",
-    "spec": 0,
+    "spec": 17,
     "values": 17,
+    "hit": 17,
+    "rate": 1.0
+   },
+   {
+    "id": "0a0cc801-9d52-4ddd-a335-2be3f80acce5",
+    "spec": 0,
+    "values": 4,
     "hit": 0,
-    "rate": 0
+    "rate": null
+   },
+   {
+    "id": "06d7107b-1172-4953-a8a2-614d5a1e22bc",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "0ee1de8f-2141-4718-9f8b-2fe322a391d4",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "0ce1a970-0889-4915-bbee-803bd7458660",
+    "spec": 0,
+    "values": 1,
+    "hit": 0,
+    "rate": null
    },
    {
     "id": "0d681686-4914-448e-a7d8-cd27a6bfffe0",
-    "spec": 0,
+    "spec": 20,
     "values": 19,
-    "hit": 0,
-    "rate": 0
+    "hit": 19,
+    "rate": 1.0
    },
    {
     "id": "1b8d1294-348f-4810-b84a-ac297d9ff1c0",
-    "spec": 0,
+    "spec": 13,
     "values": 13,
-    "hit": 0,
-    "rate": 0
+    "hit": 13,
+    "rate": 1.0
    },
    {
     "id": "151ed919-c922-4d6d-b29f-e4ffbee6aa14",
-    "spec": 0,
+    "spec": 19,
     "values": 36,
-    "hit": 0,
-    "rate": 0
+    "hit": 23,
+    "rate": 0.6389
    },
    {
     "id": "1c9af049-f700-4a01-94ee-302654f66962",
-    "spec": 0,
+    "spec": 13,
     "values": 13,
-    "hit": 0,
-    "rate": 0
+    "hit": 13,
+    "rate": 1.0
    },
    {
     "id": "1d2a90dc-f347-4d51-8ad8-3c6e691fab03",
-    "spec": 0,
+    "spec": 18,
     "values": 18,
-    "hit": 0,
-    "rate": 0
+    "hit": 18,
+    "rate": 1.0
    },
    {
     "id": "202b130d-b540-4646-b8bf-0eae95238176",
+    "spec": 17,
+    "values": 17,
+    "hit": 17,
+    "rate": 1.0
+   },
+   {
+    "id": "22f03536-fe56-4cc3-8a28-95ffc957b578",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
+   },
+   {
+    "id": "21668536-f057-4992-9c6c-1873c9aadc4c",
     "spec": 0,
     "values": 17,
     "hit": 0,
-    "rate": 0
+    "rate": null
+   },
+   {
+    "id": "22ce00dc-1716-4e10-99c2-a24c32e74f5c",
+    "spec": 0,
+    "values": 0,
+    "hit": 0,
+    "rate": null
    },
    {
     "id": "2436f65f-24d5-40ee-8814-cdb6c878ea1f",
-    "spec": 0,
+    "spec": 12,
     "values": 12,
-    "hit": 0,
-    "rate": 0
+    "hit": 12,
+    "rate": 1.0
    }
   ],
-  "specMatchOverall": 0
+  "specMatchOverall": 0.9384,
+  "specMatchNote": "已修正：原脚本 Number(\"45 millimeter\")→NaN 导致 0；正确口径=仅含有规格表图纸、按标注值加权命中率（198/211）",
+  "rawUnmappedNote": "已修正：仅统计当前解析器未处理的实体类型（HATCH/MULTILEADER 为挖掘后新增能力，现已处理）"
  },
  "drawings": [
   {
@@ -2333,6 +2388,15 @@
     6,
     42.00000000000091
    ]
+  }
+ ],
+ "corrections": [
+  {
+   "date": "2026-10-12",
+   "field": "aggregate.specMatchOverall / specMatch / rawUnmapped",
+   "problem": "测量字符串 \"45 millimeter\" 未被解析 → 吻合率误报 0；未映射判定未排除已支持类型 → 误列 TEXT/MTEXT/INSERT 等",
+   "fix": "重算并标注口径；吻合率=0.9384（仅含规格表图纸、按标注值加权）；未映射仅剩真实缺口 ['VIEWPORT', 'SPLINE', 'ATTRIB', '3DSOLID']",
+   "caveat": "原始 rawTypes/dimValues 未改动，可复算核对"
   }
  ]
 }

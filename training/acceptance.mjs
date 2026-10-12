@@ -108,7 +108,7 @@ function check2d(check, ents) {
         return approx(bb[0], check.x1, check.tol) && approx(bb[1], check.y1, check.tol) &&
                approx(bb[2], check.x2, check.tol) && approx(bb[3], check.y2, check.tol);
       })());
-      return { pass: !!pl, detail: `闭合轮廓 @(${check.x1},${check.y1})-(${check.x2},${check.y2}) ±${check.tol}${pl ? ' ✓' : ' ✗（图框/标题栏缺失或尺寸不符）'}` };
+      return { pass: !!pl, detail: `闭合轮廓 @(${check.x1},${check.y1})-(${check.x2},${check.y2}) ±${check.tol}${pl ? ' ✓' : ' ✗（该位置未找到尺寸相符的闭合轮廓）'}` };
     }
     case 'countInBand': {
       // 区域统计（三视图布局验收）：指定区域内某类实体数量
