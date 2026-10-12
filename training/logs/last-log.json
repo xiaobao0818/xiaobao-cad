@@ -10057,5 +10057,27 @@
     "fbRounds": 0,
     "fails": [],
     "note": ""
+  },
+  {
+    "ts": 1791796762765,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "flange2d",
+    "taskName": "法兰盘俯视图（2D）",
+    "round": 1,
+    "ws": "2d",
+    "scoreBefore": 85,
+    "scoreAfter": 85,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "范围 297.0×210.0（期望 110×110 ±15）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "范围 297.0×210.0（期望 110×110 ±15）"
+    ]
   }
 ]
