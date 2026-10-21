@@ -992,7 +992,7 @@ class App {
     this.openDialog({
       title: '关于小宝CAD',
       body: `<div class="form-help" style="font-size:13px;line-height:1.9">
-        <p><b style="font-size:16px">🐻 小宝CAD</b> v1.0</p>
+        <p><b style="font-size:16px">🐻 小宝CAD设计软件</b> V1.0</p>
         <p>一款运行在浏览器中的轻量 CAD 绘图软件：</p>
         <p>· 绘图：直线/多段线/矩形/圆/圆弧/椭圆/多边形/文字/填充<br>
         · 修改：移动/复制/旋转/缩放/镜像/偏移/修剪/延伸/圆角/倒角/阵列/拉伸<br>

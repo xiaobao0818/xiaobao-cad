@@ -41,9 +41,14 @@ const DEFAULT_SETTINGS = {
   deepThink: false, // MiniMax M3 thinking 模式（更高质量，略慢）
 };
 const REPEAT_LIMIT = 2; // 死循环防护：连续重复相同工具调用达到该值 → 停止（不是上限，是防空转烧额度）
+// 取 2 不是随手定的：真打转的时候第 2 轮就已经逐字重复了，
+// 放到 3 只是多烧一轮额度，换不来更好的结果。
 const MAX_SUMMARY_LEN = 3000;
 
 const REVIEW_MARK = '[多模态审阅]';
+// 这段审阅提示词是照着实测结果一句句试出来的，不是一次写好。
+// 要动的话先想清楚：删掉哪条检查项，那一类问题就会重新漏掉，
+// 尤其是「中心线」和「总长总宽」这两条，删了模型基本就不会主动补了。
 const REVIEW_PROMPT =
   REVIEW_MARK +
   '你是小宝CAD 的专业图纸审阅员（资深工程师视角）。上面的图片是当前 CAD 图纸/三维模型的实时渲染截图。\n' +
@@ -59,6 +64,12 @@ const REVIEW_PROMPT =
   '3. 认为达到要求时，回复「已满意」并简短总结最终结果，不要再调用任何工具；\n' +
   '4. 尽量在 1~2 轮内收敛，避免无意义的反复调整。';
 
+// 系统提示是照 EVAL 结果一条条筛出来的：能改变模型行为的才留。
+// 教训：早先往这里塞过"图纸默认 A3 幅面 / 图框距纸边 10mm"这类无条件规则，
+// 结果模型把它泛化到了简单零件图上，好好的图被加了图框，反而更差，已整段移除。
+// 图纸规范现在只走知识库检索那条路（见 query_knowledge），不在这里写死。
+// TODO 提示词越堆越长，每轮请求都全量重发，token 成本一直在涨，
+//      后面按任务类型裁剪一下，别继续往上加了。
 const SYSTEM_PROMPT = [
   '你是「小宝CAD」——一款 AI 原生 CAD 软件的内置智能体。',
   '小宝CAD 的核心理念：用户直接用自然语言对话、或给图纸/草图文件作参考，就能完成专业级的制图与三维建模。',
@@ -101,6 +112,8 @@ const SYSTEM_PROMPT = [
   '- 不确定时优先按行业规范给出合理默认值，并在回复中说明。',
 ].join('\n');
 
+// 给不支持 function calling 的模型兜底用的。默认的 MiniMax M3 支持工具调用，
+// 正常走不到这条路径；但换第三方兼容接口时会用到，别顺手删掉。
 const FALLBACK_INSTRUCTION =
   '\n\n如果无法调用函数工具，请用如下 JSON 代码块输出 CAD 命令（一次可多条）：\n' +
   '```cad\n' +
@@ -526,7 +539,8 @@ export default class AIChatPanel {
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (!raw) return { ...DEFAULT_SETTINGS };
       const saved = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-      // 旧版本迁移：项目已全面切换 MiniMax M3
+      // 历史包袱：老用户的 localStorage 里还存着 DeepSeek 时代的配置。
+      // 这段是兼容代码，等确认外面没人再用旧版本了，整块可以删。
       if (saved.settingsVersion !== SETTINGS_VERSION) {
         const wasDeepSeekDefault = (saved.base === 'https://api.deepseek.com' && saved.model === 'deepseek-chat');
         if (wasDeepSeekDefault) {
@@ -879,6 +893,12 @@ export default class AIChatPanel {
       this._stripReviewImages(); // 无论成功/失败/停止都清理审阅截图
     }
   }
+  // 审阅循环按设计不给硬上限——有些图确实要来回改好几轮才像样，
+  // 卡死轮数反而修不完。靠两个东西刹车：用户设的轮数上限，
+  // 以及下面那个"连续两轮改法完全相同"的判定。
+  // HACK 重复判定做得比较粗：只有工具名 + 参数串完全一致才算重复，
+  //      模型换个说法描述同一个修改就绕过去了。实测够用，先这样，
+  //      真要收紧得比对改动产生的实体差异，成本不低。
   async _visionReviewLoop(captureFn, endpointCfg, s) {
     let image = captureFn();
     const roundLimit = Number(s.reviewRounds) > 0 ? Number(s.reviewRounds) : Infinity;
@@ -1032,7 +1052,10 @@ export default class AIChatPanel {
         if (noTextOnly >= 3) {
           return { fallback: false, text: msg.content };
         }
-        // 再给机会：明确要求模型立即调用工具创建实体（针对只输出 think 计划不调工具的失败模式）
+        // HACK 模型偶尔只回一段计划却不调工具（实测大约每十几轮碰上一次，
+        //      多模态审阅轮里更容易出现）。这里追一句强制指令再给一次机会；
+        //      连追 3 次仍不动手就放弃本轮，把模型的原话直接还给用户，
+        //      免得在死路上反复重试白烧额度。
         this.messages.push({
           role: 'user',
           content: '[系统提示] 你刚才只输出了文字/思考，没有调用任何工具，工作区没有任何产出。'
@@ -1222,6 +1245,10 @@ export default class AIChatPanel {
       },
     };
   }
+  // 模型给的参数不保证是合法 JSON——多包一层 ```、用单引号、尾逗号都见过。
+  // 这里刻意不做容错清洗（去尾逗号、单引号转双引号之类）：清洗规则很容易
+  // 把本来正常的 JSON 也改坏，反而更难查。解析失败就返回空对象，
+  // 让工具自己抛"参数为空"，问题出在哪一目了然。
   _parseArgs(str) {
     if (!str) return {};
     try { return JSON.parse(str); } catch (e) { return {}; }
@@ -1479,6 +1506,8 @@ export default class AIChatPanel {
   }
 
   // ===== DWG 文本信息提取（专有二进制，尽力提取明文信息） =====
+  // DWG 没有公开的格式规范，只能到文件头前几十字节里翻 "AC10xx" 这个版本标记。
+  // 纯嗅探，不是真解析；拿到版本号只是为了给用户提示"你这文件是哪个年代存的"。
   _dwgVersion(bytes) {
     let head = '';
     for (let i = 0; i < Math.min(bytes.length, 64); i++) head += String.fromCharCode(bytes[i]);
@@ -1487,6 +1516,9 @@ export default class AIChatPanel {
     const map = { '1009': 'R12', '1012': 'R13', '1014': 'R14', '1015': '2000', '1018': '2004', '1021': '2007', '1024': '2010', '1027': '2013', '1032': '2018' };
     return map[m[1]] || ('AC' + m[1]);
   }
+  // 从二进制里捞连续可打印 ASCII（长度 ≥4 才算），再按出现次数筛一遍，
+  // 目的是把图层名、块名、文字这类明文挑出来。
+  // 阈值 4 是调出来的：设 3 会捞进一堆无意义的碎片。
   _extractASCII(bytes) {
     const out = [];
     let cur = '';
