@@ -1,5 +1,5 @@
 /* viewport.js —— Canvas 2D 视口：渲染、缩放平移、栅格、对象捕捉、拾取、标注绘制。
- * 重绘是全量的（clearRect 之后从头画），几千个图元还跑得动；
+ * 重绘是全量的（铺一次底色之后从头画），几千个图元还跑得动；
  * 要是图元上了万，得改成脏矩形局部重绘。   // TODO 先记着，暂时没这需求
  */
 import {
@@ -260,8 +260,9 @@ export class DrawContext {
   }
 }
 
-// 渲染主循环：不是 requestAnimationFrame 常驻，而是按需 _dirty 标记重绘，
-// 静态图纸的时候 CPU 基本是 0。
+// 渲染主循环：不挂常驻的 requestAnimationFrame，改成按需重绘——
+// requestRender() 用 _raf 把同一帧里的多次请求合并成一次绘制，
+// 图纸静止时完全不吃 CPU。
 export class Viewport extends Emitter {
   constructor(canvas, scene) {
     super();

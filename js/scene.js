@@ -10,8 +10,9 @@ export const DEFAULT_DIMSTYLE = {
   precision: 2, units: 'mm',
 };
 
-// FIXME 图层删除时没检查有没有实体在用它，直接删会把图元留在孤儿图层上
-//       （目前绘制还能画出来，颜色按默认走；暂时不影响使用）
+// 删图层时把该层上的图元改挂到 0 层，而不是连图元一起删——误删图层不至于丢图。
+// FIXME 块定义里的图元也被一并改到 0 层了，块内图元原本的分层信息会丢，
+//       目前没人碰到这个问题，先记着。
 export class Scene extends Emitter {
   constructor() {
     super();

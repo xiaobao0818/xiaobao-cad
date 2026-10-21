@@ -58,9 +58,9 @@ export function parseLength(str, base = 0) {
   return rel ? base + n : n;
 }
 
-/* 基础工具 */
-// JSON 转一圈就够用了，图元都是纯数据，没有循环引用
-// （以前用 structuredClone，Safari 老版本不支持，换回来了）
+/* 下面这些是杂项：深拷贝、HTML 转义、文件下载、包围盒、颜色转换 */
+// 深拷贝优先走 structuredClone（快，且能处理 Map/Set），
+// 环境不支持时退回 JSON 转一圈。图元都是纯数据、没有循环引用，两种结果等价。
 export function deepClone(o) {
   return typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o));
 }
