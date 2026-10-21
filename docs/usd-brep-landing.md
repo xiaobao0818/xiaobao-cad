@@ -115,3 +115,41 @@ metersPerUnit = 1, upAxis = "Y"
    我们只**按字段名实现互操作**，不复制 `schema.usda` 进仓库（如需 vendored，必须保留 NOTICE）；
 4. **不做 WASM 移植**（成本/收益不成立）；
 5. T3 的 NURBS 绑定存在不确定性，先探针后投入。
+
+---
+
+## 七、补充核查（2026-10-21 第二轮）：内核源码与对 AI 建模的真实价值
+
+### 7.1 内核事实（实证）
+
+- `source/SMLib/` **完整 C++ 源码在内**：`inc/` 238 个头文件 6.0 MB，`src/` 224 个实现 32.5 MB；
+  逐文件 `SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES.`
+  `SPDX-License-Identifier: Apache-2.0`
+- 分层（AGENTS.md）：`SMLib`（几何/拓扑内核：SmBrep/SmFace/SmEdge/SmSurface/SmBSplineCurve，SmContext 管内存）
+  → `SM_API`（C 风格稳定封装，头文件见 SmApiBrep/Polygons/Intersectors/Queries/Heal）
+  → `SM_API_USD`（USD 导入导出，BrepArray schema）→ `SmPyLib`/`_omni_solid`（pybind11）
+- 内核能力：解析面 + NURBS、布尔（BRep 与 PolyBrep 两套）、扫掠、圆角、偏移/抽壳、缝合、**healing**、
+  剖分（弦高/角度/边长/长宽比控制）、求交、查询（最近点/体积/面积/长度/流形检查）、**OCCT B-rep 互操作**
+  （`source/OCCT_BREP_IMPORT` / `OCCT_BREP_EXPORT`）
+- 构建：`source/SMLib/premake5.lua` 使用 `use_usd_tbb()` 并链接 **TBB**（并行）→ WASM 移植需单线程化或 stub
+
+### 7.2 对我们 AI 建模的真实价值（重排优先级）
+
+| 增益 | 机制 | 是否提升 AI 生成能力 | 落地路径 |
+|---|---|---|---|
+| **A1 生成后自动修复** | `SmApiHeal` + 缝合，修 AI 产出的裂缝/重合/自交 | 间接（成品率↑，非智能） | 服务端（最省力） |
+| **A2 更鲁棒布尔/求交** | BRep + PolyBrep 两套布尔 | 间接（失败率↓） | 服务端 或 WASM |
+| **A3 可靠几何自检** | Queries：体积/面积/流形/最近点 | 间接（修复闭环更准） | 服务端 或 WASM |
+| **B WASM 移植内核** | Emscripten 编译 SMLib+SM_API | 不直接提升 | 周级工程，需先去 TBB 依赖 |
+| **C USD B-rep 互通** | omniSolid 字段映射导出 | 不提升 | 前端（T1/T2） |
+
+**结论**：内核不改变 LLM 的"生成智能"；真正提升 AI 建模的是**特征级工具面 + 几何自检 + 自动修复闭环**
+（我们已有训练/审阅体系）。SMLib 的价值在于把"修复 + 鲁棒布尔"这两项做得比现有链路更硬。
+
+### 7.3 建议的先导实验（1~2 天，可量化）
+
+在 Linux 环境（服务器或容器）装 CPython 3.12 + `pip install usd-brep`，对我们**已知失败样本**做 A/B：
+1. OCC 布尔“空结果”的模型 → SMLib 布尔/修复能否得到有效实体；
+2. AI 生成的破损实体（裂缝/重合/非流形）→ `SmApiHeal` 修复成功率与耗时；
+3. STEP 导入 → 体积/面积与 OCC 计算结果偏差（互操作一致性）。
+判定：修复成功率 ≥50% 且耗时 <3s/模型 → 值得做服务端集成；否则只保留 USD 互通（C）。
