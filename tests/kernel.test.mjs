@@ -23,6 +23,17 @@ const boxA = kernel.createBox({ dx: 10, dy: 20, dz: 30 });
 approx(kernel.volume(boxA), 6000, 1e-6, 'box volume');
 ok('createBox({dx:10,dy:20,dz:30}) volume ≈ 6000');
 
+// 2a. 几何度量：体积/表面积/面边计数/包围盒（AI 自检用）
+{
+  const met = kernel.bodyMetrics(boxA);
+  approx(met.volume, 6000, 1e-6, 'metrics volume');
+  approx(met.area, 2 * (10 * 20 + 10 * 30 + 20 * 30), 1e-6, 'metrics area');
+  assert.equal(met.faces, 6, `box 应有 6 个面，实际 ${met.faces}`);
+  assert.equal(met.edgeUses, 24, `box 的棱出现次数应为 24（12 条棱×2 个邻面），实际 ${met.edgeUses}`);
+  assert.ok(Math.abs((met.bbox.maxX - met.bbox.minX) - 10) < 1e-6, 'metrics bbox 宽应为 10');
+  ok('bodyMetrics：体积/表面积/6面/棱出现次数24/包围盒正确');
+}
+
 // 2b. 圆柱 r/h 语义校准：直接体积测量应等于 π·r²·h
 // （实测 createCylinder({r,h}) 体积精确等于 π·r²·h，r 与 h 即用户期望的真实半径/高度，无需入参换算）
 const cylCal1 = kernel.createCylinder({ r: 2, h: 40 });

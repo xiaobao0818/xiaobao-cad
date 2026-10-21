@@ -10079,5 +10079,150 @@
     "failsBefore": [
       "范围 297.0×210.0（期望 110×110 ±15）"
     ]
+  },
+  {
+    "ts": 1792572876515,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 100,
+    "scoreAfter": 100,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [],
+    "note": ""
+  },
+  {
+    "ts": 1792573091375,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 2,
+    "ws": "3d",
+    "scoreBefore": 88,
+    "scoreAfter": 88,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "boolean 数量=4（期望 ≥5）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "boolean 数量=4（期望 ≥5）"
+    ]
+  },
+  {
+    "ts": 1792573567348,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 3,
+    "ws": "3d",
+    "scoreBefore": 79,
+    "scoreAfter": 79,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "特征数=24（期望 25~40）",
+      "boolean 数量=3（期望 ≥5）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "特征数=24（期望 25~40）",
+      "boolean 数量=3（期望 ≥5）"
+    ]
+  },
+  {
+    "ts": 1792575263445,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 1,
+    "ws": "3d",
+    "scoreBefore": 88,
+    "scoreAfter": 88,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "boolean 数量=4（期望 ≥5）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "boolean 数量=4（期望 ≥5）"
+    ]
+  },
+  {
+    "ts": 1792575881072,
+    "mode": "real",
+    "outcome": "ok",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 2,
+    "ws": "3d",
+    "scoreBefore": 88,
+    "scoreAfter": 88,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "boolean 数量=4（期望 ≥5）"
+    ],
+    "note": "",
+    "failsBefore": [
+      "boolean 数量=4（期望 ≥5）"
+    ]
+  },
+  {
+    "ts": 1792576088703,
+    "mode": "real",
+    "outcome": "noproduce",
+    "taskId": "doublesuction3d",
+    "taskName": "双吸泵（3D）",
+    "round": 3,
+    "ws": "3d",
+    "scoreBefore": 0,
+    "scoreAfter": 0,
+    "delta": 0,
+    "reviewOutcome": "未执行",
+    "reviewRounds": 0,
+    "fbRounds": 0,
+    "fails": [
+      "特征数=0（期望 25~40）",
+      "cylinder 数量=0（期望 ≥8）",
+      "box 数量=0（期望 ≥12）",
+      "boolean 数量=0（期望 ≥5）",
+      "cylinder.r≈90 命中 0/1",
+      "cylinder.r≈70 命中 0/2",
+      "box 圆心距 []，R=50±2 命中 0/12",
+      "cylinder 偏心量 []，同轴于(0,0)：0/4",
+      "轴 Φ32/孔 Φ33：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
+    ],
+    "note": "绘制未完成",
+    "failsBefore": [
+      "特征数=0（期望 25~40）",
+      "cylinder 数量=0（期望 ≥8）",
+      "box 数量=0（期望 ≥12）",
+      "boolean 数量=0（期望 ≥5）",
+      "cylinder.r≈90 命中 0/1",
+      "cylinder.r≈70 命中 0/2",
+      "box 圆心距 []，R=50±2 命中 0/12",
+      "cylinder 偏心量 []，同轴于(0,0)：0/4",
+      "轴 Φ32/孔 Φ33：缺轴·缺孔·间隙=—（配合不合格：缺轴、缺孔）"
+    ]
   }
 ]

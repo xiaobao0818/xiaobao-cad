@@ -412,6 +412,32 @@ export class Kernel {
     return this._bbox(this._assertBody(id));
   }
 
+  /**
+   * 几何度量（供 AI 自检 / 质量门禁用）：体积、表面积、面/边计数、包围盒。
+   * 有效厚度用 2V/A 估计（板类零件 V/A≈t/2），只作异常提示，不作精确判据。
+   * @returns {{volume: number, area: number, faces: number, edges: number, bbox: object}}
+   */
+  bodyMetrics(id) {
+    this._assertReady();
+    const shape = this._assertBody(id);
+    const volume = this._volume(shape);
+    const props = new this.oc.GProp_GProps_1();
+    this.oc.BRepGProp.SurfaceProperties_1(shape, props, false, false);
+    const area = props.Mass();
+    props.delete();
+    const T = this.oc.TopAbs_ShapeEnum;
+    const count = (t) => {
+      let n = 0;
+      const ex = new this.oc.TopExp_Explorer_2(shape, t, T.TopAbs_SHAPE);
+      while (ex.More()) { n++; ex.Next(); }
+      ex.delete();
+      return n;
+    };
+    // 注意：TopExp_Explorer 按"出现次数"统计（一条棱被两个面共用 → 计 2 次），
+    // 面数是唯一的；棱数作为 edgeUses 保留（≈2×唯一棱数），报告里只用面数。
+    return { volume, area, faces: count(T.TopAbs_FACE), edgeUses: count(T.TopAbs_EDGE), bbox: this._bbox(shape) };
+  }
+
   // --- export ---
 
   exportSTL(idOrIds) {

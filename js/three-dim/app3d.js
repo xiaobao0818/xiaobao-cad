@@ -513,6 +513,68 @@ export class App3D {
     this.model.on('selection', () => { this.vp?.highlight([...this.model.selection][0] || null); });
   }
 
+  /**
+   * 模型自检报告（喂给 AI 作为工具结果的补充）：
+   * 可见实体数/类型分布/总体积/包围盒/每个实体的体积·面数·有效厚度估计，并给出异常提示。
+   * 有效厚度 = 2V/A（板类零件 V/A≈t/2），只用于提示"过薄/退化"，不是精确壁厚。
+   * @returns {string} 空字符串表示没有可度量的实体
+   */
+  geometryReport() {
+    if (!this.ready || !this.kernel || !this.model) return '';
+    const bodies = this.model.bodies.filter((b) => b.visible !== false);
+    if (!bodies.length) return '';
+    const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'k' : n.toFixed(1));
+    const kinds = {};
+    const lines = [];
+    const warn = [];
+    let totalV = 0;
+    let bb = null;
+    let measured = 0;
+    for (const b of bodies) {
+      const kids = [].concat(this.model._kernelIds?.get(b.id) ?? []).filter((x) => x != null);
+      if (!kids.length) continue;
+      try {
+        let v = 0, area = 0, faces = 0, box = null;
+        for (const kid of kids) {
+          const mt = this.kernel.bodyMetrics(kid);
+          v += mt.volume; area += mt.area; faces += mt.faces;
+          box = box
+            ? { minX: Math.min(box.minX, mt.bbox.minX), maxX: Math.max(box.maxX, mt.bbox.maxX),
+                minY: Math.min(box.minY, mt.bbox.minY), maxY: Math.max(box.maxY, mt.bbox.maxY),
+                minZ: Math.min(box.minZ, mt.bbox.minZ), maxZ: Math.max(box.maxZ, mt.bbox.maxZ) }
+            : mt.bbox;
+        }
+        measured++;
+        totalV += v;
+        kinds[b.kind] = (kinds[b.kind] || 0) + 1;
+        if (box) {
+          bb = bb
+            ? { minX: Math.min(bb.minX, box.minX), maxX: Math.max(bb.maxX, box.maxX),
+                minY: Math.min(bb.minY, box.minY), maxY: Math.max(bb.maxY, box.maxY),
+                minZ: Math.min(bb.minZ, box.minZ), maxZ: Math.max(bb.maxZ, box.maxZ) }
+            : box;
+        }
+        const thick = area > 0 ? (2 * v) / area : 0;
+        lines.push(`- ${b.label}[${b.kind}] 体积≈${fmt(v)}mm³ 面数${faces} 有效厚度≈${thick.toFixed(2)}mm`);
+        if (v > 0 && thick > 0 && thick < 0.8) warn.push(`${b.label} 有效厚度≈${thick.toFixed(2)}mm 偏薄(<0.8mm)`);
+        if (v > 0 && v < 1) warn.push(`${b.label} 体积仅 ${v.toFixed(3)}mm³（疑似退化实体）`);
+      } catch (e) {
+        warn.push(`${b.label} 度量失败（几何可能无效）`);
+      }
+    }
+    if (!measured) return '';
+    if (measured > 25) warn.push(`可见实体 ${measured} 个偏多（可能冗余或未合并）`);
+    const size = bb
+      ? `${Math.round(bb.maxX - bb.minX)}×${Math.round(bb.maxY - bb.minY)}×${Math.round(bb.maxZ - bb.minZ)}mm`
+      : '-';
+    const kindStr = Object.entries(kinds).map(([k, n]) => `${k}×${n}`).join('、');
+    const head = `【模型自检】可见实体 ${measured} 个（${kindStr}）｜总体积≈${fmt(totalV)}mm³｜包围盒 ${size}`;
+    const body = lines.slice(0, 12).join('\n');
+    const tail = (warn.length ? `\n⚠ ${warn.slice(0, 5).join('；')}` : '') +
+      '\n请对照任务要求核对零件数量与关键尺寸；若缺失或异常，请在结束前修正。';
+    return `${head}\n${body}${tail}`;
+  }
+
   // ===== AI 工具 =====
   _registerAITools() {
     const CAD = window.CAD;

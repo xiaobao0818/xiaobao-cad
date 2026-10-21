@@ -53,14 +53,14 @@ try {
   page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   if (REAL) {
     // 真实 MiniMax M3：通过 evaluateOnNewDocument 注入设置（Key 只经环境变量，不落盘）
-    await page.evaluateOnNewDocument((key) => {
+    await page.evaluateOnNewDocument((key, geoSelfCheck) => {
       localStorage.setItem('xbcad:ai-settings', JSON.stringify({
         base: 'https://api.minimaxi.com', model: 'MiniMax-M3', key,
-        temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false,
+        temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false, geoSelfCheck,
         visionBase: 'https://api.minimaxi.com', visionModel: 'MiniMax-M3', visionKey: key,
         reviewRounds: 6, deepThink: true, settingsVersion: 2,
       }));
-    }, REAL_KEY);
+    }, REAL_KEY, process.env.GEOCHECK !== '0');
   }
   await page.goto(`${BASE}/tests/train-loop.html?${REAL ? 'real=1' : 'mock=1'}${SKIP3D ? '&skip3d=1' : ''}${FB || EVAL ? '&noreview=1' : ''}${EVAL ? '&fbmax=0' : (process.env.FBMAX !== undefined ? '&fbmax=' + process.env.FBMAX : '')}${CONT ? '&continuous=1' : ''}${DUTY ? '&duty=' + DUTY : ''}${HOLDOUT_DUTY ? '&duty=' + HOLDOUT_DUTY : ''}`, { waitUntil: 'load', timeout: 60000 });
   if (!KEEP) await page.evaluate(() => localStorage.removeItem('xbcad:training-log'));
@@ -73,10 +73,10 @@ try {
     const kNow = await page.evaluate(() => window.__aiPanel?.settings?.key || '');
     if (!kNow) {
       console.log('  [warn] 设置注入未生效，重试注入 Key');
-      await page.evaluate((key) => {
+      await page.evaluate((key, geoSelfCheck) => {
         localStorage.setItem('xbcad:ai-settings', JSON.stringify({
           base: 'https://api.minimaxi.com', model: 'MiniMax-M3', key,
-          temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false,
+          temperature: 0.2, maxTokens: 8000, useTools: true, autoReview: false, geoSelfCheck,
           visionBase: 'https://api.minimaxi.com', visionModel: 'MiniMax-M3', visionKey: key,
           reviewRounds: 6, deepThink: true, settingsVersion: 2,
         }));
@@ -85,7 +85,7 @@ try {
         // 最后手段：直接强制赋值，避免任何加载竞态
         if (p && (!p.settings?.key) && typeof p.settings === 'object') p.settings.key = key;
         return window.__aiPanel?.settings?.key || '';
-      }, REAL_KEY);
+      }, REAL_KEY, process.env.GEOCHECK !== '0');
     }
     const kFinal = await page.evaluate(() => {
       const raw = localStorage.getItem('xbcad:ai-settings') || '';

@@ -25,6 +25,8 @@ import { searchText as kbSearchText } from '../training/knowledge.mjs';
 const SETTINGS_KEY = 'xbcad:ai-settings';
 const SETTINGS_VERSION = 2;
 const DEFAULT_SETTINGS = {
+  // 3D 模型自检（体积/面数/厚度估计反馈给 AI）：A/B 实测无评分收益且单轮耗时约 5 倍（见 docs/geo-selfcheck-ab.md），默认关闭，保留开关供后续实验
+  geoSelfCheck: false,
   base: 'https://api.minimaxi.com',
   model: 'MiniMax-M3',
   key: '',
@@ -105,6 +107,7 @@ const SYSTEM_PROMPT = [
   '- 布尔运算：先 fuse 合并同类零件，再 cut 挖孔；确保实体相交，交集不为空。泵类装配必须通过布尔运算成型：泵壳（外圆柱 − 偏心内腔 = cut）、叶轮（轮盘 − 轮毂孔 = cut，再与全部叶片 fuse 并集）、轮毂孔与轴间隙配合。没有布尔运算的"摆在一起"不是合格装配。',
   '- 合理尺寸与坐标：零件对齐放置（例如底座底面 z=0）；孔/轴/法兰同轴对齐。',
   '- 颜色区分不同零件；特征树保持简洁。',
+  '- 模型自检：每次调用 3D 工具后，系统会在工具结果末尾附加【模型自检】（实体数/类型分布/总体积/包围盒/各实体体积·面数·有效厚度/异常提示）。必须用它核对零件数量与关键尺寸：发现漏件、过薄（<0.8mm）、体积异常（<1mm³）或实体过多（>25）时，在同一轮内修正后再结束。',
   '- 完成后可请求多模态审阅检查截图。',
   '',
   '【回答要求】',
@@ -1022,6 +1025,14 @@ export default class AIChatPanel {
         toolCallCount += msg.tool_calls.length;
         this._aiLog('tools', names.join(','));
         this._addMessage('system', `🔧 已执行工具：${names.join('、')}`);
+        // 几何度量自检：把当前模型的体积/面数/厚度估计附加到本轮工具结果，
+        // 让模型能在同一轮里发现"漏件/过薄/退化/冗余"，而不是等审阅阶段才发现。
+        // 只附加不新增消息角色（避免部分兼容接口拒绝中途 system 消息）。
+        const geoReport = this.settings.geoSelfCheck !== false ? this.CAD?.app3d?.geometryReport?.() : '';
+        if (geoReport) {
+          const lastTool = [...this.messages].reverse().find((m) => m.role === 'tool');
+          if (lastTool) lastTool.content = `${lastTool.content}\n\n${geoReport}`;
+        }
         // 进展熔断：连续多轮执行工具但工作区毫无变化 → 停止（防参数漂移式空转烧额度）
         const keyAfter = this._visibleContentKey();
         if (keyAfter === keyBefore) {
